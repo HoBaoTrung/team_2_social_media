@@ -1,0 +1,138 @@
+package com.codegym.socialmedia.model.account;
+import com.codegym.socialmedia.model.admin.ModerationLog;
+import com.codegym.socialmedia.model.conversation.ConversationParticipant;
+import com.codegym.socialmedia.model.social_action.*;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.util.List;
+
+@Entity
+@Table(name = "users")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class User {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false, unique = true)
+    @NotBlank
+    private String username;
+
+    @Column(nullable = false, unique = true)
+    @Email
+    @NotBlank
+    private String email;
+
+    @Column(nullable = false)
+    @NotBlank
+    private String passwordHash;
+
+    @Size(max = 50)
+    private String firstName;
+
+    @Size(max = 50)
+    private String lastName;
+
+    @Size(max = 255)
+    private String profilePicture;
+
+    @Lob
+    private String bio;
+
+    private LocalDate dateOfBirth;
+
+    @Enumerated(EnumType.STRING)
+    private Gender gender;
+
+    private String phone;
+
+    @Enumerated(EnumType.STRING)
+    private LoginMethod loginMethod;
+
+    @CreationTimestamp
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
+
+    private boolean isActive = false;
+
+    private boolean isVerified = false;
+
+    @Enumerated(EnumType.STRING)
+    private AccountStatus accountStatus;
+
+    @Enumerated(EnumType.STRING)
+    private PrivacyProfile privacyProfile;
+
+    private boolean canBeFound = true;
+
+    private boolean showFriendList = true;
+
+    @OneToMany(mappedBy = "user")
+    private List<UserSearchHistory> searchesPerformed;
+
+    @OneToMany(mappedBy = "resultUser")
+    private List<UserSearchHistory> searchesFoundIn;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    private UserPrivacySettings privacySettings;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    private NotificationSettings notificationSettings;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private List<UserSession> sessions;
+
+    @OneToMany(mappedBy = "requester")
+    private List<Friendship> sentFriendRequests;
+
+    @OneToMany(mappedBy = "addressee")
+    private List<Friendship> receivedFriendRequests;
+
+    @OneToMany(mappedBy = "user")
+    private List<LikeStatus> likedStatuses;
+
+    @OneToMany(mappedBy = "user")
+    private List<LikeComment> likedComments;
+
+    @OneToMany(mappedBy = "user")
+    private List<ConversationParticipant> conversations;
+
+    @OneToMany(mappedBy = "blocker")
+    private List<BlockedUsers> blockedUsers;
+
+    @OneToMany(mappedBy = "blocked")
+    private List<BlockedUsers> blockedBy;
+
+//    @OneToMany(mappedBy = "reporter")
+//    private List<Report> reports;
+
+    @OneToMany(mappedBy = "reporter")
+    private List<ModerationLog> reports;
+
+    public enum Gender {
+        MALE, FEMALE, OTHER
+    }
+
+    public enum LoginMethod {
+        EMAIL, FACEBOOK, GOOGLE
+    }
+
+    public enum AccountStatus {
+        ACTIVE, SUSPENDED, BANNED, PENDING
+    }
+
+    public enum PrivacyProfile {
+        PUBLIC, FRIENDS, PRIVATE
+    }
+}
