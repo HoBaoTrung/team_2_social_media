@@ -2,7 +2,7 @@
 <div th:fragment="content">
     <div class="text-center mb-3">
         <div class="avatar-wrapper">
-            <img th:src="${user.avatarUrl != null} ? @{/uploads/${user.avatarUrl}} : @{/images/default-avatar.jpg}"
+            <img th:src="${user.avatarUrl != null} ? @{${user.avatarUrl}} : @{/images/default-avatar.jpg}"
                  alt="Avatar" class="profile-avatar" id="avatar-preview">
 
             <div class="avatar-overlay">
