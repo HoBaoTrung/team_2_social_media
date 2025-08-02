@@ -8,6 +8,7 @@ import com.codegym.socialmedia.repository.UserRepository;
 import com.codegym.socialmedia.repository.UserPrivacySettingsRepository;
 import com.codegym.socialmedia.repository.NotificationSettingsRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +30,7 @@ public class UserService {
     private NotificationSettingsRepository notificationSettingsRepository;
 
     @Autowired
+    @Lazy // Thêm @Lazy để tránh circular dependency
     private PasswordEncoder passwordEncoder;
 
     public User save(UserRegistrationDto registrationDto) {

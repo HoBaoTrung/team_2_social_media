@@ -26,6 +26,12 @@ public class UserController {
     public String loginForm(@RequestParam(value = "error", required = false) String error,
                             @RequestParam(value = "logout", required = false) String logout,
                             Model model) {
+
+        // Luôn thêm object user để tránh lỗi template
+        if (!model.containsAttribute("user")) {
+            model.addAttribute("user", new UserRegistrationDto());
+        }
+
         if (error != null) {
             model.addAttribute("error", "Tên đăng nhập hoặc mật khẩu không đúng!");
         }
@@ -49,25 +55,30 @@ public class UserController {
 
         // Kiểm tra lỗi validation
         if (result.hasErrors()) {
-            return "register";
+            // Đảm bảo object user vẫn có trong model khi có lỗi
+            model.addAttribute("user", registrationDto);
+            return "login"; // Trả về trang login với form đăng ký active
         }
 
         // Kiểm tra password confirm
         if (!registrationDto.getPassword().equals(registrationDto.getConfirmPassword())) {
             result.rejectValue("confirmPassword", null, "Mật khẩu xác nhận không khớp");
-            return "register";
+            model.addAttribute("user", registrationDto);
+            return "login";
         }
 
         try {
             // Kiểm tra username và email đã tồn tại
             if (userService.existsByUsername(registrationDto.getUsername())) {
                 result.rejectValue("username", null, "Tên đăng nhập đã tồn tại, vui lòng chọn tên khác");
-                return "register";
+                model.addAttribute("user", registrationDto);
+                return "login";
             }
 
             if (userService.existsByEmail(registrationDto.getEmail())) {
                 result.rejectValue("email", null, "Email đã được sử dụng, vui lòng chọn email khác");
-                return "register";
+                model.addAttribute("user", registrationDto);
+                return "login";
             }
 
             // Đăng ký người dùng
@@ -80,7 +91,8 @@ public class UserController {
 
         } catch (Exception e) {
             model.addAttribute("error", "Có lỗi xảy ra trong quá trình đăng ký. Vui lòng thử lại.");
-            return "register";
+            model.addAttribute("user", registrationDto);
+            return "login";
         }
     }
 

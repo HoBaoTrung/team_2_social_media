@@ -23,6 +23,7 @@
             justify-content: center;
             flex-direction: column;
             height: 100vh;
+            overflow-y: auto; /* Cho phép cuộn trang */
         }
 
         .container {
@@ -31,9 +32,24 @@
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.35);
             position: relative;
             overflow: hidden;
-            width: 768px;
-            max-width: 100%;
+            width: 90%;
+            max-width: 1100px;
             min-height: 480px;
+            padding: 20px;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto; /* Cho phép cuộn nội dung trong container */
+        }
+
+
+        @media (max-width: 768px) {
+            .container {
+                width: 100%;
+                padding: 10px;
+                min-height: 0;
+            }
         }
 
         .container p {
@@ -86,6 +102,11 @@
             flex-direction: column;
             padding: 0 40px;
             height: 100%;
+            overflow-y: auto; /* Cho phép cuộn nếu form quá dài */
+        }
+
+        .container form h1{
+            margin-top: 5%;
         }
 
         .container input {
@@ -289,18 +310,13 @@
         }
     </style>
 </head>
-
 <body>
 <div class="container" id="container">
     <!-- Sign Up Form -->
     <div class="form-container sign-up">
         <form th:action="@{/register}" method="post" th:object="${user}">
+
             <h1>Tạo tài khoản</h1>
-            <div class="social-icons">
-                <a href="/oauth2/authorization/google" class="icon"><i class="fa-brands fa-google"></i></a>
-                <a href="/oauth2/authorization/facebook" class="icon"><i class="fa-brands fa-facebook-f"></i></a>
-            </div>
-            <span>hoặc sử dụng email để đăng ký</span>
 
             <input type="text" th:field="*{firstName}" placeholder="Tên" />
             <span th:if="${#fields.hasErrors('firstName')}" th:errors="*{firstName}" class="error-message"></span>
@@ -335,7 +351,6 @@
         <form th:action="@{/login}" method="post">
             <h1>Đăng nhập</h1>
 
-            <!-- Hiển thị thông báo lỗi -->
             <div th:if="${param.error}" class="alert alert-danger">
                 <span th:if="${param.error[0] == 'oauth2'}">Đăng nhập OAuth2 thất bại. Vui lòng thử lại.</span>
                 <span th:unless="${param.error[0] == 'oauth2'}">Tên đăng nhập hoặc mật khẩu không đúng!</span>
@@ -343,14 +358,7 @@
             <div th:if="${param.logout}" class="alert alert-success">Đăng xuất thành công!</div>
             <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
 
-            <div class="social-icons">
-                <a href="/oauth2/authorization/google" class="icon"><i class="fa-brands fa-google"></i></a>
-                <a href="/oauth2/authorization/facebook" class="icon"><i class="fa-brands fa-facebook-f"></i></a>
-            </div>
-            <span>hoặc sử dụng tài khoản của bạn</span>
-
-            <input type="text" name="username" placeholder="Tên đăng nhập hoặc Email"
-                   th:value="${username}" required />
+            <input type="text" name="username" placeholder="Tên đăng nhập hoặc Email" th:value="${username}" required />
 
             <input type="password" name="password" placeholder="Mật khẩu" required />
 
@@ -365,6 +373,8 @@
                     <i class="fa-brands fa-facebook-f"></i> Đăng nhập với Facebook
                 </a>
             </div>
+
+            <p>Chưa có tài khoản? <a href="#" id="register-link">Đăng ký ngay</a></p>
         </form>
     </div>
 
@@ -389,6 +399,7 @@
     const container = document.getElementById('container');
     const registerBtn = document.getElementById('register');
     const loginBtn = document.getElementById('login');
+    const registerLink = document.getElementById('register-link');
 
     registerBtn.addEventListener('click', () => {
         container.classList.add("active");
@@ -398,12 +409,24 @@
         container.classList.remove("active");
     });
 
-    // Auto-focus trên form đăng ký nếu có lỗi validation
+    registerLink.addEventListener('click', function() {
+        container.classList.add("active");
+    });
+
     document.addEventListener('DOMContentLoaded', function() {
         const hasErrors = document.querySelector('.sign-up .error-message');
         if (hasErrors) {
             container.classList.add("active");
         }
+    });
+
+    document.querySelectorAll('input').forEach(input => {
+        input.addEventListener('focus', () => {
+            const errorMessage = input.nextElementSibling; // Assuming error messages are right after inputs
+            if (errorMessage && errorMessage.classList.contains('error-message')) {
+                errorMessage.style.display = 'none'; // Hide the error message when the input is focused
+            }
+        });
     });
 </script>
 </body>
