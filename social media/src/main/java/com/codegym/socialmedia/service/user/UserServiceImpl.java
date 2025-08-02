@@ -19,8 +19,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
-@Autowired
-private CloudinaryService cloudinaryService;
+
+    @Autowired
+    private CloudinaryService cloudinaryService;
 
     @Override
     public User getCurrentUser() {
@@ -42,10 +43,17 @@ private CloudinaryService cloudinaryService;
 
     @Override
     public User save(User newUser) {
-        User user = getUserByUsername(newUser.getUsername());
-        if (user != null) {
-            if (user.getPasswordHash().equals(newUser.getPasswordHash())) {
+        User existingUser = getUserByUsername(newUser.getUsername());
+        if (existingUser == null) {
+            // Người dùng mới, cần mã hóa mật khẩu
+            newUser.setPasswordHash(passwordEncoder.encode(newUser.getPasswordHash()));
+        } else {
+            // Người dùng cũ, chỉ mã hóa nếu mật khẩu thay đổi
+            if (!passwordEncoder.matches(newUser.getPasswordHash(), existingUser.getPasswordHash())) {
                 newUser.setPasswordHash(passwordEncoder.encode(newUser.getPasswordHash()));
+            } else {
+                // Nếu mật khẩu không thay đổi thì giữ lại cái cũ
+                newUser.setPasswordHash(existingUser.getPasswordHash());
             }
         }
         return iUserRepository.save(newUser);
@@ -53,10 +61,12 @@ private CloudinaryService cloudinaryService;
 
     @Override
     public User save(User user, MultipartFile image) {
-        if (!image.isEmpty()) {
+        if (image != null && !image.isEmpty()) {
             user.setProfilePicture(cloudinaryService.upload(image));
         }
-        return save(user);
+
+        return iUserRepository.save(user);
     }
+
 
 }
