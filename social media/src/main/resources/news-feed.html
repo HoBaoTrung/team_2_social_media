@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bảng tin - Social Media</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .nav-menu {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .nav-link:hover {
+            color: #667eea;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .main-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+            display: grid;
+            grid-template-columns: 1fr 2fr 1fr;
+            gap: 2rem;
+        }
+
+        .sidebar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            height: fit-content;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar h3 {
+            margin-bottom: 1rem;
+            color: #667eea;
+        }
+
+        .feed {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .post-creator {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .post {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .post:hover {
+            transform: translateY(-2px);
+        }
+
+        .post-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .post-content {
+            margin-bottom: 1rem;
+            line-height: 1.6;
+        }
+
+        .post-actions {
+            display: flex;
+            gap: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid #eee;
+        }
+
+        .action-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #666;
+            transition: color 0.3s ease;
+        }
+
+        .action-btn:hover {
+            color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 0.8rem 2rem;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #eee;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .welcome-message {
+            text-align: center;
+            color: white;
+            margin-bottom: 2rem;
+        }
+
+        .welcome-message h1 {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                grid-template-columns: 1fr;
+                padding: 0 1rem;
+            }
+
+            .navbar {
+                padding: 1rem;
+            }
+
+            .nav-menu {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+<!-- Navigation Bar -->
+<nav class="navbar">
+    <div class="nav-container">
+        <div class="logo">
+            <i class="fas fa-share-alt"></i> Social Media
+        </div>
+        <div class="nav-menu">
+            <a href="/news-feed" class="nav-link">
+                <i class="fas fa-home"></i> Trang chủ
+            </a>
+            <a href="#" class="nav-link">
+                <i class="fas fa-users"></i> Bạn bè
+            </a>
+            <a href="#" class="nav-link">
+                <i class="fas fa-bell"></i> Thông báo
+            </a>
+        </div>
+        <div class="user-info">
+            <div class="avatar" sec:authentication="name">
+                <span th:text="${#strings.substring(#authentication.name, 0, 1).toUpperCase()}">U</span>
+            </div>
+            <span sec:authentication="name">User</span>
+            <a href="/logout" class="nav-link">
+                <i class="fas fa-sign-out-alt"></i> Đăng xuất
+            </a>
+        </div>
+    </div>
+</nav>
+
+<!-- Welcome Message -->
+<div class="welcome-message">
+    <h1>Chào mừng đến với Social Media!</h1>
+    <p>Kết nối và chia sẻ với bạn bè của bạn</p>
+</div>
+
+<!-- Main Container -->
+<div class="main-container">
+    <!-- Left Sidebar -->
+    <div class="sidebar">
+        <h3><i class="fas fa-user"></i> Hồ sơ của tôi</h3>
+        <div class="user-profile">
+            <div class="avatar" style="width: 60px; height: 60px; font-size: 1.5rem; margin-bottom: 1rem;">
+                <span th:text="${#strings.substring(#authentication.name, 0, 1).toUpperCase()}">U</span>
+            </div>
+            <h4 sec:authentication="name">Username</h4>
+            <p style="color: #666; font-size: 0.9rem;">Thành viên mới</p>
+        </div>
+
+        <hr style="margin: 1.5rem 0; border: none; height: 1px; background: #eee;">
+
+        <h3><i class="fas fa-chart-line"></i> Thống kê</h3>
+        <div style="color: #666;">
+            <p><i class="fas fa-users"></i> 0 bạn bè</p>
+            <p><i class="fas fa-edit"></i> 0 bài viết</p>
+            <p><i class="fas fa-heart"></i> 0 lượt thích</p>
+        </div>
+    </div>
+
+    <!-- Main Feed -->
+    <div class="feed">
+        <!-- Post Creator -->
+        <div class="post-creator">
+            <h3 style="margin-bottom: 1rem; color: #667eea;">
+                <i class="fas fa-pen"></i> Bạn đang nghĩ gì?
+            </h3>
+            <form>
+                <textarea class="form-control" rows="3" placeholder="Chia sẻ suy nghĩ của bạn..."></textarea>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
+                    <div>
+                        <button type="button" class="action-btn" style="color: #667eea;">
+                            <i class="fas fa-image"></i> Ảnh
+                        </button>
+                        <button type="button" class="action-btn" style="color: #667eea;">
+                            <i class="fas fa-video"></i> Video
+                        </button>
+                    </div>
+                    <button type="submit" class="btn">
+                        <i class="fas fa-paper-plane"></i> Đăng
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Sample Posts -->
+        <div class="post">
+            <div class="post-header">
+                <div class="avatar">
+                    <span>S</span>
+                </div>
+                <div>
+                    <h4>Social Media</h4>
+                    <p style="color: #666; font-size: 0.9rem;">2 giờ trước</p>
+                </div>
+            </div>
+            <div class="post-content">
+                <p>Chào mừng bạn đến với mạng xã hội của chúng tôi! 🎉 Hãy bắt đầu kết nối với bạn bè và chia sẻ những khoảnh khắc đẹp nhất của cuộc sống.</p>
+            </div>
+            <div class="post-actions">
+                <button class="action-btn">
+                    <i class="fas fa-heart"></i> Thích (0)
+                </button>
+                <button class="action-btn">
+                    <i class="fas fa-comment"></i> Bình luận (0)
+                </button>
+                <button class="action-btn">
+                    <i class="fas fa-share"></i> Chia sẻ (0)
+                </button>
+            </div>
+        </div>
+
+        <div class="post">
+            <div class="post-header">
+                <div class="avatar">
+                    <span>T</span>
+                </div>
+                <div>
+                    <h4>Team Developer</h4>
+                    <p style="color: #666; font-size: 0.9rem;">5 giờ trước</p>
+                </div>
+            </div>
+            <div class="post-content">
+                <p>Hệ thống đăng ký và đăng nhập đã hoàn thành! ✅ Các bạn có thể:</p>
+                <ul style="margin-left: 1.5rem; margin-top: 0.5rem;">
+                    <li>Đăng ký tài khoản mới với email</li>
+                    <li>Đăng nhập bằng username/email</li>
+                    <li>Đăng nhập bằng Google/Facebook</li>
+                </ul>
+            </div>
+            <div class="post-actions">
+                <button class="action-btn">
+                    <i class="fas fa-heart"></i> Thích (5)
+                </button>
+                <button class="action-btn">
+                    <i class="fas fa-comment"></i> Bình luận (2)
+                </button>
+                <button class="action-btn">
+                    <i class="fas fa-share"></i> Chia sẻ (1)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Sidebar -->
+    <div class="sidebar">
+        <h3><i class="fas fa-users"></i> Gợi ý kết bạn</h3>
+        <p style="color: #666; text-align: center; margin: 2rem 0;">
+            Chưa có gợi ý nào.<br>
+            Hãy mời bạn bè tham gia!
+        </p>
+
+        <hr style="margin: 1.5rem 0; border: none; height: 1px; background: #eee;">
+
+        <h3><i class="fas fa-fire"></i> Xu hướng</h3>
+        <div style="color: #666;">
+            <p style="margin: 0.5rem 0;">#ChaoMung</p>
+            <p style="margin: 0.5rem 0;">#SocialMedia</p>
+            <p style="margin: 0.5rem 0;">#KetNoi</p>
+        </div>
+    </div>
+</div>
+</body>
+</html>
