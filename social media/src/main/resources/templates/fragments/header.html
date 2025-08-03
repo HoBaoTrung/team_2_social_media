@@ -1,0 +1,116 @@
+<header th:fragment="header"
+        xmlns:th="http://www.thymeleaf.org"
+        xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+    <link rel="stylesheet" th:href="@{/css/header.css}">
+    <nav class="navbar navbar-expand-lg  shadow-sm">
+        <div class="container-fluid d-flex justify-content-between align-items-center px-3">
+
+            <!-- LEFT: Logo + Search -->
+            <div class="d-flex align-items-center" style="gap: 10px;">
+
+                <a class="navbar-brand me-2 logo" th:href="@{/news-feed}">
+                    <i class="fas fa-share-alt"></i> Social Media
+                </a>
+
+                <form class="d-none d-md-block" role="search">
+                    <input class="form-control form-control-sm" type="search" placeholder="Tìm kiếm..."
+                           aria-label="Search">
+                </form>
+            </div>
+
+            <!-- CENTER: Navigation icons -->
+            <div class="d-none d-lg-flex justify-content-center flex-grow-1 navigation-center ">
+                <a class="nav-link nav-icon nav-icon-wrapper" th:href="@{/news-feed}" title="Trang chủ" data-bs-toggle="tooltip"
+                   data-bs-placement="bottom">
+                    <i class="fas fa-home"></i>
+                </a>
+                <a class="nav-link nav-icon nav-icon-wrapper" th:href="@{/friends}" title="Bạn bè" data-bs-toggle="tooltip"
+                   data-bs-placement="bottom">
+                    <i class="fas fa-user-friends"></i>
+                </a>
+                <a class="nav-link nav-icon nav-icon-wrapper" th:href="@{/market}" title="Marketplace" data-bs-toggle="tooltip"
+                   data-bs-placement="bottom">
+                    <i class="fas fa-store"></i>
+                </a>
+                <a class="nav-link nav-icon nav-icon-wrapper" th:href="@{/groups}" title="Nhóm" data-bs-toggle="tooltip"
+                   data-bs-placement="bottom">
+                    <i class="fas fa-users"></i>
+                </a>
+            </div>
+
+
+            <!-- RIGHT: Messages, Notifications, User -->
+            <div class="d-flex align-items-center gap-3">
+                <!-- Icon Tin nhắn -->
+                <div class="nav-icon-wrapper" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Tin nhắn">
+                    <a class="nav-icon" th:href="@{/messages}">
+                        <i class="fas fa-comment-dots fa-lg"></i>
+                    </a>
+                </div>
+
+                <!-- Icon Thông báo -->
+                <div class="nav-icon-wrapper" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Thông báo">
+                    <a class="nav-icon" th:href="@{/notifications}">
+                        <i class="fas fa-bell fa-lg"></i>
+                    </a>
+                </div>
+
+                <!-- Nếu đã đăng nhập -->
+                <div class="nav-item dropdown" sec:authorize="isAuthenticated()">
+                    <a class="nav-link dropdown-toggle dropdown-toggle p-0 d-flex align-items-center" href="#" role="button"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                        <img th:if="${#authentication.principal.avatarUrl != null
+                            and !#strings.isEmpty(#authentication.principal.avatarUrl)}"
+                             th:src="@{${#authentication.principal.avatarUrl}}" alt="Avatar" class="rounded-circle nav-icon-wrapper">
+
+                        <img th:unless="${#authentication.principal.avatarUrl != null
+                        and !#strings.isEmpty(#authentication.principal.avatarUrl)}"
+                             th:src="@{/images/default-avatar.jpg}" alt="Avatar" class="rounded-circle nav-icon-wrapper">
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" >
+                        <li><a class="dropdown-item" th:href="@{/profile}">Thông tin cá nhân</a></li>
+                        <li><a class="dropdown-item" th:href="@{/setting}">Cài đặt</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <form th:action="@{/logout}" method="post" style="margin: 0;">
+                                <button type="submit" class="dropdown-item text-danger">Đăng xuất</button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Nếu chưa đăng nhập -->
+                <div class="nav-item nav-icon-wrapper" sec:authorize="!isAuthenticated()" data-bs-toggle="tooltip"
+                     data-bs-placement="bottom" title="Đăng nhập">
+                    <a class="nav-icon" th:href="@{/login}">
+                        <i class="fas fa-sign-in-alt fa-lg"></i>
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </nav>
+
+    <script>
+        // Kích hoạt Bootstrap tooltip
+        document.addEventListener("DOMContentLoaded", function () {
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+
+            // Active tab logic
+            const navLinks = document.querySelectorAll(".nav-link");
+            const currentPath = window.location.pathname;
+
+            navLinks.forEach(link => {
+                const href = link.getAttribute("href");
+                if (href && currentPath.startsWith(href)) {
+                    link.classList.add("active");
+                } else {
+                    link.classList.remove("active");
+                }
+            });
+        });
+    </script>
+</header>

@@ -1,0 +1,91 @@
+.navbar {
+    background: #f7f8fd;
+    backdrop-filter: blur(10px);
+
+    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+
+.navigation-center {
+    gap: 40px;
+    /*background-color: #252728;*/
+    padding: 8px 20px;
+    border-radius: 10px;
+    display: flex;
+}
+
+/* ===== Nút icon điều hướng (dạng tròn) ===== */
+.nav-icon-wrapper {
+    background-color: #3a3b3c;
+    border-radius: 50%;
+    /*padding: 16px; !* 👈 tăng padding để khung tròn to hơn *!*/
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s ease;
+    position: relative;
+}
+
+.nav-icon-wrapper:hover {
+    background-color: #4e4f50;
+    cursor: pointer;
+}
+
+.nav-icon-wrapper.active,
+.nav-icon-wrapper:focus-within {
+    background-color: #4e69a2;
+}
+
+.nav-icon {
+    color: white;
+    /*font-size: 24px; !* 👈 tăng kích thước icon nếu cần *!*/
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
+.navbar-brand {
+    font-weight: bold;
+    color: white;
+}
+
+.navbar-brand:hover {
+    color: #ddd;
+}
+
+/* ===== Link trong nav-center hoặc nav-right (nút chữ) ===== */
+.navigation-center a,
+.navigation-right a {
+    font-size: 14px;
+    border-radius: 5px;
+    text-decoration: none;
+    padding: 10px 50px;
+    color: #fff;
+    /*background: #333;*/
+    display: flex;
+    flex-direction: column;
+    text-transform: uppercase;
+    margin: 10px 0px;
+    letter-spacing: 1px;
+    text-align: center;
+    transition: 0.3s ease;
+}
+
+.navigation-center a:hover,
+.navigation-right a:hover {
+    background: #ff6ecf;
+    transform: scale(1.1);
+}
+
+.logo {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #667eea;
+}

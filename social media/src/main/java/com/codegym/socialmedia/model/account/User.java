@@ -33,7 +33,6 @@ public class User {
     private String email;
 
     @Column(nullable = false)
-    @NotBlank
     private String passwordHash;
 
     @Size(max = 50)
@@ -53,6 +52,8 @@ public class User {
     @Enumerated(EnumType.STRING)
     private Gender gender;
 
+    @NotBlank(message = "Không để trống")
+    @Pattern(regexp = "^(\\+84|0)(3[2-9]|5[6,8,9]|7[0,6-9]|8[1-5]|9[0-9])\\d{7}$", message = "Sai định dạng")
     private String phone;
 
     @Enumerated(EnumType.STRING)
@@ -64,15 +65,15 @@ public class User {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
-    private boolean isActive = false;
+    private boolean isActive = true;
 
     private boolean isVerified = false;
 
     @Enumerated(EnumType.STRING)
-    private AccountStatus accountStatus;
+    private AccountStatus accountStatus = AccountStatus.ACTIVE;
 
     @Enumerated(EnumType.STRING)
-    private PrivacyProfile privacyProfile;
+    private PrivacyProfile privacyProfile = PrivacyProfile.PUBLIC;
 
     private boolean canBeFound = true;
 
@@ -113,9 +114,6 @@ public class User {
 
     @OneToMany(mappedBy = "blocked")
     private List<BlockedUsers> blockedBy;
-
-//    @OneToMany(mappedBy = "reporter")
-//    private List<Report> reports;
 
     @OneToMany(mappedBy = "reporter")
     private List<ModerationLog> reports;
