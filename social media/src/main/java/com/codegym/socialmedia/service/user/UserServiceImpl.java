@@ -9,9 +9,11 @@ import com.codegym.socialmedia.repository.IUserRepository;
 import com.codegym.socialmedia.repository.NotificationSettingsRepository;
 import com.codegym.socialmedia.repository.UserPrivacySettingsRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
@@ -153,9 +155,25 @@ public class UserServiceImpl implements UserService {
         if (image != null && !image.isEmpty()) {
             user.setProfilePicture(cloudinaryService.upload(image));
         }
-
+        refreshAuthentication(user.getUsername());
         return iUserRepository.save(user);
     }
+
+    @Autowired
+    private UserDetailsService userDetailsService;
+
+    public void refreshAuthentication(String username) {
+        UserDetails updatedUser = userDetailsService.loadUserByUsername(username);
+
+        UsernamePasswordAuthenticationToken newAuth =
+                new UsernamePasswordAuthenticationToken(
+                        updatedUser,
+                        updatedUser.getPassword(),
+                        updatedUser.getAuthorities());
+
+        SecurityContextHolder.getContext().setAuthentication(newAuth);
+    }
+
 
 
     public User findByEmail(String email) {

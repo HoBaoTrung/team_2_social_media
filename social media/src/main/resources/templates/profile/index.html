@@ -56,7 +56,7 @@
         if (file && previewImg) {
             const reader = new FileReader();
             reader.onload = function (e) {
-                previewImg.src = e.target.result;
+                previewImg[0].src = e.target.result;
             };
             reader.readAsDataURL(file);
         }
