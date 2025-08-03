@@ -22,7 +22,7 @@ public interface UserService {
 
     boolean existsByEmail(String email);
 
-    User createOrUpdateOAuth2User(String email, String name, String provider);
+    User createOrUpdateOAuth2User(String email, String name, String provider, String avatar);
 
     List<User> getAllUsers();
 

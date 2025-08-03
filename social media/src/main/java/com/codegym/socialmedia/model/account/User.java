@@ -1,4 +1,5 @@
 package com.codegym.socialmedia.model.account;
+import com.codegym.socialmedia.general_interface.NormalRegister;
 import com.codegym.socialmedia.model.admin.ModerationLog;
 import com.codegym.socialmedia.model.conversation.ConversationParticipant;
 import com.codegym.socialmedia.model.social_action.*;
@@ -52,8 +53,11 @@ public class User {
     @Enumerated(EnumType.STRING)
     private Gender gender;
 
-    @NotBlank(message = "Không để trống")
-    @Pattern(regexp = "^(\\+84|0)(3[2-9]|5[6,8,9]|7[0,6-9]|8[1-5]|9[0-9])\\d{7}$", message = "Sai định dạng")
+    @NotBlank(groups = NormalRegister.class)
+    @Pattern(regexp = "^(\\+84|0)(3[2-9]|5[6,8,9]|7[0,6-9]|8[1-5]|9[0-9])\\d{7}$"
+            ,message = "Sai định dạng"
+            ,groups = NormalRegister.class
+    )
     private String phone;
 
     @Enumerated(EnumType.STRING)

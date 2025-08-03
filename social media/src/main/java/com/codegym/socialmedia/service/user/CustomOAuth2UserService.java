@@ -5,22 +5,23 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
-
 @Service
-public class CustomOAuth2UserService extends DefaultOAuth2UserService {
+public class CustomOAuth2UserService extends DefaultOAuth2UserService
+        implements OAuth2UserService<OAuth2UserRequest, OAuth2User> {
 
     @Autowired
-    @Lazy // Thêm @Lazy để tránh circular dependency
+    @Lazy
     private UserService userService;
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
-        OAuth2User oauth2User = super.loadUser(userRequest);
+        OAuth2User oauth2User = new DefaultOAuth2UserService().loadUser(userRequest);
 
         try {
             String registrationId = userRequest.getClientRegistration().getRegistrationId();
@@ -28,35 +29,23 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
             String email = null;
             String name = null;
+            String avatarUrl = null;
 
-            if ("google".equals(registrationId)) {
+            if ("facebook".equals(registrationId)) {
+                String facebookId = (String) attributes.get("id");
                 email = (String) attributes.get("email");
                 name = (String) attributes.get("name");
-
-                // Log để debug
-                System.out.println("Google OAuth2 - Email: " + email + ", Name: " + name);
-
-            } else if ("facebook".equals(registrationId)) {
-                email = (String) attributes.get("email");
-                name = (String) attributes.get("name");
-
-                // Log để debug
-                System.out.println("Facebook OAuth2 - Email: " + email + ", Name: " + name);
+                avatarUrl = "https://graph.facebook.com/" + facebookId + "/picture?type=large";
             }
 
             if (email != null && name != null) {
-                User user = userService.createOrUpdateOAuth2User(email, name, registrationId);
-                System.out.println("OAuth2 User created/updated: " + user.getUsername() + " - " + user.getEmail());
-            } else {
-                System.out.println("OAuth2 - Missing email or name information");
+                userService.createOrUpdateOAuth2User(email, name, registrationId,avatarUrl);
             }
 
+            return new CustomOAuth2User(oauth2User.getAuthorities(), attributes, "name", avatarUrl);
+
         } catch (Exception e) {
-            System.err.println("Error processing OAuth2 user: " + e.getMessage());
-            e.printStackTrace();
             throw new OAuth2AuthenticationException("Failed to process OAuth2 user");
         }
-
-        return oauth2User;
     }
 }

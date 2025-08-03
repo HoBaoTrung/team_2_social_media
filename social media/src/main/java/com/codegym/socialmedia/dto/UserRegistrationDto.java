@@ -1,5 +1,6 @@
 package com.codegym.socialmedia.dto;
 
+import com.codegym.socialmedia.general_interface.NormalRegister;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -28,7 +29,11 @@ public class UserRegistrationDto {
     @Email(message = "Email không đúng định dạng")
     private String email;
 
-    @Pattern(regexp = "^[0-9+\\-\\s()]*$", message = "Số điện thoại không đúng định dạng")
+    @NotBlank(groups = NormalRegister.class, message = "Không để trống")
+    @Pattern(regexp = "^(\\+84|0)(3[2-9]|5[6,8,9]|7[0,6-9]|8[1-5]|9[0-9])\\d{7}$"
+            ,message = "Sai định dạng"
+            ,groups = NormalRegister.class
+    )
     private String phone;
 
     @Past(message = "Ngày sinh phải là ngày trong quá khứ")

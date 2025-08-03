@@ -1,5 +1,6 @@
 package com.codegym.socialmedia.dto;
 
+import com.codegym.socialmedia.general_interface.NormalRegister;
 import com.codegym.socialmedia.model.account.User;
 import jakarta.persistence.Lob;
 import jakarta.validation.constraints.Email;
@@ -20,8 +21,11 @@ public class UserUpdateDto {
     @NotBlank
     private String email;
 
-    @NotBlank(message = "Không để trống")
-    @Pattern(regexp = "^(\\+84|0)(3[2-9]|5[6,8,9]|7[0,6-9]|8[1-5]|9[0-9])\\d{7}$", message = "Sai định dạng")
+    @NotBlank(groups = NormalRegister.class, message = "Không để trống")
+    @Pattern(regexp = "^(\\+84|0)(3[2-9]|5[6,8,9]|7[0,6-9]|8[1-5]|9[0-9])\\d{7}$"
+            ,message = "Sai định dạng"
+            ,groups = NormalRegister.class
+    )
     private String phone;
     @Lob
     private String bio;

@@ -3,6 +3,7 @@ package com.codegym.socialmedia.controller;
 import com.codegym.socialmedia.dto.UserRegistrationDto;
 import com.codegym.socialmedia.dto.UserPasswordDto;
 import com.codegym.socialmedia.dto.UserUpdateDto;
+import com.codegym.socialmedia.general_interface.NormalRegister;
 import com.codegym.socialmedia.model.account.User;
 import com.codegym.socialmedia.service.user.UserService;
 import jakarta.validation.Valid;
@@ -11,6 +12,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.multipart.MultipartFile;
@@ -55,7 +57,7 @@ public class UserController {
     }
 
     @PostMapping("/register")
-    public String registerUser(@Valid @ModelAttribute("user") UserRegistrationDto registrationDto,
+    public String registerUser(@Validated(NormalRegister.class) @ModelAttribute("user") UserRegistrationDto registrationDto,
                                BindingResult result,
                                Model model,
                                RedirectAttributes redirectAttributes) {

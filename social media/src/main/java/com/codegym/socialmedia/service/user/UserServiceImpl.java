@@ -13,6 +13,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -101,13 +102,27 @@ public class UserServiceImpl implements UserService {
     public User getCurrentUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
-        if (auth != null && auth.getPrincipal() instanceof UserDetails) {
-            UserDetails userDetails = (UserDetails) auth.getPrincipal();
-            return getUserByUsername(userDetails.getUsername());
+        if (auth == null) {
+            return null;
+        }
+
+        Object principal = auth.getPrincipal();
+
+        if (principal instanceof UserDetails) {
+            // Form login
+            String username = ((UserDetails) principal).getUsername();
+            return getUserByUsername(username);
+        } else if (principal instanceof OAuth2User) {
+            // OAuth2 login
+            OAuth2User oauth2User = (OAuth2User) principal;
+
+            String email = (String) oauth2User.getAttribute("email");
+            return iUserRepository.findByEmail(email);
         }
 
         return null;
     }
+
 
     @Override
     public User getUserByUsername(String username) {
@@ -155,7 +170,7 @@ public class UserServiceImpl implements UserService {
         return iUserRepository.existsByEmail(email);
     }
 
-    public User createOrUpdateOAuth2User(String email, String name, String provider) {
+    public User createOrUpdateOAuth2User(String email, String name, String provider, String avatar) {
         User user = findByEmail(email);
 
         if (user == null) {
@@ -167,7 +182,7 @@ public class UserServiceImpl implements UserService {
             String baseUsername = email.split("@")[0];
             String username = generateUniqueUsername(baseUsername);
             user.setUsername(username);
-
+            user.setProfilePicture(avatar);
             user.setPasswordHash(""); // OAuth2 không cần password
 
             // Tách firstName và lastName từ name

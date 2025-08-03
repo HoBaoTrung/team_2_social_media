@@ -1,5 +1,6 @@
 package com.codegym.socialmedia.config;
 
+import com.codegym.socialmedia.service.user.CustomOidcUserService;
 import com.codegym.socialmedia.service.user.CustomUserDetailsService;
 import com.codegym.socialmedia.service.user.CustomOAuth2UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,13 +28,22 @@ public class SecurityConfig {
     @Autowired
     private CustomOAuth2UserService oauth2UserService;
 
+    @Autowired
+    private CustomOidcUserService customOidcUserService;
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .authorizeHttpRequests(authz -> authz
-                        .requestMatchers("/", "/login", "/register", "/css/**", "/js/**", "/images/**", "/api/debug/**", "/api/test/**").permitAll()
-                        .anyRequest().authenticated()
+                .headers(headers -> headers
+                        .contentSecurityPolicy(csp -> csp
+                                .policyDirectives("img-src 'self' https://lh3.googleusercontent.com https://*.googleusercontent.com data:;")
+                        )
                 )
+
+                .authorizeHttpRequests(authz -> authz
+                .requestMatchers("/", "/login", "/register", "/css/**", "/js/**", "/images/**", "/api/debug/**", "/api/test/**").permitAll()
+                .anyRequest().authenticated()
+        )
                 .formLogin(form -> form
                         .loginPage("/login")
                         .loginProcessingUrl("/login")
@@ -47,6 +57,7 @@ public class SecurityConfig {
                         .loginPage("/login")
                         .userInfoEndpoint(userInfo -> userInfo
                                 .userService(oauth2UserService)
+                                .oidcUserService(customOidcUserService)
                         )
                         .successHandler((request, response, authentication) -> {
                             System.out.println("OAuth2 login successful for user: " + authentication.getName());
