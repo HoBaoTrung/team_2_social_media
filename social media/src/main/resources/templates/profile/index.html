@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org"
+    >
 <head>
     <th:block th:replace="~{fragments/commonHead :: commonHead}"></th:block>
     <link rel="stylesheet" th:href="@{/css/profile.css}">
@@ -49,7 +50,7 @@
     function showPreview(event) {
         const fileInput = event.target;
         const file = fileInput.files[0];
-        const previewImg = document.getElementById("avatar-preview");
+        const previewImg = document.getElementsByClassName("avatar-preview");
 
         if (file && previewImg) {
             const reader = new FileReader();

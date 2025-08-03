@@ -1,93 +1,17 @@
 <header th:fragment="header"
+        xmlns:th="http://www.thymeleaf.org"
         xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
-    <style>
-        .navigation-center {
-            gap: 40px;
-            background-color: #252728;
-            padding: 8px 20px;
-            border-radius: 10px;
-            display: flex;
-        }
-
-        /* ===== Nút icon điều hướng (dạng tròn) ===== */
-        .nav-icon-wrapper {
-            background-color: #3a3b3c;
-            border-radius: 50%;
-            /*padding: 16px; !* 👈 tăng padding để khung tròn to hơn *!*/
-            width: 64px;
-            height: 64px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background-color 0.3s ease;
-            position: relative;
-        }
-
-        .nav-icon-wrapper:hover {
-            background-color: #4e4f50;
-            cursor: pointer;
-        }
-
-        .nav-icon-wrapper.active,
-        .nav-icon-wrapper:focus-within {
-            background-color: #4e69a2;
-        }
-
-        .nav-icon {
-            color: white;
-            /*font-size: 24px; !* 👈 tăng kích thước icon nếu cần *!*/
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        /* ===== Style cho nav bar ===== */
-        .navbar-dark {
-            background-color: #242526 !important;
-        }
-
-        .navbar-brand {
-            font-weight: bold;
-            color: white;
-        }
-
-        .navbar-brand:hover {
-            color: #ddd;
-        }
-
-        /* ===== Link trong nav-center hoặc nav-right (nút chữ) ===== */
-        .navigation-center a,
-        .navigation-right a {
-            font-size: 14px;
-            border-radius: 5px;
-            text-decoration: none;
-            padding: 10px 50px;
-            color: #fff;
-            background: #333;
-            display: flex;
-            flex-direction: column;
-            text-transform: uppercase;
-            margin: 10px 0px;
-            letter-spacing: 1px;
-            text-align: center;
-            transition: 0.3s ease;
-        }
-
-        .navigation-center a:hover,
-        .navigation-right a:hover {
-            background: #ff6ecf;
-            transform: scale(1.1);
-        }
-    </style>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+    <link rel="stylesheet" th:href="@{/css/header.css}">
+    <nav class="navbar navbar-expand-lg  shadow-sm">
         <div class="container-fluid d-flex justify-content-between align-items-center px-3">
 
             <!-- LEFT: Logo + Search -->
             <div class="d-flex align-items-center" style="gap: 10px;">
-                <a class="navbar-brand me-2" th:href="@{/}">SocialNet</a>
+
+                <a class="navbar-brand me-2 logo" th:href="@{/news-feed}">
+                    <i class="fas fa-share-alt"></i> Social Media
+                </a>
+
                 <form class="d-none d-md-block" role="search">
                     <input class="form-control form-control-sm" type="search" placeholder="Tìm kiếm..."
                            aria-label="Search">
@@ -96,7 +20,7 @@
 
             <!-- CENTER: Navigation icons -->
             <div class="d-none d-lg-flex justify-content-center flex-grow-1 navigation-center ">
-                <a class="nav-link nav-icon nav-icon-wrapper" th:href="@{/}" title="Trang chủ" data-bs-toggle="tooltip"
+                <a class="nav-link nav-icon nav-icon-wrapper" th:href="@{/news-feed}" title="Trang chủ" data-bs-toggle="tooltip"
                    data-bs-placement="bottom">
                     <i class="fas fa-home"></i>
                 </a>
@@ -132,19 +56,23 @@
                 </div>
 
                 <!-- Nếu đã đăng nhập -->
-                <div class="nav-item dropdown nav-icon-wrapper" sec:authorize="isAuthenticated()"
-                     data-bs-toggle="tooltip" data-bs-placement="bottom" title="Tài khoản cá nhân">
-                    <a class="nav-icon dropdown-toggle" href="#" id="userDropdown" role="button"
-                       data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="fas fa-user-circle fa-lg"></i>
+                <div class="nav-item dropdown" sec:authorize="isAuthenticated()">
+                    <a class="nav-link dropdown-toggle dropdown-toggle p-0 d-flex align-items-center" href="#" role="button"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                        <img th:if="${#authentication.principal.avatarUrl != null
+                            and !#strings.isEmpty(#authentication.principal.avatarUrl)}"
+                             th:src="@{${#authentication.principal.avatarUrl}}" alt="Avatar" class="rounded-circle nav-icon-wrapper">
+
+                        <img th:unless="${#authentication.principal.avatarUrl != null
+                        and !#strings.isEmpty(#authentication.principal.avatarUrl)}"
+                             th:src="@{/images/default-avatar.jpg}" alt="Avatar" class="rounded-circle nav-icon-wrapper">
                     </a>
-                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                    <ul class="dropdown-menu dropdown-menu-end" >
                         <li><a class="dropdown-item" th:href="@{/profile}">Thông tin cá nhân</a></li>
-                        <li><a class="dropdown-item" th:href="@{/settings}">Cài đặt</a></li>
+                        <li><a class="dropdown-item" th:href="@{/setting}">Cài đặt</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li>
                             <form th:action="@{/logout}" method="post" style="margin: 0;">
-                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                                 <button type="submit" class="dropdown-item text-danger">Đăng xuất</button>
                             </form>
                         </li>
@@ -159,51 +87,6 @@
                     </a>
                 </div>
             </div>
-
-            <!--            <div class="d-flex align-items-center" style="gap: 20px;">-->
-<!--                <div class="navigation-right">-->
-<!--                    <a class="nav-link text-white" th:href="@{/messages}" title="Tin nhắn" data-bs-toggle="tooltip"-->
-<!--                       data-bs-placement="bottom">-->
-<!--                        <i class="fas fa-comment-dots fa-lg"></i>-->
-<!--                    </a>-->
-<!--                    <a class="nav-link text-white" th:href="@{/notifications}" title="Thông báo"-->
-<!--                       data-bs-toggle="tooltip" data-bs-placement="bottom">-->
-<!--                        <i class="fas fa-bell fa-lg"></i>-->
-<!--                    </a>-->
-<!--                </div>-->
-<!--                &lt;!&ndash; Nếu đã đăng nhập &ndash;&gt;-->
-<!--                <div class="nav-item dropdown" sec:authorize="isAuthenticated()">-->
-<!--                    <a class="nav-link dropdown-toggle text-white" href="#" id="userDropdown" role="button"-->
-<!--                       data-bs-toggle="dropdown" aria-expanded="false" title="Tài khoản cá nhân">-->
-<!--                        <i class="fas fa-user-circle fa-lg"></i>-->
-<!--                        <span class="d-none d-md-inline" th:text="${#authentication.principal instanceof T(org.springframework.security.oauth2.core.user.OAuth2User)-->
-<!--                                     ? #authentication.principal.attributes['name']-->
-<!--                                     : #authentication.name}">Tên người dùng</span>-->
-<!--                    </a>-->
-
-<!--                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">-->
-<!--                        <li><a class="dropdown-item" th:href="@{/profile}">Thông tin cá nhân</a></li>-->
-<!--                        <li><a class="dropdown-item" th:href="@{/settings}">Cài đặt</a></li>-->
-<!--                        <li>-->
-<!--                            <hr class="dropdown-divider">-->
-<!--                        </li>-->
-<!--                        <li>-->
-<!--                            <form th:action="@{/logout}" method="post" style="margin: 0;">-->
-<!--                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>-->
-<!--                                <button type="submit" class="dropdown-item text-danger">Đăng xuất</button>-->
-<!--                            </form>-->
-<!--                        </li>-->
-<!--                    </ul>-->
-<!--                </div>-->
-
-<!--                &lt;!&ndash; Nếu chưa đăng nhập &ndash;&gt;-->
-<!--                <div class="nav-item" sec:authorize="!isAuthenticated()">-->
-<!--                    <a class="nav-link text-white" th:href="@{/login}" title="Đăng nhập" data-bs-toggle="tooltip"-->
-<!--                       data-bs-placement="bottom">-->
-<!--                        <i class="fas fa-sign-in-alt fa-lg"></i>-->
-<!--                    </a>-->
-<!--                </div>-->
-<!--            </div>-->
 
         </div>
     </nav>

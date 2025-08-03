@@ -1,9 +1,20 @@
 
 <div th:fragment="content">
     <div class="text-center mb-3">
-        <div class="avatar-wrapper">
-            <img th:src="${user.avatarUrl != null} ? @{${user.avatarUrl}} : @{/images/default-avatar.jpg}"
-                 alt="Avatar" class="profile-avatar" id="avatar-preview">
+        <div class="avatar-wrapper"  xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+            <!-- Nếu đã đăng nhập -->
+            <sec:authorize access="isAuthenticated()">
+                <img th:if="${#authentication.principal.avatarUrl != null
+                 and !#strings.isEmpty(#authentication.principal.avatarUrl)}"
+                     th:src="@{${#authentication.principal.avatarUrl}}"
+                     alt="Avatar" class="profile-avatar avatar-preview"/>
+
+                <img th:unless="${#authentication.principal.avatarUrl != null
+                    and !#strings.isEmpty(#authentication.principal.avatarUrl)}"
+                     th:src="@{/images/default-avatar.jpg}"
+                     alt="Avatar" class="profile-avatar avatar-preview"/>
+            </sec:authorize>
+
 
             <div class="avatar-overlay">
                 <i class="fas fa-pen edit-icon"></i>

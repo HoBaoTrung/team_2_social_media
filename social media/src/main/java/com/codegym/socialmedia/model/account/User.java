@@ -33,7 +33,6 @@ public class User {
     private String email;
 
     @Column(nullable = false)
-    @NotBlank
     private String passwordHash;
 
     @Size(max = 50)
@@ -66,15 +65,15 @@ public class User {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
-    private boolean isActive = false;
+    private boolean isActive = true;
 
     private boolean isVerified = false;
 
     @Enumerated(EnumType.STRING)
-    private AccountStatus accountStatus;
+    private AccountStatus accountStatus = AccountStatus.ACTIVE;
 
     @Enumerated(EnumType.STRING)
-    private PrivacyProfile privacyProfile;
+    private PrivacyProfile privacyProfile = PrivacyProfile.PUBLIC;
 
     private boolean canBeFound = true;
 
@@ -115,9 +114,6 @@ public class User {
 
     @OneToMany(mappedBy = "blocked")
     private List<BlockedUsers> blockedBy;
-
-//    @OneToMany(mappedBy = "reporter")
-//    private List<Report> reports;
 
     @OneToMany(mappedBy = "reporter")
     private List<ModerationLog> reports;
