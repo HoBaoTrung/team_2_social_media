@@ -3,36 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bảng tin - Social Media</title>
+    <title>Facebook</title>
     <th:block th:replace="~{fragments/commonHead :: commonHead}"></th:block>
     <link rel="stylesheet" th:href="@{/css/news-feed.css}">
 </head>
 <body>
 <div th:replace="~{fragments/header :: header}"></div>
-
-<!-- Welcome Message -->
-<div class="welcome-message">
-    <h1>Chào mừng đến với Social Media!</h1>
-    <p>Kết nối và chia sẻ với bạn bè của bạn</p>
-</div>
-
-<!-- Main Container -->
 <div class="main-container">
-    <!-- Left Sidebar -->
     <div class="sidebar">
         <h3><i class="fas fa-user"></i> Hồ sơ của tôi</h3>
         <div class="user-profile">
-            <div class="avatar" style="width: 60px; height: 60px; font-size: 1.5rem; margin-bottom: 1rem;">
+            <div class="avatar">
                 <span th:text="${#strings.substring(#authentication.name, 0, 1).toUpperCase()}">U</span>
             </div>
             <h4 sec:authentication="name">Username</h4>
-            <p style="color: #666; font-size: 0.9rem;">Thành viên mới</p>
+            <p class="user-role">Thành viên mới</p>
         </div>
 
-        <hr style="margin: 1.5rem 0; border: none; height: 1px; background: #eee;">
+        <hr class="divider">
 
         <h3><i class="fas fa-chart-line"></i> Thống kê</h3>
-        <div style="color: #666;">
+        <div class="stats">
             <p><i class="fas fa-users"></i> 0 bạn bè</p>
             <p><i class="fas fa-edit"></i> 0 bài viết</p>
             <p><i class="fas fa-heart"></i> 0 lượt thích</p>
@@ -43,17 +34,17 @@
     <div class="feed">
         <!-- Post Creator -->
         <div class="post-creator">
-            <h3 style="margin-bottom: 1rem; color: #667eea;">
+            <h3 class="post-title">
                 <i class="fas fa-pen"></i> Bạn đang nghĩ gì?
             </h3>
             <form>
                 <textarea class="form-control" rows="3" placeholder="Chia sẻ suy nghĩ của bạn..."></textarea>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
+                <div class="post-options">
                     <div>
-                        <button type="button" class="action-btn" style="color: #667eea;">
+                        <button type="button" class="action-btn">
                             <i class="fas fa-image"></i> Ảnh
                         </button>
-                        <button type="button" class="action-btn" style="color: #667eea;">
+                        <button type="button" class="action-btn">
                             <i class="fas fa-video"></i> Video
                         </button>
                     </div>
@@ -72,7 +63,7 @@
                 </div>
                 <div>
                     <h4>Social Media</h4>
-                    <p style="color: #666; font-size: 0.9rem;">2 giờ trước</p>
+                    <p class="timestamp">2 giờ trước</p>
                 </div>
             </div>
             <div class="post-content">
@@ -98,12 +89,12 @@
                 </div>
                 <div>
                     <h4>Team Developer</h4>
-                    <p style="color: #666; font-size: 0.9rem;">5 giờ trước</p>
+                    <p class="timestamp">5 giờ trước</p>
                 </div>
             </div>
             <div class="post-content">
                 <p>Hệ thống đăng ký và đăng nhập đã hoàn thành! ✅ Các bạn có thể:</p>
-                <ul style="margin-left: 1.5rem; margin-top: 0.5rem;">
+                <ul class="post-list">
                     <li>Đăng ký tài khoản mới với email</li>
                     <li>Đăng nhập bằng username/email</li>
                     <li>Đăng nhập bằng Google/Facebook</li>
@@ -126,18 +117,18 @@
     <!-- Right Sidebar -->
     <div class="sidebar">
         <h3><i class="fas fa-users"></i> Gợi ý kết bạn</h3>
-        <p style="color: #666; text-align: center; margin: 2rem 0;">
+        <p class="text-muted">
             Chưa có gợi ý nào.<br>
             Hãy mời bạn bè tham gia!
         </p>
 
-        <hr style="margin: 1.5rem 0; border: none; height: 1px; background: #eee;">
+        <hr class="divider">
 
         <h3><i class="fas fa-fire"></i> Xu hướng</h3>
-        <div style="color: #666;">
-            <p style="margin: 0.5rem 0;">#ChaoMung</p>
-            <p style="margin: 0.5rem 0;">#SocialMedia</p>
-            <p style="margin: 0.5rem 0;">#KetNoi</p>
+        <div class="trending">
+            <p>#ChaoMung</p>
+            <p>#SocialMedia</p>
+            <p>#KetNoi</p>
         </div>
     </div>
 </div>
