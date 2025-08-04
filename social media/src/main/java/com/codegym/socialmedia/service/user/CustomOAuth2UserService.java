@@ -11,6 +11,7 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
+
 @Service
 public class CustomOAuth2UserService extends DefaultOAuth2UserService
         implements OAuth2UserService<OAuth2UserRequest, OAuth2User> {
@@ -31,11 +32,17 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService
             String name = null;
             String avatarUrl = null;
 
-            if ("facebook".equals(registrationId)) {
+            if ("facebook".equalsIgnoreCase(registrationId)) {
+                // Facebook
                 String facebookId = (String) attributes.get("id");
                 email = (String) attributes.get("email");
                 name = (String) attributes.get("name");
                 avatarUrl = "https://graph.facebook.com/" + facebookId + "/picture?type=large";
+            } else if ("google".equalsIgnoreCase(registrationId)) {
+                // Google
+                email = (String) attributes.get("email");
+                name = (String) attributes.get("name");
+                avatarUrl = (String) attributes.get("picture");
             }
 
             if (email != null && name != null) {
@@ -48,20 +55,25 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService
                     throw new OAuth2AuthenticationException("User not found after saving");
                 }
 
-                // Dùng thông tin avatar từ DB (có thể người dùng đã cập nhật)
+                String userNameAttributeName = userRequest.getClientRegistration()
+                        .getProviderDetails()
+                        .getUserInfoEndpoint()
+                        .getUserNameAttributeName();
+
+
+                // Return custom OAuth2User với ảnh avatar từ DB
                 return new CustomOAuth2User(
                         oauth2User.getAuthorities(),
                         attributes,
-                        "name", // key nameAttribute
-                        user.getProfilePicture() // avatar đã được lưu trong DB
+                        userNameAttributeName,
+                        user.getProfilePicture()
                 );
             }
 
             throw new OAuth2AuthenticationException("Email or name missing from OAuth2 provider");
 
         } catch (Exception e) {
-            throw new OAuth2AuthenticationException("Failed to process OAuth2 user");
+            throw new OAuth2AuthenticationException("Failed to process OAuth2 user: " + e.getMessage());
         }
     }
 }
-

@@ -1,6 +1,5 @@
 package com.codegym.socialmedia.config;
 
-import com.codegym.socialmedia.service.user.CustomOidcUserService;
 import com.codegym.socialmedia.service.user.CustomUserDetailsService;
 import com.codegym.socialmedia.service.user.CustomOAuth2UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,8 +27,6 @@ public class SecurityConfig {
     @Autowired
     private CustomOAuth2UserService oauth2UserService;
 
-    @Autowired
-    private CustomOidcUserService customOidcUserService;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -37,16 +34,14 @@ public class SecurityConfig {
                 .headers(headers -> headers
                         .contentSecurityPolicy(csp -> csp
                                 .policyDirectives("img-src 'self' " +
-                                        "https://lh3.googleusercontent.com " +
                                         "https://*.googleusercontent.com " +
-                                        "https://*.fbcdn.net " +  // ✅ Thay vì scontent.*
+                                        "https://*.fbcdn.net " +
                                         "https://res.cloudinary.com " +
                                         "https://graph.facebook.com " +
                                         "https://i.imgur.com " +
-                                        "https://secure.gravatar.com data:;")
+                                        "https://secure.gravatar.com data: blob:;")
                         )
                 )
-
 
                 .authorizeHttpRequests(authz -> authz
                 .requestMatchers("/", "/login", "/register", "/css/**", "/js/**", "/images/**", "/api/debug/**", "/api/test/**").permitAll()
@@ -65,7 +60,6 @@ public class SecurityConfig {
                         .loginPage("/login")
                         .userInfoEndpoint(userInfo -> userInfo
                                 .userService(oauth2UserService)
-                                .oidcUserService(customOidcUserService)
                         )
                         .successHandler((request, response, authentication) -> {
                             System.out.println("OAuth2 login successful for user: " + authentication.getName());
