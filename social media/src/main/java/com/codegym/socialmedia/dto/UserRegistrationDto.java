@@ -1,6 +1,8 @@
 package com.codegym.socialmedia.dto;
 
+import com.codegym.socialmedia.annotation.Unique;
 import com.codegym.socialmedia.general_interface.NormalRegister;
+import com.codegym.socialmedia.model.account.User;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -16,6 +18,8 @@ public class UserRegistrationDto {
     @NotBlank(message = "Tên đăng nhập không được để trống")
     @Size(min = 3, max = 50, message = "Tên đăng nhập phải có từ 3-50 ký tự")
     @Pattern(regexp = "^[a-zA-Z0-9_]+$", message = "Tên đăng nhập chỉ được chứa chữ cái, số và dấu gạch dưới")
+    @Unique(entityClass = User.class, fieldName = "username",
+            message = "Username đã được sử dụng")
     private String username;
 
     @NotBlank(message = "Mật khẩu không được để trống")
@@ -27,6 +31,8 @@ public class UserRegistrationDto {
 
     @NotBlank(message = "Email không được để trống")
     @Email(message = "Email không đúng định dạng")
+    @Unique(entityClass = User.class, fieldName = "email",
+            message = "Email đã được sử dụng")
     private String email;
 
     @NotBlank(groups = NormalRegister.class, message = "Không để trống")
@@ -34,6 +40,8 @@ public class UserRegistrationDto {
             ,message = "Sai định dạng"
             ,groups = NormalRegister.class
     )
+    @Unique(entityClass = User.class, fieldName = "phone",
+            message = "Số điện thoại đã được sử dụng")
     private String phone;
 
     @Past(message = "Ngày sinh phải là ngày trong quá khứ")

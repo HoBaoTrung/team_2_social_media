@@ -62,6 +62,11 @@ public class UserController {
                                Model model,
                                RedirectAttributes redirectAttributes) {
 
+        // Kiểm tra password confirm
+        if (!registrationDto.getPassword().equals(registrationDto.getConfirmPassword())) {
+            result.rejectValue("confirmPassword", null, "Mật khẩu xác nhận không khớp");
+        }
+
         // Kiểm tra lỗi validation
         if (result.hasErrors()) {
             // Đảm bảo object user vẫn có trong model khi có lỗi
@@ -69,27 +74,8 @@ public class UserController {
             return "login"; // Trả về trang login với form đăng ký active
         }
 
-        // Kiểm tra password confirm
-        if (!registrationDto.getPassword().equals(registrationDto.getConfirmPassword())) {
-            result.rejectValue("confirmPassword", null, "Mật khẩu xác nhận không khớp");
-            model.addAttribute("user", registrationDto);
-            return "login";
-        }
 
         try {
-            // Kiểm tra username và email đã tồn tại
-            if (userService.existsByUsername(registrationDto.getUsername())) {
-                result.rejectValue("username", null, "Tên đăng nhập đã tồn tại, vui lòng chọn tên khác");
-                model.addAttribute("user", registrationDto);
-                return "login";
-            }
-
-            if (userService.existsByEmail(registrationDto.getEmail())) {
-                result.rejectValue("email", null, "Email đã được sử dụng, vui lòng chọn email khác");
-                model.addAttribute("user", registrationDto);
-                return "login";
-            }
-
             // Đăng ký người dùng
 
             User newUser = new User();
@@ -119,80 +105,115 @@ public class UserController {
         return "redirect:/news-feed";
     }
 
+//    @GetMapping("/setting")
+//    public String showProfile(Model model) {
+//        // Lấy thông tin người dùng hiện tại (ưu tiên sử dụng Spring Security nếu có)
+//        User user;
+//        try {
+//            // Sử dụng getCurrentUser() nếu tích hợp Spring Security
+//            user = userService.getCurrentUser();
+//            if (user == null) {
+//                // Fallback: Lấy user mặc định nếu không có người dùng hiện tại
+//                user = userService.getUserByUsername("john_doe");
+//            }
+//        } catch (Exception e) {
+//            // Xử lý lỗi (ví dụ: user không tồn tại)
+//            model.addAttribute("error", "Unable to load user profile.");
+//            user = new User(); // Tạo user rỗng để tránh lỗi null
+//        }
+//
+//        UserUpdateDto userUpdateDto = new UserUpdateDto(user);
+//        // Thêm các attribute cho template
+//        model.addAttribute("title", "User Profile");
+//        model.addAttribute("user", userUpdateDto);
+//        model.addAttribute("passwordDto", new UserPasswordDto());
+//        // Trả về layout chung
+//        return "profile/index";
+//    }
+
     @GetMapping("/setting")
     public String showProfile(Model model) {
-        // Lấy thông tin người dùng hiện tại (ưu tiên sử dụng Spring Security nếu có)
         User user;
         try {
-            // Sử dụng getCurrentUser() nếu tích hợp Spring Security
             user = userService.getCurrentUser();
             if (user == null) {
-                // Fallback: Lấy user mặc định nếu không có người dùng hiện tại
                 user = userService.getUserByUsername("john_doe");
             }
         } catch (Exception e) {
-            // Xử lý lỗi (ví dụ: user không tồn tại)
             model.addAttribute("error", "Unable to load user profile.");
-            user = new User(); // Tạo user rỗng để tránh lỗi null
+            user = new User();
         }
 
-        UserUpdateDto userUpdateDto = new UserUpdateDto(user);
-        // Thêm các attribute cho template
+        // Nếu không có flash attribute thì tạo mới
+        if (!model.containsAttribute("user")) {
+            model.addAttribute("user", new UserUpdateDto(user));
+        }
+
+        // Nếu không có flash cho đổi mật khẩu
+        if (!model.containsAttribute("passwordDto")) {
+            model.addAttribute("passwordDto", new UserPasswordDto());
+        }
+
         model.addAttribute("title", "User Profile");
-        model.addAttribute("user", userUpdateDto);
-        model.addAttribute("passwordDto", new UserPasswordDto());
-        // Trả về layout chung
         return "profile/index";
     }
 
-    @PostMapping("/setting")
-    public String updateProfile(@Valid @ModelAttribute("user") UserUpdateDto dto, BindingResult result,
-                                @RequestParam("avatarFile") MultipartFile avatarFile
-    ) {
-        if (result.hasErrors()) {
-            // Đưa lỗi và product vào flash attribute
-            return "profile/index";
-        }
-        User user = userService.getCurrentUser();
 
+    @PostMapping("/setting")
+    public String updateProfile(@Valid @ModelAttribute("user") UserUpdateDto dto,
+                                BindingResult result,
+                                @RequestParam("avatarFile") MultipartFile avatarFile,
+                                RedirectAttributes redirectAttributes) {
+        if (result.hasErrors()) {
+            // Đưa DTO và lỗi vào flash để dùng sau redirect
+            redirectAttributes.addFlashAttribute("user", dto);
+            redirectAttributes.addFlashAttribute("org.springframework.validation.BindingResult.user", result);
+            return "redirect:/setting";
+        }
+
+        User user = userService.getCurrentUser();
         userService.save(dto.toUser(user), avatarFile);
+
+        redirectAttributes.addFlashAttribute("success", "Cập nhật thông tin thành công");
         return "redirect:/setting";
     }
 
     @PostMapping("/setting/change-password")
     public String changePassword(@Valid @ModelAttribute("passwordDto") UserPasswordDto dto,
-                                 BindingResult result, Model model) {
-
-        String currentPassword = dto.getCurrentPassword();
-        String newPassword = dto.getNewPassword();
-        String confirmPassword = dto.getConfirmPassword();
-
+                                 BindingResult result,
+                                 RedirectAttributes redirectAttributes) {
         User user = userService.getCurrentUser();
-
-        if (!passwordEncoder.matches(currentPassword, user.getPasswordHash())) {
+        if (!passwordEncoder.matches(dto.getCurrentPassword(), user.getPasswordHash())) {
             result.rejectValue("currentPassword", "error.currentPassword", "Mật khẩu hiện tại không đúng");
         }
 
-        if (newPassword.equals(currentPassword)) {
+        if (dto.getNewPassword().equals(dto.getCurrentPassword())) {
             result.rejectValue("newPassword", "error.newPassword", "Mật khẩu mới không được trùng với mật khẩu hiện tại");
         }
 
-        if (!newPassword.equals(confirmPassword)) {
+        if (!dto.getNewPassword().equals(dto.getConfirmPassword())) {
             result.rejectValue("confirmPassword", "error.confirmPassword", "Mật khẩu xác nhận không khớp");
         }
 
         if (result.hasErrors()) {
-            // Trả về đúng tab change-password đang mở
-            model.addAttribute("passwordDto", dto);
-            model.addAttribute("user", new UserUpdateDto(user));
-            model.addAttribute("title", "User Profile");
-            model.addAttribute("activeTab", "password"); // Dùng để mở đúng tab
-            return "profile/index";
+            // Truyền lại lỗi và dữ liệu qua flash
+            redirectAttributes.addFlashAttribute("passwordDto", dto);
+            redirectAttributes.addFlashAttribute("org.springframework.validation.BindingResult.passwordDto", result);
+            // Đảm bảo tab active là password
+            redirectAttributes.addFlashAttribute("activeTab", "password");
+            return "redirect:/setting";
         }
-        user.setPasswordHash(newPassword);
 
-        userService.save(user);
+        try {
+            user.setPasswordHash(dto.getNewPassword());
+            userService.save(user);
+            redirectAttributes.addFlashAttribute("success", "Đổi mật khẩu thành công");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Có lỗi xảy ra khi đổi mật khẩu");
+        }
 
+        redirectAttributes.addFlashAttribute("activeTab", "password");
         return "redirect:/setting";
     }
+
 }

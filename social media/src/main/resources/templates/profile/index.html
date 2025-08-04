@@ -22,6 +22,7 @@
 
     <div id="section-general" class="profile-form-container">
         <form th:action="@{/setting}" th:object="${user}" method="post" enctype="multipart/form-data">
+            <input type="hidden" th:field="*{id}">
             <div th:replace="profile/general-info :: content"></div>
             <div class="text-center">
                 <button type="submit" class="btn btn-primary">Cập nhật</button>
@@ -30,7 +31,8 @@
     </div>
 
     <!-- CHANGE PASSWORD -->
-    <div id="section-password" class="profile-form-container hidden">
+    <div id="section-password" class="profile-form-container hidden"
+         th:if="${passwordDto != null}">
         <form th:action="@{/setting/change-password}" th:object="${passwordDto}" method="post">
             <div th:replace="profile/change-password :: content"></div>
 

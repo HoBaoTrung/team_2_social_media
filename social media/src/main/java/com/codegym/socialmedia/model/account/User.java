@@ -58,6 +58,7 @@ public class User {
             ,message = "Sai định dạng"
             ,groups = NormalRegister.class
     )
+    @Column(unique = true)
     private String phone;
 
     @Enumerated(EnumType.STRING)

@@ -1,5 +1,6 @@
 package com.codegym.socialmedia.dto;
 
+import com.codegym.socialmedia.annotation.Unique;
 import com.codegym.socialmedia.general_interface.NormalRegister;
 import com.codegym.socialmedia.model.account.User;
 import jakarta.persistence.Lob;
@@ -16,9 +17,11 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class UserUpdateDto {
     private String username;
-
+    private Long id;
     @Email(message = "Email không hợp lệ")
     @NotBlank
+    @Unique(entityClass = User.class, fieldName = "email", idField = "id",
+            message = "Email đã được sử dụng")
     private String email;
 
     @NotBlank(groups = NormalRegister.class, message = "Không để trống")
@@ -26,6 +29,8 @@ public class UserUpdateDto {
             ,message = "Sai định dạng"
             ,groups = NormalRegister.class
     )
+    @Unique(entityClass = User.class, fieldName = "phone", idField = "id",
+            message = "Số điện thoại đã được sử dụng")
     private String phone;
     @Lob
     private String bio;
@@ -35,6 +40,7 @@ public class UserUpdateDto {
     @Size(max = 50)
     private String lasttName;
     public UserUpdateDto (User user){
+        this.id = user.getId();
         this.username = user.getUsername();
         this.email = user.getEmail();
         this.phone = user.getPhone();
