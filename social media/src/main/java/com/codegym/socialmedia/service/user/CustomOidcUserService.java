@@ -1,5 +1,6 @@
 package com.codegym.socialmedia.service.user;
 
+import com.codegym.socialmedia.model.account.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
@@ -32,15 +33,37 @@ public class CustomOidcUserService extends OidcUserService
             String avatarUrl = (String) attributes.get("picture");
 
             userService.createOrUpdateOAuth2User(email, name, registrationId, avatarUrl);
+            if (email != null && name != null) {
+                // Lưu hoặc cập nhật người dùng
+                userService.createOrUpdateOAuth2User(email, name, registrationId, avatarUrl);
 
-            return new CustomOidcUser(
-                    oidcUser.getAuthorities(),
-                    oidcUser.getIdToken(),
-                    oidcUser.getUserInfo(),
-                    "sub",             // key mặc định của OIDC (Google dùng "sub")
-                    attributes,
-                    avatarUrl
-            );
+                // Lấy thông tin người dùng từ DB
+                User user = userService.findByEmail(email);
+                if (user == null) {
+                    throw new OAuth2AuthenticationException("User not found after saving");
+                }
+
+                // Dùng thông tin avatar từ DB (có thể người dùng đã cập nhật)
+                return new CustomOidcUser(
+                        oidcUser.getAuthorities(),
+                        oidcUser.getIdToken(),
+                        oidcUser.getUserInfo(),
+                        "sub",             // key mặc định của OIDC (Google dùng "sub")
+                        attributes,
+                        user.getProfilePicture()
+                );
+
+            }
+
+            throw new OAuth2AuthenticationException("Email or name missing from OAuth2 provider");
+//            return new CustomOidcUser(
+//                    oidcUser.getAuthorities(),
+//                    oidcUser.getIdToken(),
+//                    oidcUser.getUserInfo(),
+//                    "sub",             // key mặc định của OIDC (Google dùng "sub")
+//                    attributes,
+//                    avatarUrl
+//            );
 
         } catch (Exception e) {
             throw new OAuth2AuthenticationException("Failed to process OIDC user");

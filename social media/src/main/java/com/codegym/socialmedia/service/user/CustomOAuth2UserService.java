@@ -21,7 +21,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
-        OAuth2User oauth2User = new DefaultOAuth2UserService().loadUser(userRequest);
+        OAuth2User oauth2User = super.loadUser(userRequest);
 
         try {
             String registrationId = userRequest.getClientRegistration().getRegistrationId();
@@ -39,13 +39,29 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService
             }
 
             if (email != null && name != null) {
-                userService.createOrUpdateOAuth2User(email, name, registrationId,avatarUrl);
+                // Lưu hoặc cập nhật người dùng
+                userService.createOrUpdateOAuth2User(email, name, registrationId, avatarUrl);
+
+                // Lấy thông tin người dùng từ DB
+                User user = userService.findByEmail(email);
+                if (user == null) {
+                    throw new OAuth2AuthenticationException("User not found after saving");
+                }
+
+                // Dùng thông tin avatar từ DB (có thể người dùng đã cập nhật)
+                return new CustomOAuth2User(
+                        oauth2User.getAuthorities(),
+                        attributes,
+                        "name", // key nameAttribute
+                        user.getProfilePicture() // avatar đã được lưu trong DB
+                );
             }
 
-            return new CustomOAuth2User(oauth2User.getAuthorities(), attributes, "name", avatarUrl);
+            throw new OAuth2AuthenticationException("Email or name missing from OAuth2 provider");
 
         } catch (Exception e) {
             throw new OAuth2AuthenticationException("Failed to process OAuth2 user");
         }
     }
 }
+
