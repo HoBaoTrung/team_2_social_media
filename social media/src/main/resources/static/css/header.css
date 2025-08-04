@@ -1,17 +1,18 @@
 .navbar {
     background: #f7f8fd;
     backdrop-filter: blur(10px);
-
     box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
-    position: sticky;
+    position: fixed;
     top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
     z-index: 1000;
 }
 
 
 .navigation-center {
     gap: 40px;
-    /*background-color: #252728;*/
     padding: 8px 20px;
     border-radius: 10px;
     display: flex;

@@ -1,47 +1,6 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
 
-/*.navbar {*/
-/*    background: rgba(255, 255, 255, 0.95);*/
-/*    backdrop-filter: blur(10px);*/
-/*    padding: 1rem 2rem;*/
-/*    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);*/
-/*    position: sticky;*/
-/*    top: 0;*/
-/*    z-index: 1000;*/
-/*}*/
-
-/*.nav-container {*/
-/*    display: flex;*/
-/*    justify-content: space-between;*/
-/*    align-items: center;*/
-/*    max-width: 1200px;*/
-/*    margin: 0 auto;*/
-/*}*/
-
-/*.logo {*/
-/*    font-size: 1.8rem;*/
-/*    font-weight: 700;*/
-/*    color: #667eea;*/
-/*}*/
-
-/*.nav-menu {*/
-/*    display: flex;*/
-/*    gap: 2rem;*/
-/*    align-items: center;*/
-/*}*/
-
-/*.nav-link {*/
-/*    text-decoration: none;*/
-/*    color: #333;*/
-/*    font-weight: 500;*/
-/*    transition: color 0.3s ease;*/
-/*}*/
-
-/*.nav-link:hover {*/
-/*    color: #667eea;*/
-/*}*/
-
 .user-info {
     display: flex;
     align-items: center;
@@ -61,8 +20,8 @@
 }
 
 .main-container {
-    max-width: 1200px;
-    margin: 2rem auto;
+    width: calc(100% - 10px);
+    margin: 2rem 5px;
     padding: 0 2rem;
     display: grid;
     grid-template-columns: 1fr 2fr 1fr;
