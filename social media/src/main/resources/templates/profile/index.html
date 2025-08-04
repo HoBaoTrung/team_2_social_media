@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-    >
+>
 <head>
 
     <th:block th:replace="~{fragments/commonHead :: commonHead}"></th:block>
     <link rel="stylesheet" th:href="@{/css/profile.css}">
 </head>
-<body  onload="showSectionFromServer()">
+<body onload="showSectionFromServer()">
 
 <div th:replace="~{fragments/header :: header}"></div>
 <div class="container">
@@ -25,7 +25,13 @@
             <input type="hidden" th:field="*{id}">
             <div th:replace="profile/general-info :: content"></div>
             <div class="text-center">
-                <button type="submit" class="btn btn-primary">Cập nhật</button>
+                <button type="submit" class="btn btn-primary submitBtn">
+                    <span class="btnContent">Cập nhật</span>
+                    <span class="loadingSpinner d-none">
+                        <div th:replace="~{fragments/loader :: loadingOverlay}"></div>
+                    </span>
+                </button>
+
             </div>
         </form>
     </div>
@@ -37,7 +43,13 @@
             <div th:replace="profile/change-password :: content"></div>
 
             <div class="text-center">
-                <button type="submit" class="btn btn-primary">Đổi mật khẩu</button>
+                <button type="submit" class="btn btn-primary submitBtn">
+                    <span class="btnContent">Cập nhật</span>
+                    <span class="loadingSpinner d-none">
+                        <div th:replace="~{fragments/loader :: loadingOverlay}"></div>
+                     </span>
+                </button>
+
             </div>
         </form>
     </div>
@@ -49,7 +61,7 @@
     </div>
 </div>
 
-<script  th:inline="javascript">
+<script th:inline="javascript">
     function showPreview(event) {
         const fileInput = event.target;
         const file = fileInput.files[0];
@@ -82,8 +94,9 @@
         const active = /*[[${activeTab} ?: 'general']]*/ 'general'; // Thymeleaf inline JS
         showSection(active);
     }
-</script>
 
+</script>
+<script th:src="@{/js/loader.js}"></script>
 <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
 <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
 
