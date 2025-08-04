@@ -55,7 +55,6 @@ public class UserUpdateDto {
         user.setEmail(this.email);
         user.setPhone(this.phone);
         user.setBio(this.bio);
-        user.setProfilePicture(this.avatarUrl);
         user.setFirstName(this.firstName);
         user.setLastName(this.lasttName);
         return user;
