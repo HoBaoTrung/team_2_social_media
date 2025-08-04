@@ -28,6 +28,13 @@ public class UserPrivacySettings {
     private boolean showFriendListToFriends = true;
     private boolean allowSearchByEmail = true;
     private boolean allowSearchByPhone  = true;
+    private boolean showFullNameToPublic = true;
+    private boolean showAddressToPublic = false;
+    private boolean showPhoneToPublic = false;
+    private boolean showAvatarToPublic = true;
+    private boolean showBioToPublic = true;
+    private boolean showDobToPublic = false;
+
 
     @Enumerated(EnumType.STRING)
     private WallPostPrivacy wallPostPrivacy;
