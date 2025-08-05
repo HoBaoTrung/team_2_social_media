@@ -11,14 +11,30 @@ import java.util.List;
 import java.util.Optional;
 
 public interface FriendshipRepository extends JpaRepository<Friendship, FriendshipId> {
-    @Query(
-            """
-                    SELECT f FROM Friendship f
-                    WHERE f.status = 'ACCEPTED'
-                    AND (f.requester.id = :userId OR f.addressee.id = :userId)
-                    """
-    )
-    List<Friendship> findFriendsByUserId(@Param("userId") Long userId);
+
+    @Query("""
+            SELECT u FROM User u
+            WHERE u.id IN (
+                SELECT f.requester.id FROM Friendship f
+                WHERE f.status = 'ACCEPTED'
+                  AND f.addressee.id = :targetUserId
+                  AND f.requester.id <> :viewerId
+                UNION
+                SELECT f.addressee.id FROM Friendship f
+                WHERE f.status = 'ACCEPTED'
+                  AND f.requester.id = :targetUserId
+                  AND f.addressee.id <> :viewerId
+            )
+            """)
+    List<User> findFriendsOfUserExcludingViewer(@Param("targetUserId") Long targetUserId,
+                                                @Param("viewerId") Long viewerId);
+
+    @Query("""
+                SELECT f FROM Friendship f
+                WHERE f.status = 'ACCEPTED'
+                  AND (f.requester.id = :userId OR f.addressee.id = :userId)
+            """)
+    List<Friendship> findAllFriendshipsOfUser(@Param("userId") Long userId);
 
     @Query("""
                 SELECT COUNT(f)

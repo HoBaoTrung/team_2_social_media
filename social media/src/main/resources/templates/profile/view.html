@@ -55,22 +55,6 @@
                 <strong>Giới thiệu:</strong> <span th:text="${user.bio}">...</span>
             </div>
 
-<!--            <div class="info-item" th:if="${isOwner or (privacy != null and privacy.allowSearchByEmail)}">-->
-<!--                <strong>Email:</strong> <span th:text="${user.email}">email@example.com</span>-->
-<!--            </div>-->
-<!--            <div class="info-item" th:if="${isOwner or (privacy != null and privacy.allowSearchByPhone)}">-->
-<!--                <strong>Số điện thoại:</strong> <span th:text="${user.phone}">sdt</span>-->
-<!--            </div>-->
-<!--            <div class="info-item" th:if="${isOwner or (privacy != null)}">-->
-<!--                <strong>Sinh nhật:</strong> <span th:text="${user.dateOfBirth}">birthday</span>-->
-<!--            </div>-->
-<!--            <div class="info-item" th:if="${isOwner or (privacy != null and privacy.showJoinDate)}">-->
-<!--                <strong>Ngày tham gia:</strong> <span th:text="${#temporals.format(user.createdAt, 'dd/MM/yyyy')}">01/01/2020</span>-->
-<!--            </div>-->
-<!--            <div class="info-item" th:if="${isOwner or (privacy != null and privacy.showBioToPublic)}">-->
-<!--                <strong>Giới thiệu:</strong> <span th:text="${user.bio}">...</span>-->
-<!--            </div>-->
-
             <div th:if="${isOwner}" class="profile-actions">
                 <a th:href="@{/setting}" class="btn">Chỉnh sửa hồ sơ</a>
             </div>

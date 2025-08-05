@@ -49,11 +49,10 @@ public class UserController {
         boolean isFriend = friendshipService.areFriends(viewedUser, currentUser);
 
         UserPrivacySettings privacy = viewedUser.getPrivacySettings();
-//        List<Status> posts = postService.findAllByUser(user);
 
         List<Status> posts = new ArrayList<>();
 
-        List<User> friends = friendshipService.getFriends(viewedUser.getId());
+        List<User> friends = friendshipService.getVisibleFriendList(viewedUser);
         List<UserDTO> friendDTOs = friends.stream()
                 .map(UserDTO::new)
                 .collect(Collectors.toList());
@@ -72,11 +71,6 @@ public class UserController {
         model.addAttribute("user", viewedUser);
         model.addAttribute("isOwner", isOwner);
         model.addAttribute("posts", posts);
-//        if (!isOwner) {
-//            UserPrivacySettings privacy = viewedUser.getPrivacySettings();
-//
-//        }
-        model.addAttribute("privacy", privacy);
         return "profile/view";
     }
 

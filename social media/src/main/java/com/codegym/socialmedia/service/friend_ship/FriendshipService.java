@@ -6,6 +6,7 @@ import java.util.List;
 
 public interface FriendshipService {
     List<User> getFriends(Long userId);
+    List<User> getVisibleFriendList(User u);
     long countFriends(Long userId);
     boolean areFriends(User user1, User user2);
 }

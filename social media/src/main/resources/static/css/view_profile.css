@@ -163,85 +163,19 @@
     white-space: pre-wrap;
 }
 
-/*!* Container tổng chứa danh sách bạn bè *!*/
-/*.friend-container {*/
-/*    display: grid;*/
-/*    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));*/
-/*    gap: 16px;*/
-/*    padding: 10px 0;*/
-/*}*/
-
-/*!* Mỗi thẻ bạn bè là 1 card có thể click *!*/
-/*.friend-card {*/
-/*    background-color: #e9ecef;*/
-/*    border: 1px solid;*/
-/*    border-radius: 10px;*/
-/*    padding: 3px 2px;*/
-/*    text-align: center;*/
-/*    transition: all 0.3s ease;*/
-/*    text-decoration: none;*/
-/*    display: flex;*/
-/*    flex-direction: column;*/
-/*    align-items: center;*/
-/*}*/
-
-/*!* Hover hiệu ứng nổi lên + shadow *!*/
-/*.friend-card:hover {*/
-/*    background-color: #606375;*/
-/*    color: white;*/
-/*    transform: translateY(-4px);*/
-/*    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);*/
-/*}*/
-
-/*!* Ảnh đại diện *!*/
-/*.friend-avatar {*/
-/*    width: 80px;*/
-/*    height: 80px;*/
-/*    object-fit: cover;*/
-/*    border-radius: 50%;*/
-/*    margin-bottom: 10px;*/
-/*    border: 2px solid #3a3b3c;*/
-/*}*/
-
-/*!* Tên bạn bè *!*/
-/*.friend-name {*/
-/*    font-size: 16px;*/
-/*    font-weight: 500;*/
-/*    color: #2d4373;*/
-/*    white-space: nowrap;*/
-/*    overflow: hidden;*/
-/*    text-overflow: ellipsis;*/
-/*    width: 100%;*/
-/*}*/
-
-/*!* Responsive cho mobile nhỏ *!*/
-/*@media (max-width: 600px) {*/
-/*    .friend-container {*/
-/*        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));*/
-/*        gap: 10px;*/
-/*    }*/
-
-/*    .friend-avatar {*/
-/*        width: 60px;*/
-/*        height: 60px;*/
-/*    }*/
-
-/*    .friend-name {*/
-/*        font-size: 14px;*/
-/*    }*/
-/*}*/
 
 /* Container tổng chứa danh sách bạn bè */
 .friend-container {
     display: grid;
-    grid-template-columns: repeat(3, 1fr); /* 3 cột mỗi hàng */
+    /*grid-template-columns: repeat(3, 1fr);*/
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
     gap: 12px;
     padding: 10px 0;
 }
 
 /* Mỗi card bạn bè */
 .friend-card {
-    width: 160px;
+    /*width: 160px;*/
     background-color: #e0e0e0; /* xám nhẹ */
     border-radius: 8px;
     padding: 12px 8px;
@@ -253,7 +187,6 @@
     flex-direction: column;
     align-items: center;
 }
-
 /* Hover: nền đen chữ trắng */
 .friend-card:hover {
     background-color: #000;
