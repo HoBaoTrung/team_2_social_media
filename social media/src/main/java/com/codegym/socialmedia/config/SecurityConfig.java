@@ -62,7 +62,6 @@ public class SecurityConfig {
                                 .userService(oauth2UserService)
                         )
                         .successHandler((request, response, authentication) -> {
-                            System.out.println("OAuth2 login successful for user: " + authentication.getName());
                             response.sendRedirect("/news-feed");
                         })
                         .failureHandler((request, response, exception) -> {

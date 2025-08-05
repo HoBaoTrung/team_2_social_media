@@ -72,14 +72,6 @@ public class UserServiceImpl implements UserService {
     private void createDefaultPrivacySettings(User user) {
         UserPrivacySettings privacySettings = new UserPrivacySettings();
         privacySettings.setUser(user);
-        privacySettings.setAllowFriendRequests(true);
-        privacySettings.setShowProfileToStrangers(true);
-        privacySettings.setShowFriendListToPublic(true);
-        privacySettings.setShowFriendListToFriends(true);
-        privacySettings.setAllowSearchByEmail(true);
-        privacySettings.setAllowSearchByPhone(true);
-        privacySettings.setWallPostPrivacy(UserPrivacySettings.WallPostPrivacy.PUBLIC);
-
         userPrivacySettingsRepository.save(privacySettings);
     }
 

@@ -66,8 +66,12 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService
                         oauth2User.getAuthorities(),
                         attributes,
                         userNameAttributeName,
-                        user.getProfilePicture()
+                        user.getProfilePicture(),
+                        user.getFirstName() + " " + user.getLastName(),
+                        user.getUsername(),
+                        user.getEmail()
                 );
+
             }
 
             throw new OAuth2AuthenticationException("Email or name missing from OAuth2 provider");

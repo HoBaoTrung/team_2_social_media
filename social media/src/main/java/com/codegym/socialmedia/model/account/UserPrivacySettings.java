@@ -22,22 +22,43 @@ public class UserPrivacySettings {
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 
-    private boolean allowFriendRequests = true ;
-    private boolean showProfileToStrangers = true;
-    private boolean showFriendListToPublic = true;
-    private boolean showFriendListToFriends = true;
-    private boolean allowSearchByEmail = true;
-    private boolean allowSearchByPhone  = true;
-    private boolean showFullNameToPublic = true;
-    private boolean showAddressToPublic = false;
-    private boolean showPhoneToPublic = false;
-    private boolean showAvatarToPublic = true;
-    private boolean showBioToPublic = true;
-    private boolean showDobToPublic = false;
-
+    // Quyền xem các thông tin cá nhân
+    @Enumerated(EnumType.STRING)
+    private PrivacyLevel showProfile = PrivacyLevel.PUBLIC;
 
     @Enumerated(EnumType.STRING)
-    private WallPostPrivacy wallPostPrivacy;
+    private PrivacyLevel showFriendList = PrivacyLevel.PUBLIC;
+
+    @Enumerated(EnumType.STRING)
+    private PrivacyLevel showFullName = PrivacyLevel.PUBLIC;
+
+    @Enumerated(EnumType.STRING)
+    private PrivacyLevel showAddress = PrivacyLevel.PRIVATE;
+
+    @Enumerated(EnumType.STRING)
+    private PrivacyLevel showPhone = PrivacyLevel.PRIVATE;
+
+    @Enumerated(EnumType.STRING)
+    private PrivacyLevel showEmail = PrivacyLevel.PRIVATE;
+
+    @Enumerated(EnumType.STRING)
+    private PrivacyLevel showAvatar = PrivacyLevel.PUBLIC;
+
+    @Enumerated(EnumType.STRING)
+    private PrivacyLevel showBio = PrivacyLevel.PUBLIC;
+
+    @Enumerated(EnumType.STRING)
+    private PrivacyLevel showDob = PrivacyLevel.PRIVATE;
+
+    @Enumerated(EnumType.STRING)
+    private PrivacyLevel allowSendMessage = PrivacyLevel.FRIENDS;
+
+    // Tùy chọn tìm kiếm
+    private boolean allowSearchByEmail = true;
+    private boolean allowSearchByPhone = true;
+
+    // Tùy chọn kết bạn
+    private boolean allowFriendRequests = true;
 
     @CreationTimestamp
     private LocalDateTime createdAt;
@@ -45,7 +66,8 @@ public class UserPrivacySettings {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
-    public enum WallPostPrivacy {
+    public enum PrivacyLevel {
         PUBLIC, FRIENDS, PRIVATE
     }
 }
+

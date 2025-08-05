@@ -59,16 +59,21 @@
                 <div class="nav-item dropdown" sec:authorize="isAuthenticated()">
                     <a class="nav-link dropdown-toggle dropdown-toggle p-0 d-flex align-items-center" href="#" role="button"
                         data-bs-toggle="dropdown" aria-expanded="false">
-                        <img th:if="${#authentication.principal.avatarUrl != null
-                            and !#strings.isEmpty(#authentication.principal.avatarUrl)}"
-                             th:src="@{${#authentication.principal.avatarUrl}}" alt="Avatar" class="rounded-circle nav-icon-wrapper">
+                        <img th:if="${#authentication.principal.avatarUrl != null and !#strings.isEmpty(#authentication.principal.avatarUrl)}"
+                             th:src="${#authentication.principal.avatarUrl}" alt="Avatar"
+                             class="rounded-circle nav-icon-wrapper"/>
 
-                        <img th:unless="${#authentication.principal.avatarUrl != null
-                        and !#strings.isEmpty(#authentication.principal.avatarUrl)}"
-                             th:src="@{/images/default-avatar.jpg}" alt="Avatar" class="rounded-circle nav-icon-wrapper">
+                        <img th:unless="${#authentication.principal.avatarUrl != null and !#strings.isEmpty(#authentication.principal.avatarUrl)}"
+                             th:src="@{/images/default-avatar.jpg}" alt="Avatar"
+                             class="rounded-circle nav-icon-wrapper"/>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end" >
-                        <li><a class="dropdown-item" th:href="@{/profile}">Thông tin cá nhân</a></li>
+                        <li>
+                            <a class="dropdown-item"
+                               th:href="@{|/profile/${#authentication.principal.username}|}">
+                                Thông tin cá nhân
+                            </a>
+                        </li>
                         <li><a class="dropdown-item" th:href="@{/setting}">Cài đặt</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li>

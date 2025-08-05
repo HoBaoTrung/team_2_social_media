@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title th:text="${user.firstName + ' ' + user.lastName + ' | Hồ sơ cá nhân'}">Trang cá nhân</title>
+    <link rel="stylesheet" th:href="@{/css/view_profile.css}">
+    <th:block th:replace="~{fragments/commonHead :: commonHead}"></th:block>
+</head>
+<body>
+
+<!-- HEADER -->
+<div th:replace="~{fragments/header :: header}"></div>
+
+<!-- COVER IMAGE + AVATAR -->
+<div class="cover-container">
+    <img class="cover-image" th:src="@{/images/default-avatar.jpg}" alt="Ảnh bìa">
+
+    <div class="avatar-container">
+        <img class="avatar"
+             th:if="${user.profilePicture != null and !#strings.isEmpty(user.profilePicture)}"
+             th:src="@{${user.profilePicture}}" alt="Avatar">
+
+        <img class="avatar"
+             th:unless="${user.profilePicture != null and !#strings.isEmpty(user.profilePicture)}"
+             th:src="@{/images/default-avatar.jpg}" alt="Avatar">
+
+        <div class="user-name" th:text="${user.firstName + ' ' + user.lastName}">Tên người dùng</div>
+    </div>
+</div>
+
+<!-- NAVIGATION TABS -->
+<div class="profile-tabs">
+    <a href="#" class="tab active">Giới thiệu</a>
+    <a href="#" class="tab">Bài viết</a>
+    <a href="#" class="tab">Ảnh</a>
+    <a href="#" class="tab">Bạn bè</a>
+</div>
+
+<!-- MAIN CONTENT: 2 CỘT -->
+<div class="profile-page-container">
+
+    <!-- CỘT TRÁI: Thông tin người dùng -->
+    <div class="profile-left-column">
+        <div class="profile-content">
+            <h2>Thông tin cá nhân</h2>
+            <div class="info-item" th:if="${canViewEmail}">
+                <strong>Email:</strong> <span th:text="${user.email}">email@example.com</span>
+            </div>
+            <div class="info-item" th:if="${canViewPhone}">
+                <strong>Số điện thoại:</strong> <span th:text="${user.phone}">0123456789</span>
+            </div>
+            <div class="info-item" th:if="${canViewDob}">
+                <strong>Sinh nhật:</strong> <span th:text="${user.dateOfBirth}">01/01/1990</span>
+            </div>
+            <div class="info-item" th:if="${canViewBio}">
+                <strong>Giới thiệu:</strong> <span th:text="${user.bio}">...</span>
+            </div>
+
+<!--            <div class="info-item" th:if="${isOwner or (privacy != null and privacy.allowSearchByEmail)}">-->
+<!--                <strong>Email:</strong> <span th:text="${user.email}">email@example.com</span>-->
+<!--            </div>-->
+<!--            <div class="info-item" th:if="${isOwner or (privacy != null and privacy.allowSearchByPhone)}">-->
+<!--                <strong>Số điện thoại:</strong> <span th:text="${user.phone}">sdt</span>-->
+<!--            </div>-->
+<!--            <div class="info-item" th:if="${isOwner or (privacy != null)}">-->
+<!--                <strong>Sinh nhật:</strong> <span th:text="${user.dateOfBirth}">birthday</span>-->
+<!--            </div>-->
+<!--            <div class="info-item" th:if="${isOwner or (privacy != null and privacy.showJoinDate)}">-->
+<!--                <strong>Ngày tham gia:</strong> <span th:text="${#temporals.format(user.createdAt, 'dd/MM/yyyy')}">01/01/2020</span>-->
+<!--            </div>-->
+<!--            <div class="info-item" th:if="${isOwner or (privacy != null and privacy.showBioToPublic)}">-->
+<!--                <strong>Giới thiệu:</strong> <span th:text="${user.bio}">...</span>-->
+<!--            </div>-->
+
+            <div th:if="${isOwner}" class="profile-actions">
+                <a th:href="@{/setting}" class="btn">Chỉnh sửa hồ sơ</a>
+            </div>
+        </div>
+
+        <div class="profile-content">
+            <h2>Thông tin bạn bè</h2>
+            <div class="friend-container">
+                <div th:each="friend : ${friends}">
+                    <a th:href="@{/profile/{username}(username=${friend.username})}" class="friend-card text-decoration-none">
+                        <!-- Avatar: nếu có -->
+                        <img th:if="${friend.avatarUrl != null and !#strings.isEmpty(friend.avatarUrl)}"
+                             th:src="@{${friend.avatarUrl}}"
+                             class="friend-avatar"
+                             alt="Avatar">
+
+                        <!-- Avatar mặc định -->
+                        <img th:unless="${friend.avatarUrl != null and !#strings.isEmpty(friend.avatarUrl)}"
+                             th:src="@{/images/default-avatar.jpg}"
+                             class="friend-avatar"
+                             alt="Avatar mặc định">
+
+                        <!-- Tên người bạn -->
+                        <div class="friend-name" th:title="${friend.fullName}" th:text="${friend.fullName}">Friend Name</div>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- CỘT PHẢI: Bài viết -->
+    <div class="posts-container">
+        <h2>Bài viết</h2>
+
+        <div th:if="${posts.isEmpty()}">
+            <p>Chưa có bài viết nào.</p>
+        </div>
+
+        <div th:each="post : ${posts}" class="post-card">
+            <div class="post-header">
+                <img class="post-avatar"
+                     th:src="@{${user.profilePicture != null && !#strings.isEmpty(user.profilePicture) ? user.profilePicture : '/images/default-avatar.jpg'}}"
+                     alt="Avatar">
+
+                <div class="post-user-info">
+                    <div class="post-username" th:text="${user.firstName + ' ' + user.lastName}">Tên người dùng</div>
+                    <div class="post-time" th:text="${#temporals.format(post.createdAt, 'dd/MM/yyyy HH:mm')}">Ngày
+                        đăng
+                    </div>
+                </div>
+            </div>
+
+            <div class="post-content" th:text="${post.content}">
+                Nội dung bài viết...
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

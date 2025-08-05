@@ -138,4 +138,14 @@ public class User {
     public enum PrivacyProfile {
         PUBLIC, FRIENDS, PRIVATE
     }
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "id=" + id +
+                ", username='" + username + '\'' +
+                ", email='" + email + '\'' +
+                '}';
+    }
+
 }

@@ -1,10 +1,15 @@
 package com.codegym.socialmedia.controller;
 
+import com.codegym.socialmedia.component.PrivacyUtils;
+import com.codegym.socialmedia.dto.UserDTO;
 import com.codegym.socialmedia.dto.UserRegistrationDto;
 import com.codegym.socialmedia.dto.UserPasswordDto;
 import com.codegym.socialmedia.dto.UserUpdateDto;
 import com.codegym.socialmedia.general_interface.NormalRegister;
 import com.codegym.socialmedia.model.account.User;
+import com.codegym.socialmedia.model.account.UserPrivacySettings;
+import com.codegym.socialmedia.model.social_action.Status;
+import com.codegym.socialmedia.service.friend_ship.FriendshipService;
 import com.codegym.socialmedia.service.user.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +22,11 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.security.Principal;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Controller
 public class UserController {
 
@@ -25,6 +35,51 @@ public class UserController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private FriendshipService friendshipService;
+
+    @GetMapping("/profile/{username}")
+    public String viewProfile(@PathVariable String username,
+                              Model model) {
+        User viewedUser = userService.getUserByUsername(username);
+        User currentUser = userService.getCurrentUser();
+        boolean isOwner = currentUser.getId().equals(viewedUser.getId());
+
+        boolean isFriend = friendshipService.areFriends(viewedUser, currentUser);
+
+        UserPrivacySettings privacy = viewedUser.getPrivacySettings();
+//        List<Status> posts = postService.findAllByUser(user);
+
+        List<Status> posts = new ArrayList<>();
+
+        List<User> friends = friendshipService.getFriends(viewedUser.getId());
+        List<UserDTO> friendDTOs = friends.stream()
+                .map(UserDTO::new)
+                .collect(Collectors.toList());
+
+        long friendCount = friendshipService.countFriends(viewedUser.getId());
+
+
+        model.addAttribute("canViewEmail", PrivacyUtils.canView(currentUser, viewedUser, privacy.getShowEmail(), isFriend));
+        model.addAttribute("canViewPhone", PrivacyUtils.canView(currentUser, viewedUser, privacy.getShowPhone(), isFriend));
+        model.addAttribute("canViewDob", PrivacyUtils.canView(currentUser, viewedUser, privacy.getShowDob(), isFriend));
+        model.addAttribute("canViewBio", PrivacyUtils.canView(currentUser, viewedUser, privacy.getShowBio(), isFriend));
+        model.addAttribute("canViewFriendList", PrivacyUtils.canView(currentUser, viewedUser, privacy.getShowFriendList(), isFriend));
+
+        model.addAttribute("friends", friendDTOs);
+        model.addAttribute("friendCount", friendCount);
+        model.addAttribute("user", viewedUser);
+        model.addAttribute("isOwner", isOwner);
+        model.addAttribute("posts", posts);
+//        if (!isOwner) {
+//            UserPrivacySettings privacy = viewedUser.getPrivacySettings();
+//
+//        }
+        model.addAttribute("privacy", privacy);
+        return "profile/view";
+    }
+
 
     @GetMapping("/")
     public String home() {
@@ -104,32 +159,6 @@ public class UserController {
     public String oauth2LoginSuccess() {
         return "redirect:/news-feed";
     }
-
-//    @GetMapping("/setting")
-//    public String showProfile(Model model) {
-//        // Lấy thông tin người dùng hiện tại (ưu tiên sử dụng Spring Security nếu có)
-//        User user;
-//        try {
-//            // Sử dụng getCurrentUser() nếu tích hợp Spring Security
-//            user = userService.getCurrentUser();
-//            if (user == null) {
-//                // Fallback: Lấy user mặc định nếu không có người dùng hiện tại
-//                user = userService.getUserByUsername("john_doe");
-//            }
-//        } catch (Exception e) {
-//            // Xử lý lỗi (ví dụ: user không tồn tại)
-//            model.addAttribute("error", "Unable to load user profile.");
-//            user = new User(); // Tạo user rỗng để tránh lỗi null
-//        }
-//
-//        UserUpdateDto userUpdateDto = new UserUpdateDto(user);
-//        // Thêm các attribute cho template
-//        model.addAttribute("title", "User Profile");
-//        model.addAttribute("user", userUpdateDto);
-//        model.addAttribute("passwordDto", new UserPasswordDto());
-//        // Trả về layout chung
-//        return "profile/index";
-//    }
 
     @GetMapping("/setting")
     public String showProfile(Model model) {
