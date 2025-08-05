@@ -22,6 +22,7 @@ public class UserPrivacySettings {
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 
+
     // Quyền xem các thông tin cá nhân
     @Enumerated(EnumType.STRING)
     private PrivacyLevel showProfile = PrivacyLevel.PUBLIC;
@@ -56,15 +57,9 @@ public class UserPrivacySettings {
     // Tùy chọn tìm kiếm
     private boolean allowSearchByEmail = true;
     private boolean allowSearchByPhone = true;
-
+    private boolean canBeFound = true;
     // Tùy chọn kết bạn
     private boolean allowFriendRequests = true;
-
-    @CreationTimestamp
-    private LocalDateTime createdAt;
-
-    @UpdateTimestamp
-    private LocalDateTime updatedAt;
 
     public enum PrivacyLevel {
         PUBLIC, FRIENDS, PRIVATE

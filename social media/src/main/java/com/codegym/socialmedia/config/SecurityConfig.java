@@ -33,15 +33,10 @@ public class SecurityConfig {
         http
                 .headers(headers -> headers
                         .contentSecurityPolicy(csp -> csp
-                                .policyDirectives("img-src 'self' " +
-                                        "https://*.googleusercontent.com " +
-                                        "https://*.fbcdn.net " +
-                                        "https://res.cloudinary.com " +
-                                        "https://graph.facebook.com " +
-                                        "https://i.imgur.com " +
-                                        "https://secure.gravatar.com data: blob:;")
+                                        .policyDirectives("img-src * data: blob:;")
                         )
                 )
+
 
                 .authorizeHttpRequests(authz -> authz
                 .requestMatchers("/", "/login", "/register", "/css/**", "/js/**", "/images/**", "/api/debug/**", "/api/test/**").permitAll()

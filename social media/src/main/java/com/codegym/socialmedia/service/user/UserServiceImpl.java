@@ -54,9 +54,6 @@ public class UserServiceImpl implements UserService {
         user.setAccountStatus(User.AccountStatus.ACTIVE);
         user.setActive(true);
         user.setVerified(false);
-        user.setCanBeFound(true);
-        user.setShowFriendList(true);
-        user.setPrivacyProfile(User.PrivacyProfile.PUBLIC);
 
         User savedUser = iUserRepository.save(user);
 
@@ -216,9 +213,6 @@ public class UserServiceImpl implements UserService {
             user.setAccountStatus(User.AccountStatus.ACTIVE);
             user.setActive(true);
             user.setVerified(true); // OAuth2 user đã được verify
-            user.setCanBeFound(true);
-            user.setShowFriendList(true);
-            user.setPrivacyProfile(User.PrivacyProfile.PUBLIC);
 
             User savedUser = iUserRepository.save(user);
 

@@ -9,6 +9,7 @@ import com.codegym.socialmedia.general_interface.NormalRegister;
 import com.codegym.socialmedia.model.account.User;
 import com.codegym.socialmedia.model.account.UserPrivacySettings;
 import com.codegym.socialmedia.model.social_action.Status;
+import com.codegym.socialmedia.repository.UserPrivacySettingsRepository;
 import com.codegym.socialmedia.service.friend_ship.FriendshipService;
 import com.codegym.socialmedia.service.user.UserService;
 import jakarta.validation.Valid;
@@ -29,6 +30,9 @@ import java.util.stream.Collectors;
 
 @Controller
 public class UserController {
+
+    @Autowired
+    private UserPrivacySettingsRepository privacySettingsRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -177,6 +181,11 @@ public class UserController {
             model.addAttribute("passwordDto", new UserPasswordDto());
         }
 
+        UserPrivacySettings settings = user.getPrivacySettings();
+        if (!model.containsAttribute("privacySettings")) {
+            model.addAttribute("privacySettings", settings);
+        }
+        model.addAttribute("privacyLevels", UserPrivacySettings.PrivacyLevel.values());
         model.addAttribute("title", "User Profile");
         return "profile/index";
     }
@@ -238,5 +247,17 @@ public class UserController {
         redirectAttributes.addFlashAttribute("activeTab", "password");
         return "redirect:/setting";
     }
+
+    @PostMapping("/setting/privacy")
+    public String updatePrivacySettings(@ModelAttribute UserPrivacySettings dto, RedirectAttributes redirect) {
+//        User user = userService.getCurrentUser();
+//        UserPrivacySettings settings = user.getPrivacySettings();
+//        dto.setId(settings.getId());
+        privacySettingsRepository.save(dto);
+
+        redirect.addFlashAttribute("success", "Cập nhật quyền riêng tư thành công.");
+        return "redirect:/setting";
+    }
+
 
 }

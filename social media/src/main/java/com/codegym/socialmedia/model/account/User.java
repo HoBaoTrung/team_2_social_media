@@ -77,12 +77,6 @@ public class User {
     @Enumerated(EnumType.STRING)
     private AccountStatus accountStatus = AccountStatus.ACTIVE;
 
-    @Enumerated(EnumType.STRING)
-    private PrivacyProfile privacyProfile = PrivacyProfile.PUBLIC;
-
-    private boolean canBeFound = true;
-
-    private boolean showFriendList = true;
 
     @OneToMany(mappedBy = "user")
     private List<UserSearchHistory> searchesPerformed;
@@ -135,9 +129,6 @@ public class User {
         ACTIVE, SUSPENDED, BANNED, PENDING
     }
 
-    public enum PrivacyProfile {
-        PUBLIC, FRIENDS, PRIVATE
-    }
 
     @Override
     public String toString() {

@@ -52,8 +52,10 @@
                 <strong>Sinh nhật:</strong> <span th:text="${user.dateOfBirth}">01/01/1990</span>
             </div>
             <div class="info-item" th:if="${canViewBio}">
-                <strong>Giới thiệu:</strong> <span th:text="${user.bio}">...</span>
+                <strong>Giới thiệu:</strong><br>
+                <textarea readonly rows="5" style="width: 100%;" th:text="${user.bio}">...</textarea>
             </div>
+
 
             <div th:if="${isOwner}" class="profile-actions">
                 <a th:href="@{/setting}" class="btn">Chỉnh sửa hồ sơ</a>
