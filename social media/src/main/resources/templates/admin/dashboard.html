@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title>Admin Dashboard</title>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<div class="container mt-5">
+  <h1 class="mb-4">Admin Dashboard</h1>
+
+  <!-- Thống kê -->
+  <div class="row mb-4">
+    <div class="col-md-6">
+      <h4>📊 Thống kê lượt truy cập</h4>
+      <table class="table table-bordered">
+        <thead>
+        <tr>
+          <th>Ngày</th>
+          <th>Lượt truy cập</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="entry : ${visitStats}">
+          <td th:text="${entry.key}"></td>
+          <td th:text="${entry.value}"></td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="col-md-6">
+      <h4>🧑‍💻 Thống kê người dùng mới</h4>
+      <table class="table table-bordered">
+        <thead>
+        <tr>
+          <th>Ngày</th>
+          <th>Số người dùng mới</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="entry : ${newUserStats}">
+          <td th:text="${entry.key}"></td>
+          <td th:text="${entry.value}"></td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Danh sách người dùng -->
+  <h4>👥 Danh sách người dùng</h4>
+  <table class="table table-striped">
+    <thead>
+    <tr>
+      <th>ID</th>
+      <th>Tên đăng nhập</th>
+      <th>Email</th>
+      <th>Vai trò</th>
+      <th>Trạng thái</th>
+      <th>Hành động</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="user : ${users}">
+      <td th:text="${user.id}"></td>
+      <td th:text="${user.username}"></td>
+      <td th:text="${user.email}"></td>
+      <td th:text="${user.role}"></td>
+      <td>
+                    <span th:text="${user.enabled} ? 'Hoạt động' : 'Bị khóa'"
+                          th:classappend="${user.enabled} ? 'text-success' : 'text-danger'"></span>
+      </td>
+      <td>
+        <form th:action="@{'/admin/block/' + ${user.id}}" method="post"
+              th:if="${user.enabled}">
+          <button type="submit" class="btn btn-danger btn-sm">Block</button>
+        </form>
+        <span th:if="${!user.enabled}" class="text-muted">Đã bị khóa</span>
+      </td>
+    </tr>
+    </tbody>
+  </table>
+</div>
+
+</body>
+</html>
