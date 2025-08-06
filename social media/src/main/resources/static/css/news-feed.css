@@ -98,3 +98,583 @@ textarea.form-control {
     font-size: 0.95rem;
     cursor: pointer;
 }
+/* news-feed.css - Complete styles for news feed */
+
+/* ===== GENERAL STYLES ===== */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background-color: #f0f2f5;
+    margin: 0;
+    padding: 0;
+}
+
+.container-fluid {
+    max-width: 1920px;
+    margin: 0 auto;
+}
+
+/* ===== SIDEBARS ===== */
+.left-sidebar, .right-sidebar {
+    position: sticky;
+    top: 80px;
+    height: calc(100vh - 100px);
+    overflow-y: auto;
+    padding-right: 8px;
+}
+
+.sidebar-section {
+    background: white;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e4e6ea;
+}
+
+.sidebar-section h6 {
+    color: #65676b;
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+/* ===== USER PROFILE CARD ===== */
+.user-profile-card {
+    padding: 8px;
+    border-radius: 8px;
+    transition: background-color 0.2s;
+    cursor: pointer;
+}
+
+.user-profile-card:hover {
+    background-color: #f2f3f5;
+}
+
+.profile-img {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.user-info h6 {
+    margin: 0;
+    font-weight: 600;
+    color: #050505;
+    font-size: 15px;
+}
+
+.user-info small {
+    color: #65676b;
+    font-size: 13px;
+}
+
+/* ===== NAVIGATION ITEMS ===== */
+.nav-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    margin-bottom: 4px;
+}
+
+.nav-item:hover {
+    background-color: #f2f3f5;
+}
+
+.nav-icon {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    margin-right: 12px;
+    color: #1877f2;
+}
+
+.nav-item span {
+    font-size: 15px;
+    font-weight: 500;
+    color: #050505;
+}
+
+/* ===== STATUS CREATOR ===== */
+.status-header {
+    align-items: center;
+}
+
+.status-input {
+    background-color: #f0f2f5;
+    border: none;
+    border-radius: 50px;
+    padding: 12px 16px;
+    cursor: pointer;
+    width: 100%;
+    font-size: 16px;
+    color: #65676b;
+}
+
+.status-input:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+.status-input::placeholder {
+    color: #65676b;
+}
+
+/* ===== POST STYLES ===== */
+.post-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.post-avatar:hover {
+    opacity: 0.9;
+}
+
+.author-name {
+    color: #050505;
+    cursor: pointer;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 15px;
+}
+
+.author-name:hover {
+    text-decoration: underline;
+}
+
+.card {
+    border: 1px solid #e4e6ea;
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.card-header.bg-white {
+    background-color: #ffffff !important;
+    padding: 16px;
+}
+
+.card-body {
+    padding: 16px;
+}
+
+.card-footer.bg-white {
+    background-color: #ffffff !important;
+    border-top: 1px solid #e4e6ea;
+    padding: 8px 16px;
+}
+
+/* ===== POST IMAGES ===== */
+.post-images {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.post-image {
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    border-radius: 8px;
+}
+
+.post-image:hover {
+    transform: scale(1.02);
+}
+
+.h-200 {
+    height: 200px !important;
+    object-fit: cover;
+    width: 100%;
+}
+
+/* ===== POST ACTIONS ===== */
+.action-btn {
+    border: none;
+    background: none;
+    color: #65676b;
+    font-weight: 500;
+    padding: 8px 12px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    font-size: 15px;
+}
+
+.action-btn:hover {
+    background-color: #f2f3f5;
+}
+
+.action-btn:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+.action-btn.text-primary {
+    color: #1877f2 !important;
+    font-weight: 600;
+}
+
+.action-btn i {
+    margin-right: 6px;
+    font-size: 16px;
+}
+
+/* ===== BUTTONS ===== */
+.btn {
+    font-weight: 500;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    font-size: 14px;
+}
+
+.btn-light {
+    background-color: #f0f2f5;
+    border-color: #f0f2f5;
+    color: #050505;
+}
+
+.btn-light:hover {
+    background-color: #e4e6ea;
+    border-color: #e4e6ea;
+}
+
+.btn-primary {
+    background-color: #1877f2;
+    border-color: #1877f2;
+}
+
+.btn-primary:hover {
+    background-color: #166fe5;
+    border-color: #166fe5;
+}
+
+.btn-outline-primary {
+    color: #1877f2;
+    border-color: #1877f2;
+}
+
+.btn-outline-primary:hover {
+    background-color: #1877f2;
+    border-color: #1877f2;
+}
+
+/* ===== MODAL STYLES ===== */
+.modal-content {
+    border-radius: 8px;
+    border: none;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+.modal-header {
+    border-bottom: 1px solid #e4e6ea;
+    padding: 16px 20px;
+}
+
+.modal-body {
+    padding: 16px 20px;
+}
+
+.modal-footer {
+    border-top: none;
+    padding: 16px 20px;
+}
+
+.modal-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #050505;
+}
+
+/* ===== FORM STYLES ===== */
+.form-control {
+    border: 1px solid #e4e6ea;
+    border-radius: 6px;
+    font-size: 15px;
+    padding: 8px 12px;
+}
+
+.form-control:focus {
+    border-color: #1877f2;
+    box-shadow: 0 0 0 2px rgba(24, 119, 242, 0.2);
+}
+
+.form-control.border-0 {
+    border: none !important;
+}
+
+.form-control.border-0:focus {
+    box-shadow: none;
+}
+
+.form-select {
+    border: 1px solid #e4e6ea;
+    border-radius: 6px;
+    font-size: 13px;
+}
+
+.form-select-sm {
+    padding: 4px 8px;
+    font-size: 12px;
+}
+
+/* ===== DROPDOWN STYLES ===== */
+.dropdown-menu {
+    border: 1px solid #e4e6ea;
+    border-radius: 8px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+    padding: 8px 0;
+}
+
+.dropdown-item {
+    padding: 8px 16px;
+    font-size: 14px;
+    color: #050505;
+    transition: background-color 0.2s;
+}
+
+.dropdown-item:hover {
+    background-color: #f2f3f5;
+    color: #050505;
+}
+
+.dropdown-item.text-danger {
+    color: #e41e3f !important;
+}
+
+.dropdown-item.text-danger:hover {
+    background-color: #fdf2f2;
+}
+
+.dropdown-divider {
+    margin: 4px 0;
+    border-top: 1px solid #e4e6ea;
+}
+
+/* ===== ALERT STYLES ===== */
+.alert {
+    border-radius: 8px;
+    font-size: 14px;
+    padding: 12px 16px;
+}
+
+.alert-success {
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+    color: #155724;
+}
+
+.alert-danger {
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+    color: #721c24;
+}
+
+.alert i {
+    margin-right: 8px;
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 992px) {
+    .container-fluid .row {
+        margin: 0;
+    }
+
+    .container-fluid .col-lg-3,
+    .container-fluid .col-lg-6 {
+        padding: 0 8px;
+    }
+}
+
+@media (max-width: 768px) {
+    body {
+        padding-top: 60px;
+    }
+
+    .post-avatar {
+        width: 32px;
+        height: 32px;
+    }
+
+    .status-input {
+        padding: 8px 12px;
+        font-size: 14px;
+    }
+
+    .card-header,
+    .card-body,
+    .card-footer {
+        padding: 12px;
+    }
+
+    .action-btn {
+        padding: 6px 8px;
+        font-size: 13px;
+    }
+
+    .h-200 {
+        height: 150px !important;
+    }
+}
+
+@media (max-width: 576px) {
+    .modal-dialog {
+        margin: 0;
+        width: 100vw;
+        max-width: none;
+        height: 100vh;
+    }
+
+    .modal-content {
+        height: 100vh;
+        border-radius: 0;
+    }
+
+    .status-header .d-flex {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .status-header .post-avatar {
+        align-self: center;
+        margin-bottom: 8px;
+    }
+}
+
+/* ===== ANIMATION STYLES ===== */
+.fade-in {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.card {
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ===== SCROLLBAR STYLING ===== */
+.left-sidebar::-webkit-scrollbar,
+.right-sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.left-sidebar::-webkit-scrollbar-track,
+.right-sidebar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.left-sidebar::-webkit-scrollbar-thumb,
+.right-sidebar::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+}
+
+.left-sidebar::-webkit-scrollbar-thumb:hover,
+.right-sidebar::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.3);
+}
+
+/* ===== LOADING STATES ===== */
+.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.skeleton {
+    background: linear-gradient(90deg, #f0f2f5 25%, transparent 50%, #f0f2f5 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* ===== UTILITY CLASSES ===== */
+.text-muted {
+    color: #65676b !important;
+}
+
+.fw-bold {
+    font-weight: 600 !important;
+}
+
+.cursor-pointer {
+    cursor: pointer;
+}
+
+/* ===== FACEBOOK-SPECIFIC COLORS ===== */
+:root {
+    --facebook-primary: #1877f2;
+    --facebook-primary-hover: #166fe5;
+    --facebook-background: #f0f2f5;
+    --facebook-card: #ffffff;
+    --facebook-border: #e4e6ea;
+    --facebook-text: #050505;
+    --facebook-text-secondary: #65676b;
+    --facebook-hover: #f2f3f5;
+    --facebook-success: #42b883;
+    --facebook-warning: #f39c12;
+    --facebook-danger: #e41e3f;
+}
+
+/* ===== DARK MODE SUPPORT (Optional) ===== */
+@media (prefers-color-scheme: dark) {
+    .dark-mode {
+        --facebook-background: #18191a;
+        --facebook-card: #242526;
+        --facebook-border: #393a3b;
+        --facebook-text: #e4e6ea;
+        --facebook-text-secondary: #b0b3b8;
+        --facebook-hover: #3a3b3c;
+    }
+
+    .dark-mode body {
+        background-color: var(--facebook-background);
+        color: var(--facebook-text);
+    }
+
+    .dark-mode .card,
+    .dark-mode .sidebar-section {
+        background-color: var(--facebook-card);
+        border-color: var(--facebook-border);
+    }
+
+    .dark-mode .form-control,
+    .dark-mode .btn-light {
+        background-color: var(--facebook-hover);
+        border-color: var(--facebook-border);
+        color: var(--facebook-text);
+    }
+}
