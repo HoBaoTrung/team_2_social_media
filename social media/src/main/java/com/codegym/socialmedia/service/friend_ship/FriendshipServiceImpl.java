@@ -1,5 +1,6 @@
 package com.codegym.socialmedia.service.friend_ship;
 
+import com.codegym.socialmedia.dto.friend.FriendDto;
 import com.codegym.socialmedia.model.account.User;
 import com.codegym.socialmedia.model.account.UserPrivacySettings;
 import com.codegym.socialmedia.model.social_action.Friendship;
@@ -28,7 +29,7 @@ public class FriendshipServiceImpl implements FriendshipService {
     private UserServiceImpl userServiceImpl;
 
     @Override
-    public boolean addFriendship(User user){
+    public boolean addFriendship(User user) {
         User currentUser = userService.getCurrentUser();
         FriendshipId friendshipId = new FriendshipId();
         friendshipId.setRequesterId(currentUser.getId());
@@ -40,8 +41,9 @@ public class FriendshipServiceImpl implements FriendshipService {
         newFriendship.setRequester(currentUser);
         newFriendship.setStatus(Friendship.FriendshipStatus.PENDING);
         try {
-            friendshipRepository.save(newFriendship); return true;
-        }catch (Exception e){
+            friendshipRepository.save(newFriendship);
+            return true;
+        } catch (Exception e) {
             e.printStackTrace();
             return false;
         }
@@ -52,7 +54,8 @@ public class FriendshipServiceImpl implements FriendshipService {
         Friendship f = findByUsers(user.getId(), userService.getCurrentUser().getId());
         f.setStatus(Friendship.FriendshipStatus.ACCEPTED);
         try {
-            friendshipRepository.save(f);return true;
+            friendshipRepository.save(f);
+            return true;
         } catch (Exception e) {
             e.printStackTrace();
             return false;
@@ -67,20 +70,25 @@ public class FriendshipServiceImpl implements FriendshipService {
         try {
             friendshipRepository.delete(f);
             return true;
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
             return false;
         }
     }
 
+    @Override
+    public int countMutualFriends(Long userAId, Long userBId){
+       return friendshipRepository.countMutualFriends(userAId, userBId);
+    }
 
-    public List<User> getVisibleFriendList(User targetUser) {
+    @Override
+    public List<FriendDto> getVisibleFriendList(User targetUser) {
         UserPrivacySettings.PrivacyLevel level = targetUser.getPrivacySettings().getShowFriendList();
         User viewer = userService.getCurrentUser();
         boolean isOwner = viewer.getId().equals(targetUser.getId());
-//        boolean isFriend = areFriends(targetUser, viewer);
-        boolean isFriend = getFriendshipStatus(targetUser, viewer)==Friendship.FriendshipStatus.ACCEPTED;
-        if (level == UserPrivacySettings.PrivacyLevel.PRIVATE && isFriend){
+
+        boolean isFriend = getFriendshipStatus(targetUser, viewer) == Friendship.FriendshipStatus.ACCEPTED;
+        if (level == UserPrivacySettings.PrivacyLevel.PRIVATE && isFriend) {
             return findMutualFriends(targetUser.getId(), viewer.getId());
         }
         // PRIVATE: chỉ chính chủ được xem
@@ -111,7 +119,12 @@ public class FriendshipServiceImpl implements FriendshipService {
             });
         }
 
-        return allFriends;
+        List<FriendDto> result = new ArrayList<>();
+        for (User user : allFriends) {
+            int mutualCount = countMutualFriends(user.getId(), viewer.getId());
+            result.add(new FriendDto(user, mutualCount));
+        }
+        return result;
     }
 
     @Override
@@ -133,23 +146,15 @@ public class FriendshipServiceImpl implements FriendshipService {
                 .collect(Collectors.toSet());
     }
 
-    public List<User> findMutualFriends(Long userAId, Long userBId) {
-        List<Friendship> friendshipsA = friendshipRepository.findAllFriendshipsOfUser(userAId);
-        List<Friendship> friendshipsB = friendshipRepository.findAllFriendshipsOfUser(userBId);
-
-        Set<Long> friendsOfA = friendshipsA.stream()
-                .map(f -> f.getRequester().getId().equals(userAId) ? f.getAddressee().getId() : f.getRequester().getId())
-                .collect(Collectors.toSet());
-
-        Set<Long> friendsOfB = friendshipsB.stream()
-                .map(f -> f.getRequester().getId().equals(userBId) ? f.getAddressee().getId() : f.getRequester().getId())
-                .collect(Collectors.toSet());
-
-        friendsOfA.retainAll(friendsOfB); // chỉ giữ bạn chung
-
-        if (friendsOfA.isEmpty()) return List.of();
-
-        return userRepository.findAllById(friendsOfA);
+    @Override
+    public List<FriendDto> findMutualFriends(Long userAId, Long userBId) {
+        List<User> list = friendshipRepository.findMutualFriends(userAId, userBId);
+        List<FriendDto> result = new ArrayList<>();
+        for (User user : list) {
+            int mutualCount = countMutualFriends(userAId, userBId);
+            result.add(new FriendDto(user, mutualCount));
+        }
+        return result;
     }
 
 

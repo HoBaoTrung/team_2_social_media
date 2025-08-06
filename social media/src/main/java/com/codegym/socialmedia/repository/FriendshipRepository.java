@@ -45,9 +45,58 @@ public interface FriendshipRepository extends JpaRepository<Friendship, Friendsh
             """)
     int countFriendsByUserId(@Param("userId") Long userId);
 
-//    @Query("SELECT f FROM Friendship f WHERE ((f.requester = :a AND f.addressee = :b) OR (f.requester = :b AND f.addressee = :a)) AND f.status = 'ACCEPTED'")
-//    Optional<Friendship> findAcceptedFriendshipBetween(@Param("a") User a, @Param("b") User b);
 
-        @Query("SELECT f FROM Friendship f WHERE ((f.requester = :a AND f.addressee = :b) OR (f.requester = :b AND f.addressee = :a))")
+    @Query("""
+                SELECT u
+                FROM User u
+                WHERE u.id IN (
+                    SELECT f1.requester.id
+                    FROM Friendship f1
+                    WHERE f1.addressee.id = :currentUserId AND f1.status = 'ACCEPTED'
+                    UNION
+                    SELECT f1.addressee.id
+                    FROM Friendship f1
+                    WHERE f1.requester.id = :currentUserId AND f1.status = 'ACCEPTED'
+                )
+                AND u.id IN (
+                    SELECT f2.requester.id
+                    FROM Friendship f2
+                    WHERE f2.addressee.id = :targetUserId AND f2.status = 'ACCEPTED'
+                    UNION
+                    SELECT f2.addressee.id
+                    FROM Friendship f2
+                    WHERE f2.requester.id = :targetUserId AND f2.status = 'ACCEPTED'
+                )
+            """)
+    List<User> findMutualFriends(@Param("currentUserId") Long currentUserId,
+                                 @Param("targetUserId") Long targetUserId);
+
+    @Query("""
+                SELECT COUNT(DISTINCT u.id)
+                FROM User u
+                WHERE u.id IN (
+                    SELECT f1.requester.id
+                    FROM Friendship f1
+                    WHERE f1.addressee.id = :currentUserId AND f1.status = 'ACCEPTED'
+                    UNION
+                    SELECT f1.addressee.id
+                    FROM Friendship f1
+                    WHERE f1.requester.id = :currentUserId AND f1.status = 'ACCEPTED'
+                )
+                AND u.id IN (
+                    SELECT f2.requester.id
+                    FROM Friendship f2
+                    WHERE f2.addressee.id = :targetUserId AND f2.status = 'ACCEPTED'
+                    UNION
+                    SELECT f2.addressee.id
+                    FROM Friendship f2
+                    WHERE f2.requester.id = :targetUserId AND f2.status = 'ACCEPTED'
+                )
+            """)
+    int countMutualFriends(@Param("currentUserId") Long currentUserId,
+                           @Param("targetUserId") Long targetUserId);
+
+
+    @Query("SELECT f FROM Friendship f WHERE ((f.requester = :a AND f.addressee = :b) OR (f.requester = :b AND f.addressee = :a))")
     Optional<Friendship> findFriendshipBetween(@Param("a") User a, @Param("b") User b);
 }

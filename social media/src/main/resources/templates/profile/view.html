@@ -135,6 +135,8 @@
                         <div class="friend-name" th:title="${friend.fullName}" th:text="${friend.fullName}">Friend
                             Name
                         </div>
+
+                        Bạn chung: <span th:text="${friend.getMutualFriends()}"></span>
                     </a>
                 </div>
             </div>

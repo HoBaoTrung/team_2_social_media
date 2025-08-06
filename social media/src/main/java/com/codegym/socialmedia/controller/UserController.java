@@ -5,6 +5,7 @@ import com.codegym.socialmedia.dto.UserDTO;
 import com.codegym.socialmedia.dto.UserRegistrationDto;
 import com.codegym.socialmedia.dto.UserPasswordDto;
 import com.codegym.socialmedia.dto.UserUpdateDto;
+import com.codegym.socialmedia.dto.friend.FriendDto;
 import com.codegym.socialmedia.general_interface.NormalRegister;
 import com.codegym.socialmedia.model.account.User;
 import com.codegym.socialmedia.model.account.UserPrivacySettings;
@@ -67,13 +68,13 @@ public class UserController {
 
         List<Status> posts = new ArrayList<>();
 
-        List<User> friends = friendshipService.getVisibleFriendList(viewedUser);
-        List<UserDTO> friendDTOs = friends.stream()
-                .map(UserDTO::new)
-                .collect(Collectors.toList());
+        List<FriendDto> friends = friendshipService.getVisibleFriendList(viewedUser);
+//        List<UserDTO> friendDTOs = friends.stream()
+//                .map(UserDTO::new)
+//                .collect(Collectors.toList());
 
         int friendCount = friendshipService.countFriends(viewedUser.getId());
-        int mutualFriendsCount = friendshipService.findMutualFriends(currentUser.getId(), viewedUser.getId()).size();
+        int mutualFriendsCount = friendshipService.countMutualFriends(currentUser.getId(), viewedUser.getId());
 
         model.addAttribute("canViewEmail", PrivacyUtils.canView(currentUser, viewedUser, privacy.getShowEmail(), isFriend));
         model.addAttribute("canViewPhone", PrivacyUtils.canView(currentUser, viewedUser, privacy.getShowPhone(), isFriend));
@@ -83,7 +84,7 @@ public class UserController {
         model.addAttribute("canSendMessage", PrivacyUtils.canView(currentUser, viewedUser, privacy.getAllowSendMessage(), isFriend));
         model.addAttribute("allowFriendRequests", privacy.isAllowFriendRequests());
 
-        model.addAttribute("friends", friendDTOs);
+        model.addAttribute("friends", friends);
         model.addAttribute("friendCount", friendCount);
         model.addAttribute("mutualFriendsCount", mutualFriendsCount);
         model.addAttribute("user", viewedUser);
