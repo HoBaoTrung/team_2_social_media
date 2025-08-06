@@ -22,18 +22,16 @@ public class SecurityConfig {
     }
 
     @Autowired
-    private CustomUserDetailsService userDetailsService;
-
-    @Autowired
     private CustomOAuth2UserService oauth2UserService;
 
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+
                 .headers(headers -> headers
                         .contentSecurityPolicy(csp -> csp
-                                        .policyDirectives("img-src * data: blob:;")
+                                .policyDirectives("img-src 'self' https://lh3.googleusercontent.com https://*.fbcdn.net https://res.cloudinary.com https://graph.facebook.com https://i.imgur.com https://secure.gravatar.com data: blob:;")
                         )
                 )
 

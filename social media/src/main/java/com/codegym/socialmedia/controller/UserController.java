@@ -8,6 +8,7 @@ import com.codegym.socialmedia.dto.UserUpdateDto;
 import com.codegym.socialmedia.general_interface.NormalRegister;
 import com.codegym.socialmedia.model.account.User;
 import com.codegym.socialmedia.model.account.UserPrivacySettings;
+import com.codegym.socialmedia.model.social_action.Friendship;
 import com.codegym.socialmedia.model.social_action.Status;
 import com.codegym.socialmedia.repository.UserPrivacySettingsRepository;
 import com.codegym.socialmedia.service.friend_ship.FriendshipService;
@@ -48,9 +49,19 @@ public class UserController {
                               Model model) {
         User viewedUser = userService.getUserByUsername(username);
         User currentUser = userService.getCurrentUser();
+        long currentUserId = currentUser.getId();
         boolean isOwner = currentUser.getId().equals(viewedUser.getId());
+        if(!isOwner){
+            Friendship friendship = friendshipService.findByUsers(currentUserId, viewedUser.getId());
+            if(friendship != null) {
+                model.addAttribute("isSender", currentUserId == friendship.getId().getRequesterId());
+                model.addAttribute("isReceiver", currentUserId == friendship.getId().getAddresseeId());
+            }
+        }
 
-        boolean isFriend = friendshipService.areFriends(viewedUser, currentUser);
+//        boolean isFriend = friendshipService.areFriends(viewedUser, currentUser);
+        Friendship.FriendshipStatus friendshipStatus = friendshipService.getFriendshipStatus(viewedUser, currentUser);
+        boolean isFriend = friendshipStatus == Friendship.FriendshipStatus.ACCEPTED;
 
         UserPrivacySettings privacy = viewedUser.getPrivacySettings();
 
@@ -61,19 +72,24 @@ public class UserController {
                 .map(UserDTO::new)
                 .collect(Collectors.toList());
 
-        long friendCount = friendshipService.countFriends(viewedUser.getId());
-
+        int friendCount = friendshipService.countFriends(viewedUser.getId());
+        int mutualFriendsCount = friendshipService.findMutualFriends(currentUser.getId(), viewedUser.getId()).size();
 
         model.addAttribute("canViewEmail", PrivacyUtils.canView(currentUser, viewedUser, privacy.getShowEmail(), isFriend));
         model.addAttribute("canViewPhone", PrivacyUtils.canView(currentUser, viewedUser, privacy.getShowPhone(), isFriend));
         model.addAttribute("canViewDob", PrivacyUtils.canView(currentUser, viewedUser, privacy.getShowDob(), isFriend));
         model.addAttribute("canViewBio", PrivacyUtils.canView(currentUser, viewedUser, privacy.getShowBio(), isFriend));
         model.addAttribute("canViewFriendList", PrivacyUtils.canView(currentUser, viewedUser, privacy.getShowFriendList(), isFriend));
+        model.addAttribute("canSendMessage", PrivacyUtils.canView(currentUser, viewedUser, privacy.getAllowSendMessage(), isFriend));
+        model.addAttribute("allowFriendRequests", privacy.isAllowFriendRequests());
 
         model.addAttribute("friends", friendDTOs);
         model.addAttribute("friendCount", friendCount);
+        model.addAttribute("mutualFriendsCount", mutualFriendsCount);
         model.addAttribute("user", viewedUser);
         model.addAttribute("isOwner", isOwner);
+        model.addAttribute("friendshipStatus", friendshipStatus.name());
+
         model.addAttribute("posts", posts);
         return "profile/view";
     }
@@ -250,9 +266,6 @@ public class UserController {
 
     @PostMapping("/setting/privacy")
     public String updatePrivacySettings(@ModelAttribute UserPrivacySettings dto, RedirectAttributes redirect) {
-//        User user = userService.getCurrentUser();
-//        UserPrivacySettings settings = user.getPrivacySettings();
-//        dto.setId(settings.getId());
         privacySettingsRepository.save(dto);
 
         redirect.addFlashAttribute("success", "Cập nhật quyền riêng tư thành công.");

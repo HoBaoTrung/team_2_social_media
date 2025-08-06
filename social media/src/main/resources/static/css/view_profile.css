@@ -11,32 +11,46 @@
     object-fit: cover;
 }
 
-.avatar-container {
-    position: absolute;
-    bottom: -60px;
-    left: 40px;
-    display: flex;
-    align-items: center;
-}
-
 .avatar {
-    width: 120px;
-    height: 120px;
+    width: 180px;
+    height: 180px;
     border-radius: 50%;
     border: 4px solid white;
     background-color: white;
 }
 
+.avatar-container {
+    position: absolute;
+    bottom: -60px;
+    left: 40px;
+    display: flex;
+    /*flex-direction: column;*/
+    align-items: flex-start;
+    /*align-items: center;*/
+    gap: 20px; /* khoảng cách giữa avatar và thông tin */
+}
+
+.user-info {
+    flex-direction: column;
+    justify-content: center;
+    margin-top: 20px;
+}
+
 .user-name {
     font-size: 24px;
     font-weight: bold;
-    margin-left: 20px;
-    margin-top: 18%;
+
 }
 
-.profile-container {
+.button-group {
     display: flex;
-    gap: 20px;
+    flex-wrap: wrap;
+    gap:10px
+}
+
+.user-name, .button-group {
+    margin-top: auto; /* Đẩy các phần tử này xuống dưới nếu cần thêm khoảng cách */
+    margin-bottom: 12px;
 }
 
 /* Cột bên trái chứa thông tin cá nhân + bạn bè */
@@ -77,11 +91,11 @@
 
 /* === LAYOUT 2 CỘT === */
 .profile-page-container {
-    display: flex;
     gap: 20px;
     padding: 30px 40px;
     align-items: flex-start;
 }
+
 
 /* === USER INFO (LEFT) === */
 .profile-content {
@@ -240,3 +254,35 @@
     }
 }
 
+.button {
+    padding: 5px 25px;
+    border-radius: 20px;
+    /* font-weight: bold; */
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    /* transition: background-color 0.3s; */
+    /* width: 150px; */
+     box-sizing: border-box;
+}
+
+
+.add-friend {
+    background-color: #1877f2;
+    color: white;
+    border: none;
+}
+
+.add-friend:hover {
+    background-color: #166fe5;
+}
+
+.send-message {
+    background-color: white;
+    color: black;
+    border: 1px solid #dddfe2;
+}
+
+.send-message:hover {
+    background-color: #f2f2f2;
+}

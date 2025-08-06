@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface FriendshipRepository extends JpaRepository<Friendship, FriendshipId> {
+    Optional<Friendship> findByRequesterIdAndAddresseeId(Long requesterId, Long addresseeId);
 
     @Query("""
             SELECT u FROM User u
@@ -42,8 +43,11 @@ public interface FriendshipRepository extends JpaRepository<Friendship, Friendsh
                 WHERE f.status = 'ACCEPTED'
                   AND (f.requester.id = :userId OR f.addressee.id = :userId)
             """)
-    long countFriendsByUserId(@Param("userId") Long userId);
+    int countFriendsByUserId(@Param("userId") Long userId);
 
-    @Query("SELECT f FROM Friendship f WHERE ((f.requester = :a AND f.addressee = :b) OR (f.requester = :b AND f.addressee = :a)) AND f.status = 'ACCEPTED'")
-    Optional<Friendship> findAcceptedFriendshipBetween(@Param("a") User a, @Param("b") User b);
+//    @Query("SELECT f FROM Friendship f WHERE ((f.requester = :a AND f.addressee = :b) OR (f.requester = :b AND f.addressee = :a)) AND f.status = 'ACCEPTED'")
+//    Optional<Friendship> findAcceptedFriendshipBetween(@Param("a") User a, @Param("b") User b);
+
+        @Query("SELECT f FROM Friendship f WHERE ((f.requester = :a AND f.addressee = :b) OR (f.requester = :b AND f.addressee = :a))")
+    Optional<Friendship> findFriendshipBetween(@Param("a") User a, @Param("b") User b);
 }
