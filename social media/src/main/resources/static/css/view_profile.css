@@ -96,16 +96,25 @@
     align-items: flex-start;
 }
 
-
-/* === USER INFO (LEFT) === */
-.profile-content {
-    flex: 1;
-    width: 100%;
+.card-box {
     background-color: white;
     padding: 20px;
     border-radius: 8px;
     box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
+
+/* === USER INFO (LEFT) === */
+.profile-content {
+    flex: 1;
+    width: 100%;
+}
+
+/* === POSTS (RIGHT) === */
+.posts-container {
+    flex: 2;
+}
+
+
 
 .info-item {
     margin-bottom: 15px;
@@ -125,14 +134,6 @@
     text-decoration: none;
 }
 
-/* === POSTS (RIGHT) === */
-.posts-container {
-    flex: 2;
-    background-color: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-}
 
 .post-card {
     background-color: #fff;
@@ -178,60 +179,6 @@
 }
 
 
-/* Container tổng chứa danh sách bạn bè */
-.friend-container {
-    display: grid;
-    /*grid-template-columns: repeat(3, 1fr);*/
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 12px;
-    padding: 10px 0;
-}
-
-/* Mỗi card bạn bè */
-.friend-card {
-    /*width: 160px;*/
-    background-color: #e0e0e0; /* xám nhẹ */
-    border-radius: 8px;
-    padding: 12px 8px;
-    text-align: center;
-    transition: all 0.3s ease;
-    color: #111; /* chữ đen */
-    text-decoration: none;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-/* Hover: nền đen chữ trắng */
-.friend-card:hover {
-    background-color: #000;
-    color: #fff;
-    transform: translateY(-2px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-}
-
-/* Ảnh đại diện */
-.friend-avatar {
-    width: 70px;
-    height: 70px;
-    object-fit: cover;
-    border-radius: 50%;
-    margin-bottom: 8px;
-    border: 2px solid #ccc;
-}
-
-/* Tên bạn bè */
-.friend-name {
-    font-size: 15px;
-    font-weight: 500;
-    margin-top: 10px;
-    white-space: nowrap;        /* Không xuống dòng */
-    overflow: hidden;           /* Ẩn phần tràn */
-    text-overflow: ellipsis;    /* Hiện "..." nếu tràn */
-    width: 100%;
-    text-align: center;
-}
-
-
 /* Responsive: mobile vẫn đẹp */
 @media (max-width: 768px) {
     .friend-container {
@@ -254,35 +201,32 @@
     }
 }
 
-.button {
+button {
     padding: 5px 25px;
     border-radius: 20px;
-    /* font-weight: bold; */
     text-align: center;
     text-decoration: none;
     cursor: pointer;
-    /* transition: background-color 0.3s; */
-    /* width: 150px; */
      box-sizing: border-box;
 }
 
 
-.add-friend {
-    background-color: #1877f2;
-    color: white;
-    border: none;
-}
+/*.add-friend {*/
+/*    background-color: #1877f2;*/
+/*    color: white;*/
+/*    border: none;*/
+/*}*/
 
-.add-friend:hover {
-    background-color: #166fe5;
-}
+/*.add-friend:hover {*/
+/*    background-color: #166fe5;*/
+/*}*/
 
-.send-message {
-    background-color: white;
-    color: black;
-    border: 1px solid #dddfe2;
-}
+/*.send-message {*/
+/*    background-color: white;*/
+/*    color: black;*/
+/*    border: 1px solid #dddfe2;*/
+/*}*/
 
-.send-message:hover {
-    background-color: #f2f2f2;
-}
+/*.send-message:hover {*/
+/*    background-color: #f2f2f2;*/
+/*}*/

@@ -3,6 +3,8 @@ package com.codegym.socialmedia.repository;
 import com.codegym.socialmedia.model.account.User;
 import com.codegym.socialmedia.model.social_action.Friendship;
 import com.codegym.socialmedia.model.social_action.FriendshipId;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -12,6 +14,49 @@ import java.util.Optional;
 
 public interface FriendshipRepository extends JpaRepository<Friendship, FriendshipId> {
     Optional<Friendship> findByRequesterIdAndAddresseeId(Long requesterId, Long addresseeId);
+
+    //  Lấy danh sách User chưa kết bạn (không có Friendship hoặc status != ACCEPTED)
+    @Query("""
+        SELECT u
+        FROM User u
+        WHERE u.id != :currentUserId
+        AND u.id NOT IN (
+            SELECT f.requester.id
+            FROM Friendship f
+            WHERE f.addressee.id = :currentUserId
+            UNION
+            SELECT f.addressee.id
+            FROM Friendship f
+            WHERE f.requester.id = :currentUserId
+        )
+    """)
+    Page<User> findNonFriends(@Param("currentUserId") Long currentUserId, Pageable pageable);
+
+
+    //  Lấy danh sách User mà currentUserId đã gửi lời mời kết bạn (PENDING, currentUserId là requester)
+    @Query("""
+        SELECT u
+        FROM User u
+        WHERE u.id IN (
+            SELECT f.addressee.id
+            FROM Friendship f
+            WHERE f.requester.id = :currentUserId AND f.status = 'PENDING'
+        )
+    """)
+    Page<User> findSentFriendRequests(@Param("currentUserId") Long currentUserId, Pageable pageable);
+
+    //  Lấy danh sách User đã gửi lời mời kết bạn đến currentUserId (PENDING, currentUserId là addressee)
+    @Query("""
+        SELECT u
+        FROM User u
+        WHERE u.id IN (
+            SELECT f.requester.id
+            FROM Friendship f
+            WHERE f.addressee.id = :currentUserId AND f.status = 'PENDING'
+        )
+    """)
+    Page<User> findReceivedFriendRequests(@Param("currentUserId") Long currentUserId, Pageable pageable);
+
 
     @Query("""
             SELECT u FROM User u
@@ -27,8 +72,8 @@ public interface FriendshipRepository extends JpaRepository<Friendship, Friendsh
                   AND f.addressee.id <> :viewerId
             )
             """)
-    List<User> findFriendsOfUserExcludingViewer(@Param("targetUserId") Long targetUserId,
-                                                @Param("viewerId") Long viewerId);
+    Page<User> findFriendsOfUserExcludingViewer(@Param("targetUserId") Long targetUserId,
+                                                @Param("viewerId") Long viewerId, Pageable pageable);
 
     @Query("""
                 SELECT f FROM Friendship f
@@ -68,8 +113,9 @@ public interface FriendshipRepository extends JpaRepository<Friendship, Friendsh
                     WHERE f2.requester.id = :targetUserId AND f2.status = 'ACCEPTED'
                 )
             """)
-    List<User> findMutualFriends(@Param("currentUserId") Long currentUserId,
-                                 @Param("targetUserId") Long targetUserId);
+    Page<User> findMutualFriends(@Param("currentUserId") Long currentUserId,
+                                 @Param("targetUserId") Long targetUserId
+                                ,Pageable pageable);
 
     @Query("""
                 SELECT COUNT(DISTINCT u.id)

@@ -16,6 +16,7 @@ import com.codegym.socialmedia.service.friend_ship.FriendshipService;
 import com.codegym.socialmedia.service.user.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -60,7 +61,6 @@ public class UserController {
             }
         }
 
-//        boolean isFriend = friendshipService.areFriends(viewedUser, currentUser);
         Friendship.FriendshipStatus friendshipStatus = friendshipService.getFriendshipStatus(viewedUser, currentUser);
         boolean isFriend = friendshipStatus == Friendship.FriendshipStatus.ACCEPTED;
 
@@ -68,10 +68,7 @@ public class UserController {
 
         List<Status> posts = new ArrayList<>();
 
-        List<FriendDto> friends = friendshipService.getVisibleFriendList(viewedUser);
-//        List<UserDTO> friendDTOs = friends.stream()
-//                .map(UserDTO::new)
-//                .collect(Collectors.toList());
+        Page<FriendDto> friends = friendshipService.getVisibleFriendList(viewedUser, 0 ,9);
 
         int friendCount = friendshipService.countFriends(viewedUser.getId());
         int mutualFriendsCount = friendshipService.countMutualFriends(currentUser.getId(), viewedUser.getId());
@@ -84,16 +81,19 @@ public class UserController {
         model.addAttribute("canSendMessage", PrivacyUtils.canView(currentUser, viewedUser, privacy.getAllowSendMessage(), isFriend));
         model.addAttribute("allowFriendRequests", privacy.isAllowFriendRequests());
 
-        model.addAttribute("friends", friends);
+        model.addAttribute("friends", friends.getContent());
         model.addAttribute("friendCount", friendCount);
         model.addAttribute("mutualFriendsCount", mutualFriendsCount);
         model.addAttribute("user", viewedUser);
         model.addAttribute("isOwner", isOwner);
         model.addAttribute("friendshipStatus", friendshipStatus.name());
+        model.addAttribute("targetUserId", viewedUser.getId());
 
         model.addAttribute("posts", posts);
         return "profile/view";
     }
+
+
 
 
     @GetMapping("/")

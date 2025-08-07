@@ -3,6 +3,7 @@
 <head>
     <title th:text="${user.firstName + ' ' + user.lastName + ' | Hồ sơ cá nhân'}">Trang cá nhân</title>
     <link rel="stylesheet" th:href="@{/css/view_profile.css}">
+    <link rel="stylesheet" th:href="@{/css/friend_card.css}">
     <th:block th:replace="~{fragments/commonHead :: commonHead}"></th:block>
 </head>
 <body>
@@ -24,68 +25,30 @@
              th:src="@{/images/default-avatar.jpg}" alt="Avatar">
 
         <div class="user-name" th:text="${user.firstName + ' ' + user.lastName}">Tên người dùng</div>
-
         <div class="button-group" th:if="${!isOwner}">
-            <div id="acceptedBtnGroup" th:classappend="${friendshipStatus != 'ACCEPTED'} ? 'd-none'" class="dropdown">
-                <button class="btn btn-success dropdown-toggle" type="button" id="friendDropdownBtn"
-                        data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="fa-solid fa-user-check"></i> Bạn bè
-                </button>
-                <ul class="dropdown-menu" aria-labelledby="friendDropdownBtn">
-                    <li>
-                        <button class="btn btn-danger" id="deleteFriendBtn" th:data-username="${user.username}">
-                            <i class="fa-solid fa-user-xmark"></i> Hủy kết bạn
-                        </button>
-                    </li>
-                </ul>
-            </div>
-
-
-            <div id="pendingBtnGroup"
-                 th:classappend="${friendshipStatus != 'PENDING'} ? 'd-none'">
-                <div th:if="${isSender}">
-                    <button class="btn btn-warning" id="cancelFriendRequestBtn" th:data-username="${user.username}">
-                        <i class="fa-solid fa-user-minus"></i> Hủy lời mời
-                    </button>
-                </div>
-                <div th:if="${isReceiver}">
-                    <button class="btn btn-success" id="acceptFriendBtn" th:data-username="${user.username}">
-                        <i class="fa-solid fa-user-check"></i> Chấp nhận
-                    </button>
-                    <button class="btn btn-danger" id="reflectFriendBtn" th:data-username="${user.username}">
-                        <i class="fa-solid fa-user-xmark"></i> Từ chối
-                    </button>
-                </div>
-            </div>
-
-            <div id="noneBtnGroup"
-                 th:classappend="${friendshipStatus != 'NONE' or !allowFriendRequests} ? 'd-none'">
-                <button class="btn btn-success" id="addFriendBtn" th:data-username="${user.username}">
-                    <i class="fa-solid fa-user-plus"></i> Thêm bạn
-                </button>
-            </div>
-            <button th:if="${canSendMessage}" class="btn btn-primary"><i class="fa-solid fa-message"></i> Nhắn tin
+            <div th:insert="fragments/friend-button-group :: buttonGroup(${user.username}, ${friendshipStatus}, ${isSender}, ${isReceiver}, ${allowFriendRequests},false)"></div>
+            <button th:if="${canSendMessage}" class="btn btn-primary ">
+                <i class="fa-solid fa-message"></i> Nhắn tin
             </button>
         </div>
-
     </div>
 </div>
 
 
 <!-- NAVIGATION TABS -->
 <div class="profile-tabs">
-    <a href="#" class="tab active">Giới thiệu</a>
-    <a href="#" class="tab">Bài viết</a>
-    <a href="#" class="tab">Ảnh</a>
-    <a href="#" class="tab">Bạn bè</a>
+    <a data-target="postsSection" th:href="@{'/profile/' + ${user.username}}" class="tab active">Bài viết</a>
+    <a data-target="photosSection" href="#" class="tab">Ảnh</a>
+    <a data-target="friendsSection" href="#" class="tab" th:if="${canViewFriendList}">Bạn bè</a>
 </div>
 
 <!-- MAIN CONTENT: 2 CỘT -->
-<div class="profile-page-container d-flex">
+<!--    Khi nhấn nút Bài viết-->
+<div id="postsSection" class="profile-page-container d-flex profile-section">
 
     <!-- CỘT TRÁI: Thông tin người dùng -->
     <div class="profile-left-column">
-        <div class="profile-content">
+        <div class="card-box profile-content">
             <h2>Thông tin cá nhân</h2>
             <div class="info-item" th:if="${canViewEmail}">
                 <strong>Email:</strong> <span th:text="${user.email}">email@example.com</span>
@@ -107,7 +70,7 @@
             </div>
         </div>
 
-        <div class="profile-content" th:if="${canViewFriendList}">
+        <div class="card-box profile-content" th:if="${canViewFriendList}">
             <h2>Thông tin bạn bè</h2>
             <div>
                 Bạn bè: <span th:text="${friendCount}"></span>
@@ -115,29 +78,11 @@
             <div th:if="${!isOwner and mutualFriendsCount>0}">
                 Bạn chung: <span th:text="${mutualFriendsCount}"></span>
             </div>
-            <div class="friend-container">
-                <div th:each="friend : ${friends}">
-                    <a th:href="@{/profile/{username}(username=${friend.username})}"
-                       class="friend-card text-decoration-none">
-                        <!-- Avatar: nếu có -->
-                        <img th:if="${friend.avatarUrl != null and !#strings.isEmpty(friend.avatarUrl)}"
-                             th:src="@{${friend.avatarUrl}}"
-                             class="friend-avatar"
-                             alt="Avatar">
+            <div class="row">
+                <div class="col-md-4" th:each="friend : ${friends}">
+                    <th:block
+                            th:insert="~{fragments/friendCard :: friendCard(friend=${friend}, nameClass='name-profile')}"></th:block>
 
-                        <!-- Avatar mặc định -->
-                        <img th:unless="${friend.avatarUrl != null and !#strings.isEmpty(friend.avatarUrl)}"
-                             th:src="@{/images/default-avatar.jpg}"
-                             class="friend-avatar"
-                             alt="Avatar mặc định">
-
-                        <!-- Tên người bạn -->
-                        <div class="friend-name" th:title="${friend.fullName}" th:text="${friend.fullName}">Friend
-                            Name
-                        </div>
-
-                        Bạn chung: <span th:text="${friend.getMutualFriends()}"></span>
-                    </a>
                 </div>
             </div>
         </div>
@@ -145,7 +90,7 @@
     </div>
 
     <!-- CỘT PHẢI: Bài viết -->
-    <div class="posts-container">
+    <div class="card-box posts-container">
         <h2>Bài viết</h2>
 
         <div th:if="${posts.isEmpty()}">
@@ -159,7 +104,8 @@
                      alt="Avatar">
 
                 <div class="post-user-info">
-                    <div class="post-username" th:text="${user.firstName + ' ' + user.lastName}">Tên người dùng</div>
+                    <div class="post-username" th:text="${user.firstName + ' ' + user.lastName}">Tên người dùng
+                    </div>
                     <div class="post-time" th:text="${#temporals.format(post.createdAt, 'dd/MM/yyyy HH:mm')}">Ngày
                         đăng
                     </div>
@@ -173,104 +119,58 @@
     </div>
 </div>
 
+
+<!--    Khi nhấn nút Bạn bè-->
+<div id="friendsSection" class="card-box profile-section d-none " style="margin: 30px 40px;">
+    <h2>Thông tin bạn bè</h2>
+    <div>
+        Bạn bè: <span th:text="${friendCount}"></span>
+    </div>
+    <div th:if="${!isOwner and mutualFriendsCount>0}">
+        Bạn chung: <span th:text="${mutualFriendsCount}"></span>
+    </div>
+    <div class="row" id="friends-list">
+        <div class="col-md-6" th:each="friend : ${friends}">
+            <th:block
+                    th:insert="~{fragments/friendCard :: friendCard(friend=${friend}, nameClass='name-list-friend')}">
+            </th:block>
+        </div>
+    </div>
+
+    <div class="loading" id="loading">
+        <i class="fas fa-spinner fa-spin"></i> Đang tải...
+    </div>
+
+</div>
+
+<script th:src="@{/js/load-friend.js}"></script>
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const addFriendBtn = document.getElementById("addFriendBtn");
-        const cancelFriendRequestBtn = document.getElementById("cancelFriendRequestBtn");
-        const reflectFriendBtn = document.getElementById("reflectFriendBtn");
-        const deleteFriendBtn = document.getElementById("deleteFriendBtn");
-        const acceptFriendBtn = document.getElementById("acceptFriendBtn");
-        const noneBtnGroup = document.getElementById("noneBtnGroup");
-        const pendingBtnGroup = document.getElementById("pendingBtnGroup");
-        const acceptedBtnGroup = document.getElementById("acceptedBtnGroup");
+    document.addEventListener('DOMContentLoaded', function () {
+        const tabs = document.querySelectorAll('.profile-tabs .tab');
+        const sections = document.querySelectorAll('.profile-section');
 
-        function toggleButtons(showGroup) {
-            [noneBtnGroup, pendingBtnGroup, acceptedBtnGroup].forEach(group => {
-                if (group) group.classList.add("d-none");
+        tabs.forEach(tab => {
+            tab.addEventListener('click', function (e) {
+                e.preventDefault();
+
+                // Bỏ active tab cũ
+                tabs.forEach(t => t.classList.remove('active'));
+                // Ẩn tất cả sections
+                sections.forEach(section => section.classList.add('d-none'));
+
+                // Thêm active cho tab đang chọn
+                tab.classList.add('active');
+                // Hiện section tương ứng
+                const targetId = tab.getAttribute('data-target');
+                document.getElementById(targetId).classList.remove('d-none');
             });
-            if (showGroup) showGroup.classList.remove("d-none");
-        }
-
-        if (addFriendBtn) {
-            addFriendBtn.addEventListener("click", function () {
-                const username = this.getAttribute("data-username");
-                fetch('/addFriend', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    },
-                    body: new URLSearchParams({user_name: username})
-                })
-                    .then(response => {
-                        if (response.ok) {
-                            toggleButtons(pendingBtnGroup); // Hiện Hủy lời mời
-                        } else {
-                            alert("Có lỗi xảy ra khi gửi lời mời!");
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Lỗi:', error);
-                        alert("Không thể gửi lời mời.");
-                    });
-            });
-        }
-
-        if (acceptFriendBtn) {
-            acceptFriendBtn.addEventListener("click", function () {
-                const username = this.getAttribute("data-username");
-
-                fetch('/acceptFriend', {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    },
-                    body: new URLSearchParams({
-                        user_name: username
-                    })
-                })
-                    .then(response => {
-                        if (response.ok) {
-                            // ✅ Cập nhật UI sau khi chấp nhận
-                            toggleButtons(acceptedBtnGroup);
-                        } else {
-                            alert("Có lỗi xảy ra khi chấp nhận lời mời!");
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Lỗi:', error);
-                        alert("Không thể chấp nhận.");
-                    });
-            });
-        }
-
-        // Gộp logic hủy / từ chối / xóa kết bạn
-        [cancelFriendRequestBtn, reflectFriendBtn, deleteFriendBtn].forEach(btn => {
-            if (btn) {
-                btn.addEventListener("click", function () {
-                    const username = this.getAttribute("data-username");
-                    fetch('/deleteFriend', {
-                        method: 'DELETE',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded'
-                        },
-                        body: new URLSearchParams({user_name: username})
-                    })
-                        .then(response => {
-                            if (response.ok) {
-                                toggleButtons(noneBtnGroup); // Hiện "Thêm bạn"
-                            } else {
-                                alert("Có lỗi xảy ra khi XÓA BẠN!");
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Lỗi:', error);
-                            alert("Không thể xóa.");
-                        });
-                });
-            }
         });
+
+        // Tùy chọn: mặc định hiển thị "Bạn bè" (nếu bạn muốn)
+        // document.querySelector('.tab[data-target="friendsSection"]').click();
     });
 </script>
 
+<script th:src="@{/js/friend-button.js}"></script>
 </body>
 </html>

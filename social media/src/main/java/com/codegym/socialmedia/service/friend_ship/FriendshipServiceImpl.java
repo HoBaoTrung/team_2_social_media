@@ -8,8 +8,11 @@ import com.codegym.socialmedia.model.social_action.FriendshipId;
 import com.codegym.socialmedia.repository.FriendshipRepository;
 import com.codegym.socialmedia.repository.IUserRepository;
 import com.codegym.socialmedia.service.user.UserService;
-import com.codegym.socialmedia.service.user.UserServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -17,6 +20,7 @@ import java.util.stream.Collectors;
 
 @Service
 public class FriendshipServiceImpl implements FriendshipService {
+
     @Autowired
     private FriendshipRepository friendshipRepository;
 
@@ -25,12 +29,14 @@ public class FriendshipServiceImpl implements FriendshipService {
 
     @Autowired
     private UserService userService;
-    @Autowired
-    private UserServiceImpl userServiceImpl;
 
     @Override
     public boolean addFriendship(User user) {
         User currentUser = userService.getCurrentUser();
+        if (currentUser == null || user == null || currentUser.getId().equals(user.getId())) {
+            return false;
+        }
+
         FriendshipId friendshipId = new FriendshipId();
         friendshipId.setRequesterId(currentUser.getId());
         friendshipId.setAddresseeId(user.getId());
@@ -40,6 +46,7 @@ public class FriendshipServiceImpl implements FriendshipService {
         newFriendship.setAddressee(user);
         newFriendship.setRequester(currentUser);
         newFriendship.setStatus(Friendship.FriendshipStatus.PENDING);
+
         try {
             friendshipRepository.save(newFriendship);
             return true;
@@ -51,24 +58,40 @@ public class FriendshipServiceImpl implements FriendshipService {
 
     @Override
     public boolean acceptFriendship(User user) {
-        Friendship f = findByUsers(user.getId(), userService.getCurrentUser().getId());
-        f.setStatus(Friendship.FriendshipStatus.ACCEPTED);
+        User currentUser = userService.getCurrentUser();
+        if (currentUser == null || user == null) {
+            return false;
+        }
+
+        Friendship friendship = findByUsers(user.getId(), currentUser.getId());
+        if (friendship == null || friendship.getStatus() != Friendship.FriendshipStatus.PENDING) {
+            return false;
+        }
+
+        friendship.setStatus(Friendship.FriendshipStatus.ACCEPTED);
         try {
-            friendshipRepository.save(f);
+            friendshipRepository.save(friendship);
             return true;
         } catch (Exception e) {
             e.printStackTrace();
             return false;
         }
-
     }
-
 
     @Override
     public boolean deleteFriendship(User user) {
-        Friendship f = findByUsers(user.getId(), userService.getCurrentUser().getId());
+        User currentUser = userService.getCurrentUser();
+        if (currentUser == null || user == null) {
+            return false;
+        }
+
+        Friendship friendship = findByUsers(user.getId(), currentUser.getId());
+        if (friendship == null) {
+            return false;
+        }
+
         try {
-            friendshipRepository.delete(f);
+            friendshipRepository.delete(friendship);
             return true;
         } catch (Exception e) {
             e.printStackTrace();
@@ -77,54 +100,62 @@ public class FriendshipServiceImpl implements FriendshipService {
     }
 
     @Override
-    public int countMutualFriends(Long userAId, Long userBId){
-       return friendshipRepository.countMutualFriends(userAId, userBId);
+    public int countMutualFriends(Long userAId, Long userBId) {
+        return friendshipRepository.countMutualFriends(userAId, userBId);
     }
 
     @Override
-    public List<FriendDto> getVisibleFriendList(User targetUser) {
-        UserPrivacySettings.PrivacyLevel level = targetUser.getPrivacySettings().getShowFriendList();
+    public Page<FriendDto> getVisibleFriendList(User targetUser, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
         User viewer = userService.getCurrentUser();
-        boolean isOwner = viewer.getId().equals(targetUser.getId());
-
-        boolean isFriend = getFriendshipStatus(targetUser, viewer) == Friendship.FriendshipStatus.ACCEPTED;
-        if (level == UserPrivacySettings.PrivacyLevel.PRIVATE && isFriend) {
-            return findMutualFriends(targetUser.getId(), viewer.getId());
+        if (viewer == null || targetUser == null) {
+            return new PageImpl<>(Collections.emptyList(), pageable, 0);
         }
-        // PRIVATE: chỉ chính chủ được xem
-        if (level == UserPrivacySettings.PrivacyLevel.PRIVATE && !isOwner) {
-            return Collections.emptyList();
+
+        boolean isOwner = viewer.getId().equals(targetUser.getId());
+        UserPrivacySettings.PrivacyLevel level = targetUser.getPrivacySettings().getShowFriendList();
+        boolean isFriend = getFriendshipStatus(targetUser, viewer) == Friendship.FriendshipStatus.ACCEPTED;
+
+        // PRIVATE: chỉ chính chủ được xem hoặc bạn bè xem bạn chung
+        if (level == UserPrivacySettings.PrivacyLevel.PRIVATE) {
+            if (isOwner) {
+                return getFriendsPage(targetUser.getId(), viewer.getId(), pageable);
+            } else if (isFriend) {
+                return findMutualFriends(targetUser.getId(), viewer.getId(), page, size);
+            }
+            return new PageImpl<>(Collections.emptyList(), pageable, 0);
         }
 
         // FRIENDS: chỉ bạn bè hoặc chính chủ được xem
         if (level == UserPrivacySettings.PrivacyLevel.FRIENDS && !(isFriend || isOwner)) {
-            return Collections.emptyList();
+            return new PageImpl<>(Collections.emptyList(), pageable, 0);
         }
 
+        // PUBLIC hoặc đủ điều kiện: lấy danh sách bạn bè
+        return getFriendsPage(targetUser.getId(), viewer.getId(), pageable);
+    }
 
-        // PUBLIC hoặc đủ điều kiện ở trên: lấy danh sách bạn bè (loại bỏ viewer khỏi danh sách)
-        List<User> allFriends = friendshipRepository.findFriendsOfUserExcludingViewer(targetUser.getId(), viewer.getId());
+    private Page<FriendDto> getFriendsPage(Long targetUserId, Long viewerId, Pageable pageable) {
+        Page<User> friendsPage = friendshipRepository.findFriendsOfUserExcludingViewer(targetUserId,viewerId,pageable);
+        boolean isFriend = getFriendshipStatus(userRepository.findById(targetUserId).orElse(null),
+                userRepository.findById(viewerId).orElse(null)) == Friendship.FriendshipStatus.ACCEPTED;
 
-        // Nếu là PUBLIC và viewer là bạn → đưa bạn chung lên đầu
-        if ((level == UserPrivacySettings.PrivacyLevel.FRIENDS ||
-                level == UserPrivacySettings.PrivacyLevel.PUBLIC) && isFriend) {
-            Set<Long> viewerFriends = findFriendIdsOfUser(viewer.getId());
-            allFriends.sort((u1, u2) -> {
-                boolean u1IsMutual = viewerFriends.contains(u1.getId());
-                boolean u2IsMutual = viewerFriends.contains(u2.getId());
+        List<FriendDto> friendDtos = friendsPage.getContent().stream()
+                .filter(user -> !user.getId().equals(viewerId)) // Loại bỏ viewer khỏi danh sách
+                .map(user -> new FriendDto(user, countMutualFriends(user.getId(), viewerId)))
+                .collect(Collectors.toList());
 
-                if (u1IsMutual && !u2IsMutual) return -1;
-                if (!u1IsMutual && u2IsMutual) return 1;
-                return 0;
+        // Sắp xếp bạn chung lên đầu nếu viewer là bạn
+        if (isFriend) {
+            Set<Long> viewerFriends = findFriendIdsOfUser(viewerId);
+            friendDtos.sort((dto1, dto2) -> {
+                boolean u1IsMutual = viewerFriends.contains(dto1.getId());
+                boolean u2IsMutual = viewerFriends.contains(dto2.getId());
+                return u1IsMutual && !u2IsMutual ? -1 : (u2IsMutual && !u1IsMutual ? 1 : 0);
             });
         }
 
-        List<FriendDto> result = new ArrayList<>();
-        for (User user : allFriends) {
-            int mutualCount = countMutualFriends(user.getId(), viewer.getId());
-            result.add(new FriendDto(user, mutualCount));
-        }
-        return result;
+        return new PageImpl<>(friendDtos, pageable, friendsPage.getTotalElements());
     }
 
     @Override
@@ -136,71 +167,75 @@ public class FriendshipServiceImpl implements FriendshipService {
 
     public Set<Long> findFriendIdsOfUser(Long userId) {
         List<Friendship> friendships = friendshipRepository.findAllFriendshipsOfUser(userId);
-
         return friendships.stream()
-                .map(f -> {
-                    Long requesterId = f.getRequester().getId();
-                    Long addresseeId = f.getAddressee().getId();
-                    return requesterId.equals(userId) ? addresseeId : requesterId;
-                })
+                .map(f -> f.getRequester().getId().equals(userId) ? f.getAddressee().getId() : f.getRequester().getId())
                 .collect(Collectors.toSet());
     }
 
     @Override
-    public List<FriendDto> findMutualFriends(Long userAId, Long userBId) {
-        List<User> list = friendshipRepository.findMutualFriends(userAId, userBId);
-        List<FriendDto> result = new ArrayList<>();
-        for (User user : list) {
-            int mutualCount = countMutualFriends(userAId, userBId);
-            result.add(new FriendDto(user, mutualCount));
-        }
-        return result;
-    }
+    public Page<FriendDto> findMutualFriends(Long userAId, Long userBId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<User> mutualFriendsPage = friendshipRepository.findMutualFriends(userAId, userBId, pageable);
 
+        List<FriendDto> friendDtos = mutualFriendsPage.getContent().stream()
+                .map(user -> new FriendDto(user, countMutualFriends(userAId, userBId)))
+                .collect(Collectors.toList());
+
+        return new PageImpl<>(friendDtos, pageable, mutualFriendsPage.getTotalElements());
+    }
 
     @Override
     public int countFriends(Long userId) {
         return friendshipRepository.countFriendsByUserId(userId);
     }
 
-//    public boolean areFriends(User user1, User user2) {
-//        if (user1 == null || user2 == null) return false;
-//        return friendshipRepository.findAcceptedFriendshipBetween(user1, user2).isPresent();
-//    }
-
+    @Override
     public Friendship.FriendshipStatus getFriendshipStatus(User user1, User user2) {
         if (user1 == null || user2 == null || user1.equals(user2)) {
-            return Friendship.FriendshipStatus.NONE; // Không so sánh với chính mình hoặc null
+            return Friendship.FriendshipStatus.NONE;
         }
 
         Optional<Friendship> optional = friendshipRepository.findFriendshipBetween(user1, user2);
-
         if (!optional.isPresent()) {
             return Friendship.FriendshipStatus.NONE;
         }
 
-        Friendship friendship = optional.get();
-        Friendship.FriendshipStatus status;
-
-        switch (friendship.getStatus()) {
-            case PENDING:
-                if (friendship.getRequester().equals(user1)) {
-                    // user1 đã gửi yêu cầu
-                    status = Friendship.FriendshipStatus.PENDING;
-                } else {
-                    // user1 là người nhận, có thể chấp nhận
-                    status = Friendship.FriendshipStatus.PENDING;
-                }
-                break;
-            case ACCEPTED:
-                status = Friendship.FriendshipStatus.ACCEPTED;
-                break;
-            default:
-                status = Friendship.FriendshipStatus.NONE;
-                break;
-        }
-
-        return status;
+        return optional.get().getStatus();
     }
 
+    @Override
+    public Page<FriendDto> findNonFriends(Long currentUserId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<User> nonFriendsPage = friendshipRepository.findNonFriends(currentUserId, pageable);
+
+        List<FriendDto> friendDtos = nonFriendsPage.getContent().stream()
+                .map(user -> new FriendDto(user, countMutualFriends(currentUserId, user.getId())))
+                .collect(Collectors.toList());
+
+        return new PageImpl<>(friendDtos, pageable, nonFriendsPage.getTotalElements());
+    }
+
+    @Override
+    public Page<FriendDto> findSentFriendRequests(Long currentUserId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<User> sentRequestsPage = friendshipRepository.findSentFriendRequests(currentUserId, pageable);
+
+        List<FriendDto> friendDtos = sentRequestsPage.getContent().stream()
+                .map(user -> new FriendDto(user, countMutualFriends(currentUserId, user.getId())))
+                .collect(Collectors.toList());
+
+        return new PageImpl<>(friendDtos, pageable, sentRequestsPage.getTotalElements());
+    }
+
+    @Override
+    public Page<FriendDto> findReceivedFriendRequests(Long currentUserId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<User> receivedRequestsPage = friendshipRepository.findReceivedFriendRequests(currentUserId, pageable);
+
+        List<FriendDto> friendDtos = receivedRequestsPage.getContent().stream()
+                .map(user -> new FriendDto(user, countMutualFriends(currentUserId, user.getId())))
+                .collect(Collectors.toList());
+
+        return new PageImpl<>(friendDtos, pageable, receivedRequestsPage.getTotalElements());
+    }
 }
