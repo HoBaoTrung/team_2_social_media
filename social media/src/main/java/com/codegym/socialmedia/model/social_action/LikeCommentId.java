@@ -1,3 +1,5 @@
+
+// LikeCommentId.java - Fixed version
 package com.codegym.socialmedia.model.social_action;
 
 import jakarta.persistence.Embeddable;
@@ -12,6 +14,7 @@ import java.io.Serializable;
 @NoArgsConstructor
 @AllArgsConstructor
 public class LikeCommentId implements Serializable {
-    private Integer userId;
-    private Integer commentId;
+    // FIX: Thay đổi từ Integer thành Long
+    private Long userId;
+    private Long commentId;
 }

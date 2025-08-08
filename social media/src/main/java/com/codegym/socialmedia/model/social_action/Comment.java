@@ -1,4 +1,6 @@
+// Comment.java - Fixed version
 package com.codegym.socialmedia.model.social_action;
+
 import com.codegym.socialmedia.model.account.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
@@ -31,7 +33,8 @@ public class Comment {
     @JoinColumn(name = "parent_comment_id")
     private Comment parentComment;
 
-    @Lob
+    // FIX: Thay đổi từ @Lob thành @Column với TEXT
+    @Column(nullable = false, columnDefinition = "TEXT")
     @NotBlank
     private String content;
 
@@ -48,6 +51,4 @@ public class Comment {
 
     @OneToMany(mappedBy = "comment")
     private List<LikeComment> likedByUsers;
-
-
 }

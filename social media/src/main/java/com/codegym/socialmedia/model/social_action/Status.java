@@ -1,4 +1,3 @@
-// Status.java - Updated Entity
 package com.codegym.socialmedia.model.social_action;
 
 import com.codegym.socialmedia.model.account.User;
@@ -25,11 +24,10 @@ public class Status {
     private User user;
 
     @Lob
-    @Column(nullable = false)
     private String content;
 
     @Column(columnDefinition = "JSON")
-    private String imageUrls; // Lưu danh sách URL ảnh dạng JSON
+    private String imageUrls;
 
     private String videoUrl;
 
@@ -91,57 +89,9 @@ public class Status {
     }
 
     public enum StatusType {
-        TEXT("Văn bản"),
-        IMAGE("Hình ảnh"),
-        VIDEO("Video"),
-        SHARED("Chia sẻ");
-
-        private final String displayName;
-
-        StatusType(String displayName) {
-            this.displayName = displayName;
-        }
-
-        public String getDisplayName() {
-            return displayName;
-        }
-    }
-
-    // Helper methods
-    public boolean isLikedByUser(User user) {
-        if (likedByUsers == null || user == null) return false;
-        return likedByUsers.stream()
-                .anyMatch(like -> like.getUser().getId().equals(user.getId()));
-    }
-
-    public boolean canBeViewedBy(User viewer) {
-        if (isDeleted) return false;
-
-        // Chủ sở hữu luôn xem được
-        if (viewer != null && viewer.getId().equals(this.user.getId())) {
-            return true;
-        }
-
-        switch (privacyLevel) {
-            case PUBLIC:
-                return true;
-            case FRIENDS:
-                // Kiểm tra có phải bạn bè không (cần implement logic friendship)
-                return viewer != null && areFriends(viewer, this.user);
-            case ONLY_ME:
-                return viewer != null && viewer.getId().equals(this.user.getId());
-            default:
-                return false;
-        }
+        TEXT, IMAGE, VIDEO, SHARE
     }
 
     public boolean canBeEditedBy(User user) {
         return user != null && user.getId().equals(this.user.getId()) && !isDeleted;
     }
-
-    // Placeholder cho logic kiểm tra bạn bè - cần implement sau
-    private boolean areFriends(User user1, User user2) {
-        // TODO: Implement friendship logic
-        return true; // Tạm thời return true
-    }
-}

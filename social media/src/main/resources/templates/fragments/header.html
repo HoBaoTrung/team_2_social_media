@@ -58,7 +58,7 @@
                 <!-- Nếu đã đăng nhập -->
                 <div class="nav-item dropdown" sec:authorize="isAuthenticated()">
                     <a class="nav-link dropdown-toggle dropdown-toggle p-0 d-flex align-items-center" href="#" role="button"
-                        data-bs-toggle="dropdown" aria-expanded="false">
+                       data-bs-toggle="dropdown" aria-expanded="false">
                         <img th:if="${#authentication.principal.avatarUrl != null
                             and !#strings.isEmpty(#authentication.principal.avatarUrl)}"
                              th:src="@{${#authentication.principal.avatarUrl}}" alt="Avatar" class="rounded-circle nav-icon-wrapper">

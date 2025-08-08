@@ -1,4 +1,6 @@
+// User.java - Fixed version
 package com.codegym.socialmedia.model.account;
+
 import com.codegym.socialmedia.general_interface.NormalRegister;
 import com.codegym.socialmedia.model.admin.ModerationLog;
 import com.codegym.socialmedia.model.conversation.ConversationParticipant;
@@ -45,7 +47,8 @@ public class User {
     @Size(max = 255)
     private String profilePicture;
 
-    @Lob
+    // FIX: Thay đổi từ @Lob thành @Column với TEXT
+    @Column(columnDefinition = "TEXT")
     private String bio;
 
     private LocalDate dateOfBirth;
@@ -54,10 +57,9 @@ public class User {
     private Gender gender;
 
     @NotBlank(groups = NormalRegister.class)
-    @Pattern(regexp = "^(\\+84|0)(3[2-9]|5[6,8,9]|7[0,6-9]|8[1-5]|9[0-9])\\d{7}$"
-            ,message = "Sai định dạng"
-            ,groups = NormalRegister.class
-    )
+    @Pattern(regexp = "^(\\+84|0)(3[2-9]|5[6,8,9]|7[0,6-9]|8[1-5]|9[0-9])\\d{7}$",
+            message = "Sai định dạng",
+            groups = NormalRegister.class)
     @Column(unique = true)
     private String phone;
 
@@ -71,7 +73,6 @@ public class User {
     private LocalDateTime updatedAt;
 
     private boolean isActive = true;
-
     private boolean isVerified = false;
 
     @Enumerated(EnumType.STRING)
@@ -81,7 +82,6 @@ public class User {
     private PrivacyProfile privacyProfile = PrivacyProfile.PUBLIC;
 
     private boolean canBeFound = true;
-
     private boolean showFriendList = true;
 
     @OneToMany(mappedBy = "user")

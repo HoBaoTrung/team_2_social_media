@@ -1,3 +1,4 @@
+// LikeStatusId.java - Fixed version  
 package com.codegym.socialmedia.model.social_action;
 
 import jakarta.persistence.Embeddable;
@@ -12,6 +13,7 @@ import java.io.Serializable;
 @NoArgsConstructor
 @AllArgsConstructor
 public class LikeStatusId implements Serializable {
-    private Integer userId;
-    private Integer statusId;
+    // FIX: Thay đổi từ Integer thành Long
+    private Long userId;
+    private Long statusId;
 }
