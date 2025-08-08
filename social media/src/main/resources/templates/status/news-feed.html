@@ -8,17 +8,69 @@
   <link rel="stylesheet" th:href="@{/css/news-feed.css}">
   <style>
     body { padding-top: 70px; }
-    .status-input { background-color: #f0f2f5; border: none; border-radius: 50px; padding: 12px 16px; cursor: pointer; width: 100%; }
+    .status-input {
+      background-color: #f0f2f5;
+      border: none;
+      border-radius: 50px;
+      padding: 12px 16px;
+      cursor: pointer;
+      width: 100%;
+      transition: all 0.2s;
+    }
+    .status-input:hover { background-color: #e4e6ea; }
     .post-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; cursor: pointer; }
     .profile-img { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; }
-    .action-btn { border: none; background: none; color: #65676b; font-weight: 500; padding: 8px; border-radius: 6px; transition: all 0.2s; cursor: pointer; }
+    .action-btn {
+      border: none;
+      background: none;
+      color: #65676b;
+      font-weight: 500;
+      padding: 8px 12px;
+      border-radius: 6px;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
     .action-btn:hover { background-color: #f0f2f5; }
-    .action-btn.text-primary { color: #1877f2 !important; }
+    .action-btn.text-primary { color: #1877f2 !important; font-weight: 600; }
     .author-name { color: #050505; cursor: pointer; text-decoration: none; font-weight: 600; }
     .author-name:hover { text-decoration: underline; }
-    .post-image { cursor: pointer; transition: transform 0.2s; }
+    .post-image { cursor: pointer; transition: transform 0.2s; border-radius: 8px; }
     .post-image:hover { transform: scale(1.02); }
     .h-200 { height: 200px !important; object-fit: cover; }
+    .privacy-selector { font-size: 13px; }
+    .privacy-icon { margin-right: 4px; }
+    .media-preview { max-height: 300px; overflow-y: auto; }
+    .remove-media-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+    }
+    .video-container { position: relative; }
+    .video-overlay {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0,0,0,0.7);
+      color: white;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+    }
+    .share-count { color: #65676b; font-size: 13px; }
+    .post-stats { border-bottom: 1px solid #e4e6ea; }
+    .shared-post { border-left: 3px solid #1877f2; background-color: #f8f9fa; }
   </style>
 </head>
 <body>
@@ -43,14 +95,20 @@
         <!-- User Info -->
         <div class="sidebar-section" sec:authorize="isAuthenticated()">
           <div class="user-profile-card d-flex align-items-center">
-            <img th:if="${currentUser?.profilePicture}"
-                 th:src="@{${currentUser.profilePicture}}"
-                 alt="Avatar" class="profile-img me-3">
-            <img th:unless="${currentUser?.profilePicture}"
-                 th:src="@{/images/default-avatar.jpg}"
-                 alt="Avatar" class="profile-img me-3">
+            <a th:href="@{'/profile/' + ${#authentication.name}}">
+              <img th:if="${currentUser?.profilePicture}"
+                   th:src="@{${currentUser.profilePicture}}"
+                   alt="Avatar" class="profile-img me-3">
+              <img th:unless="${currentUser?.profilePicture}"
+                   th:src="@{/images/default-avatar.jpg}"
+                   alt="Avatar" class="profile-img me-3">
+            </a>
             <div class="user-info">
-              <h6 th:text="${currentUser?.firstName + ' ' + currentUser?.lastName}">Tên người dùng</h6>
+              <h6>
+                <a th:href="@{'/profile/' + ${#authentication.name}}"
+                   class="text-decoration-none text-dark"
+                   th:text="${currentUser?.firstName + ' ' + currentUser?.lastName}">Tên người dùng</a>
+              </h6>
               <small class="text-muted" sec:authentication="name">username</small>
             </div>
           </div>
@@ -58,22 +116,41 @@
 
         <!-- Navigation -->
         <div class="sidebar-section">
-          <div class="nav-item">
-            <i class="fas fa-home nav-icon"></i>
+          <a href="/status/news-feed" class="nav-item text-decoration-none">
+            <i class="fas fa-home nav-icon text-primary"></i>
             <span>News Feed</span>
-          </div>
-          <div class="nav-item">
-            <i class="fas fa-user-friends nav-icon"></i>
+          </a>
+          <a href="/friendship/friends" class="nav-item text-decoration-none">
+            <i class="fas fa-user-friends nav-icon text-success"></i>
             <span>Bạn bè</span>
-          </div>
+          </a>
+          <a href="/friendship/requests" class="nav-item text-decoration-none position-relative">
+            <i class="fas fa-user-plus nav-icon text-warning"></i>
+            <span>Lời mời kết bạn</span>
+            <span id="friendRequestBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                  style="font-size: 10px; display: none;">0</span>
+          </a>
           <div class="nav-item">
-            <i class="fas fa-users nav-icon"></i>
+            <i class="fas fa-users nav-icon text-info"></i>
             <span>Nhóm</span>
           </div>
           <div class="nav-item">
-            <i class="fas fa-store nav-icon"></i>
+            <i class="fas fa-store nav-icon text-purple"></i>
             <span>Marketplace</span>
           </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="sidebar-section">
+          <h6 class="fw-bold text-muted">Lối tắt</h6>
+          <div class="nav-item" onclick="document.querySelector('[data-bs-target=\'#statusModal\']').click()">
+            <i class="fas fa-plus nav-icon text-primary"></i>
+            <span>Tạo bài viết</span>
+          </div>
+          <a href="/status/search" class="nav-item text-decoration-none">
+            <i class="fas fa-search nav-icon text-secondary"></i>
+            <span>Tìm kiếm bài viết</span>
+          </a>
         </div>
       </div>
     </div>
@@ -99,7 +176,7 @@
           <!-- Action Buttons -->
           <div class="d-flex justify-content-around">
             <button type="button" class="btn btn-light d-flex align-items-center flex-fill me-1"
-                    data-bs-toggle="modal" data-bs-target="#statusModal">
+                    data-bs-toggle="modal" data-bs-target="#statusModal" data-media-type="image">
               <i class="fas fa-images text-success me-2"></i>
               <span>Ảnh/Video</span>
             </button>
@@ -119,51 +196,62 @@
       <div class="status-feed">
         <!-- Status Posts -->
         <div th:if="${statuses != null && !statuses.isEmpty()}">
-          <div class="card mb-3" th:each="status : ${statuses.content}">
+          <div class="card mb-3 fade-in" th:each="status : ${statuses.content}">
             <!-- Post Header -->
             <div class="card-header bg-white border-0 pb-0">
               <div class="d-flex justify-content-between align-items-center">
                 <div class="d-flex align-items-center">
                   <img th:if="${status.userAvatar != null}" th:src="@{${status.userAvatar}}"
-                       alt="Avatar" class="post-avatar me-3">
+                       alt="Avatar" class="post-avatar me-3"
+                       th:onclick="'window.location.href=\'/profile/' + ${status.username} + '\''">
                   <img th:unless="${status.userAvatar != null}" th:src="@{/images/default-avatar.jpg}"
-                       alt="Avatar" class="post-avatar me-3">
-                  alt="Avatar" class="post-avatar me-3">
+                       alt="Avatar" class="post-avatar me-3"
+                       th:onclick="'window.location.href=\'/profile/' + ${status.username} + '\''">
                   <div>
-                    <h6 class="mb-0 fw-bold author-name" th:text="${status.userFullName}">Tên tác giả</h6>
+                    <h6 class="mb-0 fw-bold">
+                      <a th:href="@{'/profile/' + ${status.username}}"
+                         class="author-name" th:text="${status.userFullName}">Tên tác giả</a>
+                    </h6>
                     <small class="text-muted d-flex align-items-center">
                       <span th:text="${status.timeAgo}">2 giờ trước</span>
                       <span class="mx-1">·</span>
-                      <i class="fas fa-globe-americas"></i>
+                      <i th:class="${status.privacyLevel.iconClass} + ' privacy-icon'"></i>
+                      <span class="ms-1" th:text="${status.privacyLevel.displayName}">Công khai</span>
                     </small>
                   </div>
                 </div>
 
                 <!-- Options Menu -->
-                <div class="dropdown" th:if="${status.userId == currentUserId}">
-                  <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown">
+                <div class="dropdown" th:if="${status.userId == currentUser?.id}">
+                  <button class="btn btn-sm btn-light rounded-circle" type="button" data-bs-toggle="dropdown">
                     <i class="fas fa-ellipsis-h"></i>
                   </button>
-                  <ul class="dropdown-menu">
+                  <ul class="dropdown-menu dropdown-menu-end">
                     <li>
                       <a class="dropdown-item" th:href="@{'/status/edit/' + ${status.id}}">
-                        <i class="fas fa-edit me-2"></i>Chỉnh sửa
+                        <i class="fas fa-edit me-2"></i>Chỉnh sửa bài viết
                       </a>
                     </li>
                     <li>
                       <form th:action="@{'/status/toggle-pin/' + ${status.id}}" method="post" class="d-inline">
                         <button type="submit" class="dropdown-item">
                           <i class="fas fa-thumbtack me-2"></i>
-                          <span th:text="${status.pinned} ? 'Bỏ ghim' : 'Ghim bài viết'">Ghim</span>
+                          <span th:text="${status.pinned} ? 'Bỏ ghim bài viết' : 'Ghim bài viết'">Ghim</span>
                         </button>
                       </form>
                     </li>
                     <li><hr class="dropdown-divider"></li>
                     <li>
+                      <button class="dropdown-item" onclick="copyStatusLink([[${status.id}]])">
+                        <i class="fas fa-link me-2"></i>Sao chép liên kết
+                      </button>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
                       <form th:action="@{'/status/delete/' + ${status.id}}" method="post"
-                            class="d-inline" onsubmit="return confirm('Bạn có chắc muốn xóa?')">
+                            class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa bài viết này?')">
                         <button type="submit" class="dropdown-item text-danger">
-                          <i class="fas fa-trash me-2"></i>Xóa
+                          <i class="fas fa-trash me-2"></i>Xóa bài viết
                         </button>
                       </form>
                     </li>
@@ -174,72 +262,164 @@
 
             <!-- Pinned Badge -->
             <div class="px-3 py-1" th:if="${status.pinned}">
-              <small class="text-warning">
+              <small class="text-warning d-flex align-items-center">
                 <i class="fas fa-thumbtack me-1"></i>
-                Bài viết đã ghim
+                <span>Bài viết được ghim</span>
               </small>
             </div>
 
             <!-- Post Content -->
             <div class="card-body pt-2">
-              <p class="mb-3" th:text="${status.content}">Nội dung bài viết</p>
+              <!-- Text Content -->
+              <div th:if="${status.content != null && !status.content.isEmpty()}" class="mb-3">
+                <p class="mb-0" th:text="${status.content}" style="white-space: pre-wrap;">Nội dung bài viết</p>
+              </div>
 
               <!-- Images -->
               <div class="post-images mb-3" th:if="${status.imageUrls != null && !status.imageUrls.isEmpty()}">
-                <div class="row g-2" th:switch="${status.imageUrls.size()}">
+                <div class="row g-2" th:switch="${#lists.size(status.imageUrls)}">
+                  <!-- Single Image -->
                   <div th:case="1" class="col-12">
                     <img th:src="@{${status.imageUrls[0]}}" alt="Post image"
-                         class="img-fluid rounded post-image">
+                         class="img-fluid rounded post-image w-100"
+                         onclick="openImageModal(this.src)"
+                         style="max-height: 500px; object-fit: cover;">
                   </div>
 
+                  <!-- Multiple Images -->
                   <div th:case="*" th:each="imageUrl, iterStat : ${status.imageUrls}"
-                       th:class="${iterStat.index < 2} ? 'col-6' : 'd-none'">
-                    <img th:src="@{${imageUrl}}" alt="Post image"
-                         class="img-fluid rounded post-image h-200">
+                       th:class="${iterStat.index < 4} ? 'col-6' : 'd-none'">
+                    <div class="position-relative">
+                      <img th:src="@{${imageUrl}}" alt="Post image"
+                           class="img-fluid rounded post-image h-200 w-100"
+                           onclick="openImageModal(this.src)">
+
+                      <!-- "+N more" overlay for 4th image -->
+                      <div th:if="${iterStat.index == 3 && #lists.size(status.imageUrls) > 4}"
+                           class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center rounded"
+                           style="background: rgba(0,0,0,0.6); cursor: pointer;"
+                           onclick="showAllImages([[${status.id}]])">
+                                                <span class="text-white fw-bold fs-2">
+                                                    +<span th:text="${#lists.size(status.imageUrls) - 3}">1</span>
+                                                </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
 
               <!-- Video -->
               <div class="mb-3" th:if="${status.videoUrl}">
-                <video controls class="w-100 rounded">
-                  <source th:src="@{${status.videoUrl}}" type="video/mp4">
-                </video>
+                <div class="video-container position-relative">
+                  <video controls class="w-100 rounded" preload="metadata"
+                         style="max-height: 500px; object-fit: cover;">
+                    <source th:src="@{${status.videoUrl}}" type="video/mp4">
+                    <p>Trình duyệt của bạn không hỗ trợ phát video.</p>
+                  </video>
+                </div>
+              </div>
+
+              <!-- Shared Status -->
+              <div class="border rounded p-3 mb-3 shared-post" th:if="${status.sharedStatus}">
+                <div class="d-flex align-items-center mb-2">
+                  <img th:if="${status.sharedStatus.userAvatar}"
+                       th:src="@{${status.sharedStatus.userAvatar}}"
+                       alt="Avatar" class="rounded-circle me-2" width="32" height="32">
+                  <div>
+                    <h6 class="mb-0 fw-bold">
+                      <a th:href="@{'/profile/' + ${status.sharedStatus.username}}"
+                         class="text-decoration-none" th:text="${status.sharedStatus.userFullName}">Shared Author</a>
+                    </h6>
+                    <small class="text-muted" th:text="${status.sharedStatus.timeAgo}">1 giờ trước</small>
+                  </div>
+                </div>
+                <p class="mb-2" th:text="${status.sharedStatus.content}">Shared content</p>
+
+                <!-- Shared media preview -->
+                <div th:if="${status.sharedStatus.imageUrls != null && !status.sharedStatus.imageUrls.isEmpty()}" class="mb-2">
+                  <img th:src="@{${status.sharedStatus.imageUrls[0]}}" alt="Shared image"
+                       class="img-fluid rounded" style="max-height: 200px;">
+                </div>
               </div>
             </div>
 
             <!-- Post Stats -->
-            <div class="px-3 py-1" th:if="${status.likeCount > 0 || status.commentCount > 0}">
-              <div class="d-flex justify-content-between text-muted small">
-                <div th:if="${status.likeCount > 0}">
-                  <i class="fas fa-thumbs-up text-primary me-1"></i>
-                  <span th:text="${status.likeCount}">0</span>
+            <div class="px-3 py-2 post-stats" th:if="${status.likeCount > 0 || status.commentCount > 0 || status.shareCount > 0}">
+              <div class="d-flex justify-content-between align-items-center text-muted small">
+                <div class="d-flex align-items-center gap-3">
+                  <div th:if="${status.likeCount > 0}" class="d-flex align-items-center cursor-pointer">
+                    <div class="d-flex me-1">
+                      <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center"
+                           style="width: 18px; height: 18px; margin-right: -2px;">
+                        <i class="fas fa-thumbs-up text-white" style="font-size: 10px;"></i>
+                      </div>
+                    </div>
+                    <span th:text="${status.likeCount}">0</span>
+                  </div>
+                  <div th:if="${status.shareCount > 0}" class="d-flex align-items-center">
+                    <i class="fas fa-share text-success me-1"></i>
+                    <span th:text="${status.shareCount}">0</span>
+                  </div>
                 </div>
-                <div>
-                                        <span th:if="${status.commentCount > 0}"
-                                              th:text="${status.commentCount + ' bình luận'}"></span>
+                <div class="d-flex gap-3">
+                                    <span th:if="${status.commentCount > 0}"
+                                          th:text="${status.commentCount + ' bình luận'}" class="cursor-pointer">0 bình luận</span>
                 </div>
               </div>
             </div>
 
             <!-- Post Actions -->
-            <div class="card-footer bg-white border-0 pt-0">
+            <div class="card-footer bg-white border-0 pt-2 pb-1">
               <div class="d-flex justify-content-around">
-                <button class="btn btn-light flex-fill me-1 action-btn"
-                        th:classappend="${status.liked} ? 'text-primary' : ''">
+                <button class="btn btn-light flex-fill me-1 action-btn like-btn"
+                        th:classappend="${status.liked} ? 'text-primary' : ''"
+                        th:onclick="'toggleLike(this, ' + ${status.id} + ')'">
                   <i class="fas fa-thumbs-up me-1"></i>
                   <span>Thích</span>
                 </button>
 
-                <button class="btn btn-light flex-fill mx-1 action-btn">
+                <button class="btn btn-light flex-fill mx-1 action-btn comment-btn"
+                        th:onclick="'toggleComments(' + ${status.id} + ')'">
                   <i class="fas fa-comment me-1"></i>
                   <span>Bình luận</span>
                 </button>
 
-                <button class="btn btn-light flex-fill ms-1 action-btn">
+                <button class="btn btn-light flex-fill ms-1 action-btn share-btn"
+                        th:onclick="'shareStatus(' + ${status.id} + ')'">
                   <i class="fas fa-share me-1"></i>
                   <span>Chia sẻ</span>
                 </button>
+              </div>
+            </div>
+
+            <!-- Comments Section (initially hidden) -->
+            <div th:id="'comments-' + ${status.id}" class="comments-section border-top" style="display: none;">
+              <div class="p-3">
+                <!-- Comment Form -->
+                <div class="d-flex mb-3" sec:authorize="isAuthenticated()">
+                  <img th:if="${currentUser?.profilePicture}"
+                       th:src="@{${currentUser.profilePicture}}"
+                       alt="Avatar" class="rounded-circle me-2" width="32" height="32">
+                  <img th:unless="${currentUser?.profilePicture}"
+                       th:src="@{/images/default-avatar.jpg}"
+                       alt="Avatar" class="rounded-circle me-2" width="32" height="32">
+                  <div class="flex-grow-1">
+                    <div class="input-group">
+                      <input type="text" class="form-control rounded-pill border-0 bg-light"
+                             placeholder="Viết bình luận..."
+                             th:onkeypress="'handleCommentSubmit(event, ' + ${status.id} + ')'">
+                      <button class="btn btn-link text-primary" type="button"
+                              th:onclick="'submitComment(' + ${status.id} + ')'">
+                        <i class="fas fa-paper-plane"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Comments List (placeholder) -->
+                <div th:id="'comment-list-' + ${status.id}" class="comments-list">
+                  <p class="text-muted small text-center">Chưa có bình luận nào</p>
+                </div>
               </div>
             </div>
           </div>
@@ -251,7 +431,17 @@
             <div class="card-body">
               <i class="fas fa-newspaper fa-3x text-muted mb-3"></i>
               <h5 class="text-muted">Chưa có bài viết nào</h5>
-              <p class="text-muted">Hãy tạo bài viết đầu tiên!</p>
+              <p class="text-muted">
+                <span sec:authorize="isAuthenticated()">Hãy tạo bài viết đầu tiên hoặc kết bạn để xem nhiều nội dung hơn!</span>
+                <span sec:authorize="!isAuthenticated()">
+                                    <a th:href="@{/login}" class="text-decoration-none">Đăng nhập</a> để xem và tạo bài viết!
+                                </span>
+              </p>
+              <div sec:authorize="isAuthenticated()">
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#statusModal">
+                  <i class="fas fa-plus me-2"></i>Tạo bài viết đầu tiên
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -259,8 +449,15 @@
         <!-- Load More -->
         <div class="text-center my-4" th:if="${hasNext}">
           <a th:href="@{/status/news-feed(page=${currentPage + 1})}" class="btn btn-outline-primary">
-            Xem thêm bài viết
+            <i class="fas fa-chevron-down me-2"></i>Xem thêm bài viết
           </a>
+        </div>
+
+        <!-- Pagination Info -->
+        <div class="text-center text-muted small mb-4" th:if="${statuses != null && !statuses.isEmpty()}">
+          Đang xem <span th:text="${currentPage * 10 + 1}">1</span> -
+          <span th:text="${(currentPage + 1) * 10 > statuses.totalElements ? statuses.totalElements : (currentPage + 1) * 10}">10</span>
+          trong tổng số <span th:text="${statuses.totalElements}">0</span> bài viết
         </div>
       </div>
     </div>
@@ -268,14 +465,60 @@
     <!-- Right Sidebar -->
     <div class="col-lg-3 d-none d-lg-block">
       <div class="right-sidebar sticky-top" style="top: 80px;">
+        <!-- Online Friends -->
         <div class="sidebar-section">
-          <h6 class="fw-bold mb-3">Người liên hệ</h6>
-          <p class="text-muted small">Chưa có bạn bè online</p>
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="fw-bold mb-0 text-muted">Người liên hệ</h6>
+            <button class="btn btn-sm btn-outline-secondary">
+              <i class="fas fa-search"></i>
+            </button>
+          </div>
+          <div id="onlineFriends">
+            <p class="text-muted small">Chưa có bạn bè online</p>
+          </div>
         </div>
 
+        <!-- Friend Suggestions -->
         <div class="sidebar-section">
-          <h6 class="fw-bold mb-3">Gợi ý kết bạn</h6>
-          <p class="text-muted small">Chưa có gợi ý nào</p>
+          <h6 class="fw-bold mb-3 text-muted">Gợi ý kết bạn</h6>
+          <div id="friendSuggestions">
+            <p class="text-muted small">Đang tải gợi ý...</p>
+          </div>
+        </div>
+
+        <!-- Trending -->
+        <div class="sidebar-section">
+          <h6 class="fw-bold mb-3 text-muted">Xu hướng</h6>
+          <div class="trending-topics">
+            <div class="trend-item mb-2">
+              <small class="text-primary">#SocialMedia</small>
+            </div>
+            <div class="trend-item mb-2">
+              <small class="text-primary">#SpringBoot</small>
+            </div>
+            <div class="trend-item mb-2">
+              <small class="text-primary">#WebDevelopment</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="sidebar-section" sec:authorize="isAuthenticated()">
+          <h6 class="fw-bold mb-3 text-muted">Thống kê của bạn</h6>
+          <div class="stats-grid">
+            <div class="stat-item d-flex justify-content-between mb-2">
+              <span class="text-muted">Bài viết:</span>
+              <span class="fw-bold" id="myPostCount">0</span>
+            </div>
+            <div class="stat-item d-flex justify-content-between mb-2">
+              <span class="text-muted">Bạn bè:</span>
+              <span class="fw-bold" id="myFriendCount">0</span>
+            </div>
+            <div class="stat-item d-flex justify-content-between mb-2">
+              <span class="text-muted">Lượt thích:</span>
+              <span class="fw-bold" id="myLikeCount">0</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -283,77 +526,491 @@
 </div>
 
 <!-- Status Creation Modal -->
-<div class="modal fade" id="statusModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
+<div class="modal fade" id="statusModal" tabindex="-1" sec:authorize="isAuthenticated()">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
     <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Tạo bài viết</h5>
+      <div class="modal-header border-bottom">
+        <h5 class="modal-title fw-bold">Tạo bài viết</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
 
-      <form th:action="@{/status/create}" method="post" enctype="multipart/form-data"
-            th:object="${statusCreateDto}">
+      <form th:action="@{/status/create}" method="post" enctype="multipart/form-data" id="statusForm">
         <div class="modal-body">
           <!-- User Info -->
-          <div class="d-flex align-items-center mb-3" sec:authorize="isAuthenticated()">
+          <div class="d-flex align-items-center mb-3">
             <img th:if="${currentUser?.profilePicture}"
                  th:src="@{${currentUser.profilePicture}}"
-                 alt="Avatar" class="rounded-circle me-2" width="40" height="40">
+                 alt="Avatar" class="rounded-circle me-3" width="40" height="40">
             <img th:unless="${currentUser?.profilePicture}"
                  th:src="@{/images/default-avatar.jpg}"
-                 alt="Avatar" class="rounded-circle me-2" width="40" height="40">
+                 alt="Avatar" class="rounded-circle me-3" width="40" height="40">
             <div>
-              <h6 class="mb-0" th:text="${currentUser?.firstName + ' ' + currentUser?.lastName}">Tên</h6>
-              <select class="form-select form-select-sm mt-1" name="privacyLevel">
-                <option value="PUBLIC">🌍 Công khai</option>
-                <option value="FRIENDS">👥 Bạn bè</option>
-                <option value="ONLY_ME">🔒 Chỉ mình tôi</option>
+              <h6 class="mb-1" th:text="${currentUser?.firstName + ' ' + currentUser?.lastName}">Tên người dùng</h6>
+              <select class="form-select form-select-sm privacy-selector" name="privacyLevel" style="width: auto;">
+                <option value="PUBLIC" selected>
+                  <i class="fas fa-globe-americas"></i> 🌍 Công khai
+                </option>
+                <option value="FRIENDS">
+                  <i class="fas fa-user-friends"></i> 👥 Bạn bè
+                </option>
+                <option value="ONLY_ME">
+                  <i class="fas fa-lock"></i> 🔒 Chỉ mình tôi
+                </option>
               </select>
             </div>
           </div>
 
           <!-- Content Input -->
-          <textarea class="form-control border-0 mb-3" name="content" rows="4"
-                    placeholder="Bạn đang nghĩ gì?" required></textarea>
+          <div class="mb-3">
+                        <textarea class="form-control border-0" name="content" rows="4" id="statusContent"
+                                  placeholder="Bạn đang nghĩ gì?" style="resize: none; font-size: 16px;"></textarea>
+          </div>
 
-          <!-- File Upload -->
-          <div class="border rounded p-2">
+          <!-- Media Preview -->
+          <div id="mediaPreview" class="media-preview mb-3" style="display: none;">
+            <div id="imagePreview" class="row g-2 mb-2"></div>
+            <div id="videoPreview" class="mb-2"></div>
+          </div>
+
+          <!-- Media Upload Options -->
+          <div class="border rounded p-3 bg-light">
             <div class="d-flex justify-content-between align-items-center">
-              <small class="fw-bold">Thêm vào bài viết</small>
-              <div>
-                <label class="btn btn-light btn-sm">
-                  <i class="fas fa-images text-success"></i>
-                  <input type="file" name="images" multiple accept="image/*" style="display: none;">
+              <span class="fw-bold text-dark">Thêm vào bài viết của bạn</span>
+              <div class="d-flex gap-2">
+                <label class="btn btn-outline-success btn-sm d-flex align-items-center" for="imageInput" title="Ảnh">
+                  <i class="fas fa-images me-1"></i>
+                  <span class="d-none d-md-inline">Ảnh</span>
+                  <input type="file" id="imageInput" name="images" multiple accept="image/*"
+                         style="display: none;" onchange="previewImages(this)">
                 </label>
-                <label class="btn btn-light btn-sm">
-                  <i class="fas fa-video text-danger"></i>
-                  <input type="file" name="video" accept="video/*" style="display: none;">
+
+                <label class="btn btn-outline-danger btn-sm d-flex align-items-center" for="videoInput" title="Video">
+                  <i class="fas fa-video me-1"></i>
+                  <span class="d-none d-md-inline">Video</span>
+                  <input type="file" id="videoInput" name="video" accept="video/*"
+                         style="display: none;" onchange="previewVideo(this)">
                 </label>
+
+                <button type="button" class="btn btn-outline-warning btn-sm" title="Cảm xúc">
+                  <i class="fas fa-smile"></i>
+                  <span class="d-none d-md-inline">Cảm xúc</span>
+                </button>
+
+                <button type="button" class="btn btn-outline-info btn-sm" title="Vị trí">
+                  <i class="fas fa-map-marker-alt"></i>
+                  <span class="d-none d-md-inline">Vị trí</span>
+                </button>
               </div>
             </div>
           </div>
+
+          <!-- Upload Progress -->
+          <div id="uploadProgress" class="mt-3" style="display: none;">
+            <div class="progress">
+              <div class="progress-bar progress-bar-striped progress-bar-animated"
+                   role="progressbar" style="width: 0%"></div>
+            </div>
+            <small class="text-muted">Đang tải lên...</small>
+          </div>
         </div>
 
-        <div class="modal-footer">
-          <button type="submit" class="btn btn-primary w-100">Đăng</button>
+        <div class="modal-footer border-top">
+          <button type="submit" id="postButton" class="btn btn-primary w-100 fw-bold" disabled>
+            <i class="fas fa-paper-plane me-2"></i>Đăng bài viết
+          </button>
         </div>
       </form>
     </div>
   </div>
 </div>
 
+<!-- Image Modal -->
+<div class="modal fade" id="imageModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content bg-transparent border-0">
+      <div class="modal-header border-0">
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body text-center p-0">
+        <img id="modalImage" src="" alt="Full size image" class="img-fluid rounded">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Share Modal -->
+<div class="modal fade" id="shareModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Chia sẻ bài viết</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="shareForm" method="post">
+          <div class="mb-3">
+            <textarea class="form-control" placeholder="Nói gì đó về bài viết này..." rows="3"></textarea>
+          </div>
+          <div id="sharePreview" class="border rounded p-3 bg-light">
+            <!-- Share preview will be populated here -->
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+        <button type="button" class="btn btn-primary" onclick="submitShare()">
+          <i class="fas fa-share me-2"></i>Chia sẻ ngay
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
-  // Auto-hide alerts
+  // ===== INITIALIZATION =====
   document.addEventListener('DOMContentLoaded', function() {
-    setTimeout(function() {
-      const alerts = document.querySelectorAll('.alert');
-      alerts.forEach(alert => {
+    initializeApp();
+  });
+
+  function initializeApp() {
+    // Auto-hide alerts
+    setTimeout(() => {
+      document.querySelectorAll('.alert').forEach(alert => {
         if (alert.classList.contains('show')) {
           bootstrap.Alert.getOrCreateInstance(alert).close();
         }
       });
     }, 5000);
+
+    // Initialize post button state
+    checkPostButtonState();
+
+    // Load friend request count
+    loadFriendRequestCount();
+
+    // Load user stats
+    loadUserStats();
+
+    // Setup infinite scroll (optional)
+    // setupInfiniteScroll();
+  }
+
+  // ===== STATUS CREATION =====
+  document.getElementById('statusContent')?.addEventListener('input', checkPostButtonState);
+  document.getElementById('imageInput')?.addEventListener('change', checkPostButtonState);
+  document.getElementById('videoInput')?.addEventListener('change', checkPostButtonState);
+
+  function checkPostButtonState() {
+    const content = document.getElementById('statusContent')?.value?.trim() || '';
+    const hasImages = document.getElementById('imageInput')?.files?.length > 0;
+    const hasVideo = document.getElementById('videoInput')?.files?.length > 0;
+    const postButton = document.getElementById('postButton');
+
+    if (postButton) {
+      postButton.disabled = !(content || hasImages || hasVideo);
+
+      if (content || hasImages || hasVideo) {
+        postButton.classList.remove('btn-outline-primary');
+        postButton.classList.add('btn-primary');
+      } else {
+        postButton.classList.remove('btn-primary');
+        postButton.classList.add('btn-outline-primary');
+      }
+    }
+  }
+
+  // ===== MEDIA PREVIEW =====
+  function previewImages(input) {
+    const preview = document.getElementById('imagePreview');
+    const mediaPreview = document.getElementById('mediaPreview');
+
+    if (input.files && input.files.length > 0) {
+      preview.innerHTML = '';
+      mediaPreview.style.display = 'block';
+
+      const maxFiles = Math.min(input.files.length, 4);
+
+      Array.from(input.files).slice(0, maxFiles).forEach((file, index) => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const col = document.createElement('div');
+          col.className = maxFiles === 1 ? 'col-12' : 'col-6';
+          col.innerHTML = `
+                    <div class="position-relative">
+                        <img src="${e.target.result}" class="img-fluid rounded w-100"
+                             style="height: ${maxFiles === 1 ? '300px' : '150px'}; object-fit: cover;">
+                        <button type="button" class="btn btn-danger btn-sm remove-media-btn"
+                                onclick="removeImage(${index})">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        ${index === 3 && input.files.length > 4 ?
+                  `<div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center rounded"
+                                  style="background: rgba(0,0,0,0.6);">
+                                <span class="text-white fw-bold fs-4">+${input.files.length - 3}</span>
+                             </div>` : ''}
+                    </div>
+                `;
+          preview.appendChild(col);
+        };
+        reader.readAsDataURL(file);
+      });
+
+      // Clear video if images are selected
+      document.getElementById('videoInput').value = '';
+      document.getElementById('videoPreview').innerHTML = '';
+    } else {
+      mediaPreview.style.display = 'none';
+    }
+
+    checkPostButtonState();
+  }
+
+  function previewVideo(input) {
+    const preview = document.getElementById('videoPreview');
+    const mediaPreview = document.getElementById('mediaPreview');
+
+    if (input.files && input.files[0]) {
+      const file = input.files[0];
+      const url = URL.createObjectURL(file);
+
+      // Check file size (max 50MB)
+      if (file.size > 50 * 1024 * 1024) {
+        alert('File video quá lớn! Vui lòng chọn file nhỏ hơn 50MB.');
+        input.value = '';
+        return;
+      }
+
+      preview.innerHTML = `
+            <div class="position-relative">
+                <video controls class="w-100 rounded" style="max-height: 300px;">
+                    <source src="${url}" type="${file.type}">
+                    Trình duyệt không hỗ trợ video.
+                </video>
+                <button type="button" class="btn btn-danger btn-sm remove-media-btn"
+                        onclick="removeVideo()">
+                    <i class="fas fa-times"></i>
+                </button>
+                <div class="mt-2">
+                    <small class="text-muted">
+                        <i class="fas fa-file-video me-1"></i>
+                        ${file.name} (${(file.size / (1024 * 1024)).toFixed(1)} MB)
+                    </small>
+                </div>
+            </div>
+        `;
+
+      mediaPreview.style.display = 'block';
+
+      // Clear images if video is selected
+      document.getElementById('imageInput').value = '';
+      document.getElementById('imagePreview').innerHTML = '';
+    } else {
+      preview.innerHTML = '';
+      mediaPreview.style.display = 'none';
+    }
+
+    checkPostButtonState();
+  }
+
+  function removeImage(index) {
+    const input = document.getElementById('imageInput');
+    const dt = new DataTransfer();
+
+    Array.from(input.files).forEach((file, i) => {
+      if (i !== index) {
+        dt.items.add(file);
+      }
+    });
+
+    input.files = dt.files;
+    previewImages(input);
+  }
+
+  function removeVideo() {
+    document.getElementById('videoInput').value = '';
+    document.getElementById('videoPreview').innerHTML = '';
+
+    if (document.getElementById('imagePreview').innerHTML === '') {
+      document.getElementById('mediaPreview').style.display = 'none';
+    }
+
+    checkPostButtonState();
+  }
+
+  // ===== POST INTERACTIONS =====
+  function toggleLike(button, statusId) {
+    const isLiked = button.classList.contains('text-primary');
+    const icon = button.querySelector('i');
+    const text = button.querySelector('span');
+
+    // Update UI immediately
+    if (isLiked) {
+      button.classList.remove('text-primary');
+      icon.classList.remove('fas');
+      icon.classList.add('far');
+      text.textContent = 'Thích';
+    } else {
+      button.classList.add('text-primary');
+      icon.classList.remove('far');
+      icon.classList.add('fas');
+      text.textContent = 'Đã thích';
+    }
+
+    // Add animation
+    button.style.transform = 'scale(0.95)';
+    setTimeout(() => {
+      button.style.transform = 'scale(1)';
+    }, 100);
+
+    // TODO: Send AJAX request to server
+    console.log('Toggle like for status:', statusId, isLiked ? 'unlike' : 'like');
+  }
+
+  function toggleComments(statusId) {
+    const commentsSection = document.getElementById('comments-' + statusId);
+    if (commentsSection) {
+      if (commentsSection.style.display === 'none') {
+        commentsSection.style.display = 'block';
+        // TODO: Load actual comments
+        loadComments(statusId);
+      } else {
+        commentsSection.style.display = 'none';
+      }
+    }
+  }
+
+  function shareStatus(statusId) {
+    // TODO: Implement proper share functionality
+    document.getElementById('shareForm').action = '/status/share/' + statusId;
+
+    // Load status preview
+    // loadStatusForShare(statusId);
+
+    const shareModal = new bootstrap.Modal(document.getElementById('shareModal'));
+    shareModal.show();
+  }
+
+  function submitShare() {
+    // TODO: Implement share submission
+    console.log('Submitting share...');
+    bootstrap.Modal.getInstance(document.getElementById('shareModal')).hide();
+  }
+
+  function loadComments(statusId) {
+    // TODO: Load actual comments from server
+    const commentsList = document.getElementById('comment-list-' + statusId);
+    if (commentsList) {
+      commentsList.innerHTML = '<p class="text-muted small text-center">Đang tải bình luận...</p>';
+    }
+  }
+
+  function handleCommentSubmit(event, statusId) {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      submitComment(statusId);
+    }
+  }
+
+  function submitComment(statusId) {
+    const input = event.target.previousElementSibling || event.target.closest('.input-group').querySelector('input');
+    const comment = input.value.trim();
+
+    if (comment) {
+      // TODO: Send comment to server
+      console.log('Submit comment for status:', statusId, 'Comment:', comment);
+      input.value = '';
+    }
+  }
+
+  // ===== UTILITY FUNCTIONS =====
+  function openImageModal(src) {
+    document.getElementById('modalImage').src = src;
+    const imageModal = new bootstrap.Modal(document.getElementById('imageModal'));
+    imageModal.show();
+  }
+
+  function copyStatusLink(statusId) {
+    const url = window.location.origin + '/status/' + statusId;
+    navigator.clipboard.writeText(url).then(() => {
+      showToast('Đã sao chép liên kết!', 'success');
+    });
+  }
+
+  function showToast(message, type = 'info') {
+    // Simple toast notification
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type} position-fixed`;
+    toast.style.cssText = 'top: 80px; right: 20px; z-index: 9999; opacity: 0; transition: opacity 0.3s;';
+    toast.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : 'info-circle'} me-2"></i>
+        ${message}
+    `;
+
+    document.body.appendChild(toast);
+
+    setTimeout(() => toast.style.opacity = '1', 100);
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      setTimeout(() => toast.remove(), 300);
+    }, 3000);
+  }
+
+  function loadFriendRequestCount() {
+    // TODO: Load actual friend request count
+    // fetch('/friendship/api/count-requests')
+    //     .then(response => response.json())
+    //     .then(count => {
+    //         const badge = document.getElementById('friendRequestBadge');
+    //         if (count > 0) {
+    //             badge.textContent = count;
+    //             badge.style.display = 'inline-block';
+    //         } else {
+    //             badge.style.display = 'none';
+    //         }
+    //     });
+  }
+
+  function loadUserStats() {
+    // TODO: Load actual user statistics
+    // This is a mock implementation
+    setTimeout(() => {
+      const stats = {
+        posts: Math.floor(Math.random() * 50),
+        friends: Math.floor(Math.random() * 100),
+        likes: Math.floor(Math.random() * 500)
+      };
+
+      document.getElementById('myPostCount').textContent = stats.posts;
+      document.getElementById('myFriendCount').textContent = stats.friends;
+      document.getElementById('myLikeCount').textContent = stats.likes;
+    }, 1000);
+  }
+
+  // Form submission with progress
+  document.getElementById('statusForm')?.addEventListener('submit', function(e) {
+    const hasFiles = document.getElementById('imageInput').files.length > 0 ||
+            document.getElementById('videoInput').files.length > 0;
+
+    if (hasFiles) {
+      document.getElementById('uploadProgress').style.display = 'block';
+      document.getElementById('postButton').disabled = true;
+      document.getElementById('postButton').innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Đang đăng...';
+    }
+  });
+
+  // Reset modal when closed
+  document.getElementById('statusModal')?.addEventListener('hidden.bs.modal', function() {
+    document.getElementById('statusContent').value = '';
+    document.getElementById('imageInput').value = '';
+    document.getElementById('videoInput').value = '';
+    document.getElementById('imagePreview').innerHTML = '';
+    document.getElementById('videoPreview').innerHTML = '';
+    document.getElementById('mediaPreview').style.display = 'none';
+    document.getElementById('uploadProgress').style.display = 'none';
+    document.getElementById('postButton').disabled = true;
+    document.getElementById('postButton').innerHTML = '<i class="fas fa-paper-plane me-2"></i>Đăng bài viết';
   });
 </script>
+
 </body>
 </html>
