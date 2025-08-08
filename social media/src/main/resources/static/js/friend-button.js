@@ -68,14 +68,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Gắn sự kiện cho các nút hủy/từ chối/xóa bạn
     $(document).on('click', '.cancelFriendRequestBtn, .reflectFriendBtn, .deleteFriendBtn', function () {
-        const username = $(this).data('username');
-        sendRequest(
-            buttonConfigs.deleteActions.url,
-            buttonConfigs.deleteActions.method,
-            username,
-            'Xóa thành công',
-            buttonConfigs.deleteActions.errorMessage
-        );
+        swal({
+            title: "Xóa kết bạn?",
+            // text: productName,
+            icon: "warning",
+            buttons: ["Hủy", "Xóa"],
+            dangerMode: true,
+        }).then((willDelete) => {
+            if (willDelete) {
+                const username = $(this).data('username');
+                sendRequest(
+                    buttonConfigs.deleteActions.url,
+                    buttonConfigs.deleteActions.method,
+                    username,
+                    'Xóa thành công',
+                    buttonConfigs.deleteActions.errorMessage
+                );
+            }
+        });
     });
 
 
