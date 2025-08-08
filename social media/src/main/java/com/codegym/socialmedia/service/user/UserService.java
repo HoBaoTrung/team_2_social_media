@@ -10,10 +10,14 @@ import java.util.List;
 public interface UserService {
     User getCurrentUser();
 
+    User getUserById(Long id);
+
     User getUserByUsername(String username);
 
     User save(User user);
+
     User save(User user, MultipartFile file);
+
     User save(UserRegistrationDto registrationDto);
 
     User findByEmail(String email);

@@ -34,10 +34,19 @@
         </div>
     </div>
 
-    <div id="noneBtnGroup"
-         th:classappend="${friendshipStatus != 'NONE' or !allowFriendRequests} ? 'd-none'">
-        <button class="btn btn-success addFriendBtn"  th:data-username="${username}">
+    <div id="noneBtnGroup">
+        <!-- Hiển thị nút "Thêm bạn" khi friendshipStatus là NONE và allowFriendRequests là true -->
+        <button th:if="${friendshipStatus == 'NONE' and allowFriendRequests}"
+                class="btn btn-success addFriendBtn"
+                th:data-username="${username}">
             <i class="fa-solid fa-user-plus"></i> Thêm bạn
+        </button>
+
+        <!-- Hiển thị nút disabled "Không thể kết bạn" khi friendshipStatus là NONE và allowFriendRequests là false -->
+        <button th:if="${friendshipStatus == 'NONE' and !allowFriendRequests}"
+                class="btn btn-secondary"
+                disabled>
+            <i class="fa-solid fa-ban"></i> Kết bạn
         </button>
     </div>
 

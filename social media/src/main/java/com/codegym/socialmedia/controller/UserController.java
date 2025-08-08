@@ -68,7 +68,7 @@ public class UserController {
 
         List<Status> posts = new ArrayList<>();
 
-        Page<FriendDto> friends = friendshipService.getVisibleFriendList(viewedUser, 0 ,9);
+        Page<FriendDto> friends = friendshipService.getVisibleFriendList(viewedUser, 0 ,10);
 
         int friendCount = friendshipService.countFriends(viewedUser.getId());
         int mutualFriendsCount = friendshipService.countMutualFriends(currentUser.getId(), viewedUser.getId());

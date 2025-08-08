@@ -114,6 +114,11 @@ public class UserServiceImpl implements UserService {
         return null;
     }
 
+    @Override
+    public User getUserById(Long id) {
+        return iUserRepository.findById(id).orElse(null);
+    }
+
 
     @Override
     public User getUserByUsername(String username) {

@@ -22,9 +22,6 @@
             margin: 20px 0;
         }
 
-        .active {
-            color: red;
-        }
     </style>
     <link rel="stylesheet" th:href="@{/css/friend_card.css}">
 </head>
@@ -35,70 +32,36 @@
         <!-- Sidebar -->
         <div class="col-md-3">
             <div class="sidebar">
-                <h2 class="mb-4">Lựa chọn</h2>
-                <nav class="navbar-light" style="background-color: #e3f2fd;">
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a th:class="'nav-link ' + (${filter == 'all'} ? 'active' : '')"
-                               th:href="@{/friends(filter='all')}"
-                               href="#"
-                               data-filter="all">Tất cả bạn bè</a>
-                        </li>
-                        <li class="nav-item">
-                            <a th:class="'nav-link ' + (${filter == 'non-friends'} ? 'active' : '')"
-                               th:href="@{/friends(filter='non-friends')}"
-                               href="#"
-                               data-filter="non-friends">Chưa kết bạn</a>
-                        </li>
-                        <li class="nav-item">
-                            <a th:class="'nav-link ' + (${filter == 'sent-requests'} ? 'active' : '')"
-                               th:href="@{/friends(filter='sent-requests')}"
-                               href="#"
-                               data-filter="sent-requests">Lời mời đã gửi</a>
-                        </li>
-                        <li class="nav-item">
-                            <a th:class="'nav-link ' + (${filter == 'received-requests'} ? 'active' : '')"
-                               th:href="@{/friends(filter='received-requests')}"
-                               href="#"
-                               data-filter="received-requests">Lời mời nhận được</a>
-                        </li>
-                    </ul>
-                </nav>
+                <h2 class="mb-4 bg-dark text-white">Lựa chọn</h2>
+                <div class="card shadow-sm">
+                    <div class="list-group list-group-flush">
+                        <a th:class="'list-group-item list-group-item-action ' + (${filter == 'non-friends'} ? 'active' : '')"
+                           th:href="@{/friends(filter='non-friends')}">
+                            Trang chủ
+                        </a>
+                        <a th:class="'list-group-item list-group-item-action ' + (${filter == 'all'} ? 'active' : '')"
+                           th:href="@{/friends(filter='all')}">
+                            Tất cả bạn bè
+                        </a>
+                        <a th:class="'list-group-item list-group-item-action ' + (${filter == 'sent-requests'} ? 'active' : '')"
+                           th:href="@{/friends(filter='sent-requests')}">
+                            Lời mời đã gửi
+                        </a>
+                        <a th:class="'list-group-item list-group-item-action ' + (${filter == 'received-requests'} ? 'active' : '')"
+                           th:href="@{/friends(filter='received-requests')}">
+                            Lời mời nhận được
+                        </a>
+                    </div>
+                </div>
             </div>
-        </div>
-<!--        <div class="col-md-3">-->
-<!--            <div class="sidebar">-->
-<!--                <h2 class="mb-4">Lựa chọn</h2>-->
-<!--                <nav class=" navbar-light" style="background-color: #e3f2fd;">-->
-<!--                    <ul class="nav flex-column">-->
-<!--                        <li class="nav-item">-->
-<!--                            <a th:class="'nav-link ' + (${filter == null || filter == 'all'} ? 'active' : '')"-->
-<!--                               th:href="@{/friends}"-->
-<!--                               data-filter="all">Tất cả bạn bè</a>-->
-<!--                        </li>-->
-<!--                        <li class="nav-item">-->
-<!--                            <a th:class="'nav-link ' + (${filter == 'non-friends'} ? 'active' : '')"-->
-<!--                               th:href="@{/friends(filter='non-friends')}"-->
-<!--                               data-filter="non-friends">Chưa kết bạn</a>-->
-<!--                        </li>-->
-<!--                        <li class="nav-item">-->
-<!--                            <a th:class="'nav-link ' + (${filter == 'sent-requests'} ? 'active' : '')"-->
-<!--                               th:href="@{/friends(filter='sent-requests')}"-->
-<!--                               data-filter="sent-requests">Lời mời đã gửi</a>-->
-<!--                        </li>-->
-<!--                        <li class="nav-item">-->
-<!--                            <a th:class="'nav-link ' + (${filter == 'received-requests'} ? 'active' : '')"-->
-<!--                               th:href="@{/friends(filter='received-requests')}"-->
-<!--                               data-filter="received-requests">Lời mời nhận được</a>-->
-<!--                        </li>-->
-<!--                    </ul>-->
 
-<!--                </nav>-->
-<!--            </div>-->
-<!--        </div>-->
+        </div>
+
+        <input type="hidden" id="filterValue" th:value="${filter}" />
+        <input type="hidden" id="targetUserId" th:value="${targetUserId}" />
         <!-- Danh sách bạn bè -->
         <div class="col-md-9">
-            <h2 class="mb-4" id="list-title" th:text="${listTitle}">Danh sách bạn bè</h2>
+            <h2 class="mb-4 bg-dark text-white" id="list-title" th:text="${listTitle}">Danh sách bạn bè</h2>
 
             <div class="row" id="friends-list">
                 <div th:each="friend : ${friends}" class="col-md-3">

@@ -1,16 +1,14 @@
-
+let friendshipStatus = 'ACCEPTED'
 let page = 1;
 let isLoading = false;
 let hasMoreData = true; // Biến theo dõi xem còn dữ liệu để tải hay không
 const size = 10;
-// const currentUserId = /*[[${currentUserId}]]*/ 0; // Thymeleaf inline
-const targetUserId = /*[[${targetUserId}]]*/ 0; // Thymeleaf inline
-const initialFilter = /*[[${filter}]]*/ 'all'; // Lấy giá trị filter từ Thymeleaf
-let currentFilter = initialFilter;
-
+const targetUserId = document.getElementById('targetUserId').value;
+const currentFilter = document.getElementById('filterValue').value;// Lấy giá trị filter từ Thymeleaf
+const currentPage = window.location.pathname;
+const isAddBtnActionFriend = currentPage.includes('friends') ? true : false
 $(document).ready(function () {
-    // Thiết lập currentFilter từ giá trị server
-    currentFilter = /*[[${filter}]]*/ 'all';
+
     console.log('Initial filter from server:', currentFilter);
 
     // Đảm bảo nav-link tương ứng có lớp active
@@ -22,11 +20,9 @@ $(document).ready(function () {
         $('.sidebar .nav-link').removeClass('active');
         $(this).addClass('active');
 
-        currentFilter = $(this).data('filter') || 'all';
-
         page = 0;
         hasMoreData = true;
-        $('#friends-list').empty();
+        // $('#friends-list').empty();
         console.log('Filter changed to:', currentFilter);
         loadMoreFriends();
     });
@@ -45,6 +41,7 @@ $(document).ready(function () {
     }
 
 });
+let isSender = isReceiver = false
 
 function loadMoreFriends() {
     if (!hasMoreData) return; // Không tải nếu đã hết dữ liệu
@@ -56,21 +53,28 @@ function loadMoreFriends() {
     switch (currentFilter) {
         case 'all':
             url = `/api/friends?targetUserId=${targetUserId}&page=${page}&size=${size}`;
+            friendshipStatus = 'ACCEPTED'
             break;
         case 'mutual':
             url = `/api/friends/mutual?targetUserId=${targetUserId}&page=${page}&size=${size}`;
             break;
         case 'non-friends':
             url = `/api/friends/non-friends?page=${page}&size=${size}`;
+            friendshipStatus = 'NONE'
             break;
         case 'sent-requests':
             url = `/api/friends/sent-requests?page=${page}&size=${size}`;
+            friendshipStatus = 'PENDING';
+            isSender = true;
             break;
         case 'received-requests':
             url = `/api/friends/received-requests?page=${page}&size=${size}`;
+            friendshipStatus = 'PENDING';
+            isReceiver = true
             break;
         default:
             url = `/api/friends?targetUserId=${targetUserId}&page=${page}&size=${size}`;
+            friendshipStatus = 'ACCEPTED'
     }
 
     $.ajax({
@@ -96,13 +100,34 @@ function loadMoreFriends() {
                                     <h7>${friend.mutualFriends} bạn chung</h7>
                                 </div>
                             </a>
-                            <div class="friend-button-group">
-                                ${generateButtonGroup(friend)}
-                            </div>
+                            <div class="friend-button-group"  id="btn-group-${friend.username}"></div>
                         </div>
                     </div>
                 `;
                 $('#friends-list').append(friendCardHtml);
+
+                if (isAddBtnActionFriend) {
+                    // gắn nút vào friendCard
+                    $.ajax({
+                        url: '/friend/button',
+                        method: 'GET',
+                        data: {
+                            username: friend.username,
+                            friendshipStatus: friendshipStatus,
+                            isSender: isSender,
+                            isReceiver: isReceiver,
+                            allowFriendRequests: friend.allowFriendRequests,
+                            isVisible: true
+                        },
+                        success: function (fragmentHtml) {
+                            $(`#btn-group-${friend.username}`).html(fragmentHtml);
+                        },
+                        error: function (xhr) {
+                            console.error(`Lỗi khi tải nút cho ${friend.username}:`, xhr.status, xhr.statusText);
+                        }
+                    });
+                }
+
             });
 
             page++;
@@ -117,62 +142,4 @@ function loadMoreFriends() {
             alert(`Lỗi khi tải danh sách: ${xhr.status} - ${xhr.statusText}`);
         }
     });
-}
-
-// Hàm tạo HTML cho friend-button-group
-function generateButtonGroup(friend) {
-    let buttons = '';
-
-    if (currentFilter === 'all') {
-        buttons = `
-            <div id="acceptedBtnGroup" class="dropdown">
-                <button class="btn btn-light dropdown-toggle" type="button" id="friendDropdownBtn-${friend.username}"
-                        data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="fa-solid fa-user-check"></i> Bạn bè
-                </button>
-                <ul class="dropdown-menu" aria-labelledby="friendDropdownBtn-${friend.username}">
-                    <li>
-                        <button class="btn btn-danger deleteFriendBtn" data-username="${friend.username}">
-                            <i class="fa-solid fa-user-xmark"></i> Hủy kết bạn
-                        </button>
-                    </li>
-                </ul>
-            </div>
-        `;
-    } else if (currentFilter === 'sent-requests') {
-        buttons = `
-            <div id="pendingBtnGroup">
-                <button class="btn btn-warning cancelFriendRequestBtn" data-username="${friend.username}">
-                    <i class="fa-solid fa-user-minus"></i> Hủy lời mời
-                </button>
-            </div>
-        `;
-    } else if (currentFilter === 'received-requests') {
-        buttons = `
-            <div id="pendingBtnGroup">
-                <button class="btn btn-success acceptFriendBtn" data-username="${friend.username}">
-                    <i class="fa-solid fa-user-check"></i> Chấp nhận
-                </button>
-                <button class="btn btn-danger reflectFriendBtn mt-3" data-username="${friend.username}">
-                    <i class="fa-solid fa-user-xmark"></i> Từ chối
-                </button>
-            </div>
-        `;
-    } else if (currentFilter === 'non-friends' && friend.allowFriendRequests) {
-        buttons = `
-            <div id="noneBtnGroup">
-                <button class="btn btn-success addFriendBtn" data-username="${friend.username}">
-                    <i class="fa-solid fa-user-plus"></i> Thêm bạn
-                </button>
-            </div>
-        `;
-    }else if (currentFilter === 'non-friends' && !friend.allowFriendRequests) {
-        buttons = `
-            <div id="noneBtnGroup">
-                <button class="btn btn-secondary" disabled>Người này không bật chế độ kết bạn</button>
-            </div>
-        `;
-    }
-
-    return buttons;
 }

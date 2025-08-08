@@ -5,6 +5,7 @@ import com.codegym.socialmedia.model.account.User;
 import com.codegym.socialmedia.model.social_action.Friendship;
 import com.codegym.socialmedia.service.friend_ship.FriendshipService;
 import com.codegym.socialmedia.service.user.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -22,49 +23,76 @@ public class FriendController {
     @Autowired
     private UserService userService;
 
+    @GetMapping("/friend/button")
+    public String getFriendButtonFragment(Model model,
+                                          @RequestParam String username,
+                                          @RequestParam String friendshipStatus,
+                                          @RequestParam boolean isSender,
+                                          @RequestParam boolean isReceiver,
+                                          @RequestParam boolean allowFriendRequests,
+                                          @RequestParam boolean isVisible,
+                                          HttpServletRequest request) {
+        model.addAttribute("username", username);
+        model.addAttribute("friendshipStatus", friendshipStatus);
+        model.addAttribute("isSender", isSender);
+        model.addAttribute("isReceiver", isReceiver);
+        model.addAttribute("allowFriendRequests", allowFriendRequests);
+        model.addAttribute("isVisible", isVisible);
+        return "fragments/friend-button-group :: buttonGroup";
+    }
+
+
     @GetMapping("/friends")
     public String friends(Model model, @RequestParam(value = "filter", defaultValue = "all") String filter,
                           @RequestParam(value = "page", defaultValue = "0") int page,
-                          @RequestParam(value = "size", defaultValue = "10") int size) {
-        User currentUser = userService.getCurrentUser();
+                          @RequestParam(value = "size", defaultValue = "10") int size
+            ,@RequestParam(value = "targetUserId", required = false) Long targetUserId) {
+
+        User u = null;
+        if(targetUserId == null) {
+            u = userService.getCurrentUser();
+            targetUserId = u.getId();
+        }else{
+            u = userService.getUserById(targetUserId);
+        }
+
         Page<FriendDto> friends;
         String listTitle;
-        Long targetUserId = currentUser.getId(); // Mặc định hiển thị danh sách bạn bè của chính người dùng
+
         boolean isSender = false, isReceiver = false;
         switch (filter) {
             case "mutual":
                 model.addAttribute("friendshipStatus", Friendship.FriendshipStatus.ACCEPTED.name());
-                friends = friendshipService.findMutualFriends(currentUser.getId(), targetUserId, page, size);
+                friends = friendshipService.findMutualFriends(targetUserId, targetUserId, page, size);
                 listTitle = "Bạn chung";
                 break;
             case "non-friends":
                 model.addAttribute("friendshipStatus", Friendship.FriendshipStatus.NONE.name());
-                friends = friendshipService.findNonFriends(currentUser.getId(), page, size);
+                friends = friendshipService.findNonFriends(targetUserId, page, size);
                 listTitle = "Chưa kết bạn";
                 break;
             case "sent-requests":
                 isSender = true;
                 model.addAttribute("friendshipStatus", Friendship.FriendshipStatus.PENDING.name());
-                friends = friendshipService.findSentFriendRequests(currentUser.getId(), page, size);
+                friends = friendshipService.findSentFriendRequests(targetUserId, page, size);
                 listTitle = "Lời mời đã gửi";
                 break;
             case "received-requests":
                 isReceiver = true;
                 model.addAttribute("friendshipStatus", Friendship.FriendshipStatus.PENDING.name());
-                friends = friendshipService.findReceivedFriendRequests(currentUser.getId(), page, size);
+                friends = friendshipService.findReceivedFriendRequests(targetUserId, page, size);
                 listTitle = "Lời mời nhận được";
                 break;
             case "all":
             default:
                 model.addAttribute("friendshipStatus", Friendship.FriendshipStatus.ACCEPTED.name());
-                friends = friendshipService.getVisibleFriendList(currentUser, page, size);
+                friends = friendshipService.getVisibleFriendList(u, page, size);
                 listTitle = "Danh sách bạn bè";
                 break;
         }
         model.addAttribute("isReceiver", isReceiver);
         model.addAttribute("isSender", isSender);
         model.addAttribute("friends", friends);
-        model.addAttribute("currentUserId", currentUser.getId());
         model.addAttribute("targetUserId", targetUserId);
         model.addAttribute("filter", filter);
         model.addAttribute("listTitle", listTitle);
@@ -74,11 +102,16 @@ public class FriendController {
     @GetMapping("/api/friends")
     @ResponseBody
     public Page<FriendDto> getFriends(@RequestParam("page") int page,
+                                      @RequestParam(value = "targetUserId", required = false) Long targetUserId,
                                       @RequestParam(value = "size", defaultValue = "10") int size
     ) {
-        User currentUser = userService.getCurrentUser();
-        Page<FriendDto> p = friendshipService.getVisibleFriendList(currentUser, page, size);
-        return friendshipService.getVisibleFriendList(currentUser, page, size);
+        User u = null;
+        if(targetUserId == null) {
+            u = userService.getCurrentUser();
+        }else{
+            u = userService.getUserById(targetUserId);
+        }
+        return friendshipService.getVisibleFriendList(u, page, size);
     }
 
     @GetMapping("/api/friends/mutual")

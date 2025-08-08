@@ -79,10 +79,11 @@
                 Bạn chung: <span th:text="${mutualFriendsCount}"></span>
             </div>
             <div class="row">
-                <div class="col-md-4" th:each="friend : ${friends}">
+                <div class="col-md-4"  th:each="friend, iterStat : ${friends}"
+                     th:if="${iterStat.index} < 9">
                     <th:block
-                            th:insert="~{fragments/friendCard :: friendCard(friend=${friend}, nameClass='name-profile')}"></th:block>
-
+                            th:insert="~{fragments/friendCard :: friendCard(friend=${friend}, nameClass='name-profile')}">
+                    </th:block>
                 </div>
             </div>
         </div>
@@ -129,8 +130,10 @@
     <div th:if="${!isOwner and mutualFriendsCount>0}">
         Bạn chung: <span th:text="${mutualFriendsCount}"></span>
     </div>
+    <input type="hidden" id="targetUserId" th:value="${targetUserId}" />
+    <input type="hidden" id="filterValue" value="all" />
     <div class="row" id="friends-list">
-        <div class="col-md-6" th:each="friend : ${friends}">
+        <div class="col-md-3" th:each="friend : ${friends}">
             <th:block
                     th:insert="~{fragments/friendCard :: friendCard(friend=${friend}, nameClass='name-list-friend')}">
             </th:block>

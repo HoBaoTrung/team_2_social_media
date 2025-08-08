@@ -1,13 +1,4 @@
-
 document.addEventListener("DOMContentLoaded", () => {
-    // Lấy tất cả các nút và chuyển thành mảng
-    const buttons = {
-        addFriend: Array.from(document.getElementsByClassName("addFriendBtn")),
-        cancelRequest: Array.from(document.getElementsByClassName("cancelFriendRequestBtn")),
-        reflectFriend: Array.from(document.getElementsByClassName("reflectFriendBtn")),
-        deleteFriend: Array.from(document.getElementsByClassName("deleteFriendBtn")),
-        acceptFriend: Array.from(document.getElementsByClassName("acceptFriendBtn"))
-    };
 
     // Hàm gửi request chung
     const sendRequest = async (url, method, username, successMessage, errorMessage) => {
@@ -17,7 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded'
                 },
-                body: new URLSearchParams({ user_name: username })
+                body: new URLSearchParams({user_name: username})
             });
 
             if (response.ok) {
@@ -51,44 +42,41 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     // Gắn sự kiện cho nút thêm bạn
-    buttons.addFriend.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const username = btn.dataset.username;
-            sendRequest(
-                buttonConfigs.addFriend.url,
-                buttonConfigs.addFriend.method,
-                username,
-                'Thêm bạn thành công',
-                buttonConfigs.addFriend.errorMessage
-            );
-        });
+    $(document).on('click', '.addFriendBtn', function () {
+        const username = $(this).data('username');
+        sendRequest(
+            buttonConfigs.addFriend.url,
+            buttonConfigs.addFriend.method,
+            username,
+            'Thêm bạn thành công',
+            buttonConfigs.addFriend.errorMessage
+        );
     });
 
     // Gắn sự kiện cho nút chấp nhận bạn
-    buttons.acceptFriend.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const username = btn.dataset.username;
-            sendRequest(
-                buttonConfigs.acceptFriend.url,
-                buttonConfigs.acceptFriend.method,
-                username,
-                'Chấp nhận bạn thành công',
-                buttonConfigs.acceptFriend.errorMessage
-            );
-        });
+    $(document).on('click', '.acceptFriendBtn', function () {
+        const username = $(this).data('username');
+        sendRequest(
+            buttonConfigs.acceptFriend.url,
+            buttonConfigs.acceptFriend.method,
+            username,
+            'Xóa thành công',
+            buttonConfigs.acceptFriend.errorMessage
+        );
     });
 
+
     // Gắn sự kiện cho các nút hủy/từ chối/xóa bạn
-    [...buttons.cancelRequest, ...buttons.reflectFriend, ...buttons.deleteFriend].forEach(btn => {
-        btn.addEventListener('click', () => {
-            const username = btn.dataset.username;
-            sendRequest(
-                buttonConfigs.deleteActions.url,
-                buttonConfigs.deleteActions.method,
-                username,
-                'Xóa thành công',
-                buttonConfigs.deleteActions.errorMessage
-            );
-        });
+    $(document).on('click', '.cancelFriendRequestBtn, .reflectFriendBtn, .deleteFriendBtn', function () {
+        const username = $(this).data('username');
+        sendRequest(
+            buttonConfigs.deleteActions.url,
+            buttonConfigs.deleteActions.method,
+            username,
+            'Xóa thành công',
+            buttonConfigs.deleteActions.errorMessage
+        );
     });
+
+
 });
