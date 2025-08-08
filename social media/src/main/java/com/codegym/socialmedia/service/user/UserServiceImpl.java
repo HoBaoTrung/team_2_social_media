@@ -54,9 +54,6 @@ public class UserServiceImpl implements UserService {
         user.setAccountStatus(User.AccountStatus.ACTIVE);
         user.setActive(true);
         user.setVerified(false);
-        user.setCanBeFound(true);
-        user.setShowFriendList(true);
-        user.setPrivacyProfile(User.PrivacyProfile.PUBLIC);
 
         User savedUser = iUserRepository.save(user);
 
@@ -72,14 +69,6 @@ public class UserServiceImpl implements UserService {
     private void createDefaultPrivacySettings(User user) {
         UserPrivacySettings privacySettings = new UserPrivacySettings();
         privacySettings.setUser(user);
-        privacySettings.setAllowFriendRequests(true);
-        privacySettings.setShowProfileToStrangers(true);
-        privacySettings.setShowFriendListToPublic(true);
-        privacySettings.setShowFriendListToFriends(true);
-        privacySettings.setAllowSearchByEmail(true);
-        privacySettings.setAllowSearchByPhone(true);
-        privacySettings.setWallPostPrivacy(UserPrivacySettings.WallPostPrivacy.PUBLIC);
-
         userPrivacySettingsRepository.save(privacySettings);
     }
 
@@ -123,6 +112,11 @@ public class UserServiceImpl implements UserService {
         }
 
         return null;
+    }
+
+    @Override
+    public User getUserById(Long id) {
+        return iUserRepository.findById(id).orElse(null);
     }
 
 
@@ -224,9 +218,6 @@ public class UserServiceImpl implements UserService {
             user.setAccountStatus(User.AccountStatus.ACTIVE);
             user.setActive(true);
             user.setVerified(true); // OAuth2 user đã được verify
-            user.setCanBeFound(true);
-            user.setShowFriendList(true);
-            user.setPrivacyProfile(User.PrivacyProfile.PUBLIC);
 
             User savedUser = iUserRepository.save(user);
 

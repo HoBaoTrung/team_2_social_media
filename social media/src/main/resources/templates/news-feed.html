@@ -16,7 +16,7 @@
             <div class="avatar">
                 <span th:text="${#strings.substring(#authentication.name, 0, 1).toUpperCase()}">U</span>
             </div>
-            <h4 sec:authentication="name">Username</h4>
+            <h4 th:text="${#authentication.principal.fullName}">Tên người dùng</h4>
             <p class="user-role">Thành viên mới</p>
         </div>
 

@@ -22,26 +22,19 @@ public class SecurityConfig {
     }
 
     @Autowired
-    private CustomUserDetailsService userDetailsService;
-
-    @Autowired
     private CustomOAuth2UserService oauth2UserService;
 
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+
                 .headers(headers -> headers
                         .contentSecurityPolicy(csp -> csp
-                                .policyDirectives("img-src 'self' " +
-                                        "https://*.googleusercontent.com " +
-                                        "https://*.fbcdn.net " +
-                                        "https://res.cloudinary.com " +
-                                        "https://graph.facebook.com " +
-                                        "https://i.imgur.com " +
-                                        "https://secure.gravatar.com data: blob:;")
+                                .policyDirectives("img-src 'self' https://lh3.googleusercontent.com https://*.fbcdn.net https://res.cloudinary.com https://graph.facebook.com https://i.imgur.com https://secure.gravatar.com data: blob:;")
                         )
                 )
+
 
                 .authorizeHttpRequests(authz -> authz
                 .requestMatchers("/", "/login", "/register", "/css/**", "/js/**", "/images/**", "/api/debug/**", "/api/test/**").permitAll()
@@ -62,7 +55,6 @@ public class SecurityConfig {
                                 .userService(oauth2UserService)
                         )
                         .successHandler((request, response, authentication) -> {
-                            System.out.println("OAuth2 login successful for user: " + authentication.getName());
                             response.sendRedirect("/news-feed");
                         })
                         .failureHandler((request, response, exception) -> {
