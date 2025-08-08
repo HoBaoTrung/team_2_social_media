@@ -47,15 +47,17 @@ public class UserController {
     private FriendshipService friendshipService;
 
     @GetMapping("/profile/{username}")
-    public String viewProfile(@PathVariable String username,
-                              Model model) {
+    public String viewProfile(
+            @RequestParam(value = "filter", defaultValue = "posts", required = false) String filter,
+            @PathVariable String username,
+            Model model) {
         User viewedUser = userService.getUserByUsername(username);
         User currentUser = userService.getCurrentUser();
         long currentUserId = currentUser.getId();
         boolean isOwner = currentUser.getId().equals(viewedUser.getId());
-        if(!isOwner){
+        if (!isOwner) {
             Friendship friendship = friendshipService.findByUsers(currentUserId, viewedUser.getId());
-            if(friendship != null) {
+            if (friendship != null) {
                 model.addAttribute("isSender", currentUserId == friendship.getId().getRequesterId());
                 model.addAttribute("isReceiver", currentUserId == friendship.getId().getAddresseeId());
             }
@@ -78,11 +80,13 @@ public class UserController {
         model.addAttribute("canViewBio", PrivacyUtils.canView(currentUser, viewedUser, privacy.getShowBio(), isFriend));
 
         Page<FriendDto> friends = null;
-        if(isFriend || privacy.getShowFriendList().equals(UserPrivacySettings.PrivacyLevel.PRIVATE)){
-            friends = friendshipService.findMutualFriends(viewedUser.getId(),currentUser.getId(),0,10);
-        } else
-        if(isOwner || isFriend || !privacy.getShowFriendList().equals(UserPrivacySettings.PrivacyLevel.PRIVATE)) {
-             friends = friendshipService.getVisibleFriendList(viewedUser, 0 ,10);
+
+        if (!isOwner && filter.equals("mutual")) {
+            friends = friendshipService.findMutualFriends(viewedUser.getId(), currentUser.getId(), 0, 10);
+        } else if (!isFriend && !privacy.getShowFriendList().equals(UserPrivacySettings.PrivacyLevel.PUBLIC)) {
+            friends = friendshipService.findMutualFriends(viewedUser.getId(), currentUser.getId(), 0, 10);
+        } else if (isOwner || isFriend || !privacy.getShowFriendList().equals(UserPrivacySettings.PrivacyLevel.PRIVATE)) {
+            friends = friendshipService.getVisibleFriendList(viewedUser, 0, 10);
         }
 
         model.addAttribute("canViewFriendList", PrivacyUtils.canView(currentUser, viewedUser, privacy.getShowFriendList(), isFriend));
@@ -96,12 +100,10 @@ public class UserController {
         model.addAttribute("isOwner", isOwner);
         model.addAttribute("friendshipStatus", friendshipStatus.name());
         model.addAttribute("targetUserId", viewedUser.getId());
-
+        model.addAttribute("filter", filter);
         model.addAttribute("posts", posts);
         return "profile/view";
     }
-
-
 
 
     @GetMapping("/")

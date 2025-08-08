@@ -134,26 +134,13 @@ public class FriendshipServiceImpl implements FriendshipService {
         // PUBLIC hoặc đủ điều kiện: lấy danh sách bạn bè
         return getFriendsPage(targetUser.getId(), viewer.getId(), pageable);
     }
-
     private Page<FriendDto> getFriendsPage(Long targetUserId, Long viewerId, Pageable pageable) {
-        Page<User> friendsPage = friendshipRepository.findFriendsOfUserExcludingViewer(targetUserId,viewerId,pageable);
-        boolean isFriend = getFriendshipStatus(userRepository.findById(targetUserId).orElse(null),
-                userRepository.findById(viewerId).orElse(null)) == Friendship.FriendshipStatus.ACCEPTED;
+        Page<User> friendsPage = friendshipRepository.findFriendsOfUserExcludingViewer(targetUserId, viewerId, pageable);
 
         List<FriendDto> friendDtos = friendsPage.getContent().stream()
                 .filter(user -> !user.getId().equals(viewerId)) // Loại bỏ viewer khỏi danh sách
                 .map(user -> new FriendDto(user, countMutualFriends(user.getId(), viewerId)))
                 .collect(Collectors.toList());
-
-        // Sắp xếp bạn chung lên đầu nếu viewer là bạn
-        if (isFriend) {
-            Set<Long> viewerFriends = findFriendIdsOfUser(viewerId);
-            friendDtos.sort((dto1, dto2) -> {
-                boolean u1IsMutual = viewerFriends.contains(dto1.getId());
-                boolean u2IsMutual = viewerFriends.contains(dto2.getId());
-                return u1IsMutual && !u2IsMutual ? -1 : (u2IsMutual && !u1IsMutual ? 1 : 0);
-            });
-        }
 
         return new PageImpl<>(friendDtos, pageable, friendsPage.getTotalElements());
     }
@@ -176,9 +163,9 @@ public class FriendshipServiceImpl implements FriendshipService {
     public Page<FriendDto> findMutualFriends(Long userAId, Long userBId, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<User> mutualFriendsPage = friendshipRepository.findMutualFriends(userAId, userBId, pageable);
-
+        long currentUserID = userService.getCurrentUser().getId();
         List<FriendDto> friendDtos = mutualFriendsPage.getContent().stream()
-                .map(user -> new FriendDto(user, countMutualFriends(userAId, userBId)))
+                .map(user -> new FriendDto(user, countMutualFriends(currentUserID, user.getId())))
                 .collect(Collectors.toList());
 
         return new PageImpl<>(friendDtos, pageable, mutualFriendsPage.getTotalElements());

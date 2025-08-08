@@ -1,8 +1,8 @@
 let friendshipStatus = 'ACCEPTED'
 let page = 1;
+const size = 10;
 let isLoading = false;
 let hasMoreData = true; // Biến theo dõi xem còn dữ liệu để tải hay không
-const size = 10;
 const targetUserId = document.getElementById('targetUserId').value;
 const currentFilter = document.getElementById('filterValue').value;// Lấy giá trị filter từ Thymeleaf
 const currentPage = window.location.pathname;

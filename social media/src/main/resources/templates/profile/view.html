@@ -1,3 +1,153 @@
+<!--<!DOCTYPE html>-->
+<!--<html xmlns:th="http://www.thymeleaf.org">-->
+<!--<head>-->
+<!--    <title th:text="${user.firstName + ' ' + user.lastName + ' | Hồ sơ cá nhân'}">Trang cá nhân</title>-->
+<!--    <link rel="stylesheet" th:href="@{/css/view_profile.css}">-->
+<!--    <link rel="stylesheet" th:href="@{/css/friend_card.css}">-->
+<!--    <th:block th:replace="~{fragments/commonHead :: commonHead}"></th:block>-->
+<!--</head>-->
+<!--<body>-->
+
+<!--&lt;!&ndash; HEADER &ndash;&gt;-->
+<!--<div th:replace="~{fragments/header :: header}"></div>-->
+
+<!--&lt;!&ndash; COVER IMAGE + AVATAR &ndash;&gt;-->
+<!--<div class="cover-container">-->
+<!--    <img class="cover-image" th:src="@{/images/default-avatar.jpg}" alt="Ảnh bìa">-->
+
+<!--    <div class="avatar-container">-->
+<!--        <img class="avatar"-->
+<!--             th:if="${user.profilePicture != null and !#strings.isEmpty(user.profilePicture)}"-->
+<!--             th:src="@{${user.profilePicture}}" alt="Avatar">-->
+
+<!--        <img class="avatar"-->
+<!--             th:unless="${user.profilePicture != null and !#strings.isEmpty(user.profilePicture)}"-->
+<!--             th:src="@{/images/default-avatar.jpg}" alt="Avatar">-->
+
+<!--        <div class="user-name" th:text="${user.firstName + ' ' + user.lastName}">Tên người dùng</div>-->
+<!--        <div class="button-group" th:if="${!isOwner}">-->
+<!--            <div th:insert="fragments/friend-button-group :: buttonGroup(${user.username}, ${friendshipStatus}, ${isSender}, ${isReceiver}, ${allowFriendRequests},false)"></div>-->
+<!--            <button th:if="${canSendMessage}" class="btn btn-primary ">-->
+<!--                <i class="fa-solid fa-message"></i> Nhắn tin-->
+<!--            </button>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--</div>-->
+
+
+<!--&lt;!&ndash; NAVIGATION TABS &ndash;&gt;-->
+<!--<div class="profile-tabs">-->
+<!--    <a th:href="@{'/profile/' + ${user.username}}" class="tab active">Bài viết</a>-->
+<!--    <a href="#" class="tab">Ảnh</a>-->
+<!--    <a th:href="@{'/profile/' + ${user.username} + '?filter=all'}" class="tab" th:if="${canViewFriendList or mutualFriendsCount>0}" >Bạn bè</a>-->
+<!--    <a th:href="@{'/profile/' + ${user.username} + '?filter=mutual'}" class="tab" th:if="${!isOwner and mutualFriendsCount>0}" >Bạn chung</a></div>-->
+
+<!--&lt;!&ndash; MAIN CONTENT: 2 CỘT &ndash;&gt;-->
+<!--&lt;!&ndash;    Khi nhấn nút Bài viết&ndash;&gt;-->
+<!--<div id="postsSection" class="profile-page-container d-flex profile-section">-->
+
+<!--    &lt;!&ndash; CỘT TRÁI: Thông tin người dùng &ndash;&gt;-->
+<!--    <div class="profile-left-column">-->
+<!--        <div class="card-box profile-content">-->
+<!--            <h2>Thông tin cá nhân</h2>-->
+<!--            <div class="info-item" th:if="${canViewEmail}">-->
+<!--                <strong>Email:</strong> <span th:text="${user.email}">email@example.com</span>-->
+<!--            </div>-->
+<!--            <div class="info-item" th:if="${canViewPhone}">-->
+<!--                <strong>Số điện thoại:</strong> <span th:text="${user.phone}">0123456789</span>-->
+<!--            </div>-->
+<!--            <div class="info-item" th:if="${canViewDob}">-->
+<!--                <strong>Sinh nhật:</strong> <span th:text="${user.dateOfBirth}">01/01/1990</span>-->
+<!--            </div>-->
+<!--            <div class="info-item" th:if="${canViewBio}">-->
+<!--                <strong>Giới thiệu:</strong><br>-->
+<!--                <textarea readonly rows="5" style="width: 100%;" th:text="${user.bio}">...</textarea>-->
+<!--            </div>-->
+
+
+<!--            <div th:if="${isOwner}" class="profile-actions">-->
+<!--                <a th:href="@{/setting}" class="btn">Chỉnh sửa hồ sơ</a>-->
+<!--            </div>-->
+<!--        </div>-->
+
+<!--        <div class="card-box profile-content" th:if="${canViewFriendList or mutualFriendsCount>0}">-->
+<!--            <h2>Thông tin bạn bè</h2>-->
+<!--            <div th:if="${canViewFriendList}">-->
+<!--                Bạn bè: <span th:text="${friendCount}"></span>-->
+<!--            </div>-->
+<!--            <div th:if="${!isOwner and mutualFriendsCount>0}">-->
+<!--                Bạn chung: <span th:text="${mutualFriendsCount}"></span>-->
+<!--            </div>-->
+<!--            <div class="row">-->
+<!--                <div class="col-md-4"  th:each="friend, iterStat : ${friends}"-->
+<!--                     th:if="${iterStat.index} < 9">-->
+<!--                    <th:block-->
+<!--                            th:insert="~{fragments/friendCard :: friendCard(friend=${friend}, nameClass='name-profile')}">-->
+<!--                    </th:block>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </div>-->
+
+<!--    </div>-->
+
+<!--    &lt;!&ndash; CỘT PHẢI: Bài viết &ndash;&gt;-->
+<!--    <div class="card-box posts-container">-->
+<!--        <h2>Bài viết</h2>-->
+
+<!--        <div th:if="${posts.isEmpty()}">-->
+<!--            <p>Chưa có bài viết nào.</p>-->
+<!--        </div>-->
+
+<!--        <div th:each="post : ${posts}" class="post-card">-->
+<!--            <div class="post-header">-->
+<!--                <img class="post-avatar"-->
+<!--                     th:src="@{${user.profilePicture != null && !#strings.isEmpty(user.profilePicture) ? user.profilePicture : '/images/default-avatar.jpg'}}"-->
+<!--                     alt="Avatar">-->
+
+<!--                <div class="post-user-info">-->
+<!--                    <div class="post-username" th:text="${user.firstName + ' ' + user.lastName}">Tên người dùng-->
+<!--                    </div>-->
+<!--                    <div class="post-time" th:text="${#temporals.format(post.createdAt, 'dd/MM/yyyy HH:mm')}">Ngày-->
+<!--                        đăng-->
+<!--                    </div>-->
+<!--                </div>-->
+<!--            </div>-->
+
+<!--            <div class="post-content" th:text="${post.content}">-->
+<!--                Nội dung bài viết...-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--</div>-->
+
+
+<!--&lt;!&ndash;    Khi nhấn nút Bạn bè&ndash;&gt;-->
+<!--<div id="friendsSection" class="card-box profile-section d-none " style="margin: 30px 40px;">-->
+<!--    <h2>Thông tin bạn bè</h2>-->
+<!--    <div th:if="${canViewFriendList}">-->
+<!--        Bạn bè: <span th:text="${friendCount}"></span>-->
+<!--    </div>-->
+<!--    <div th:if="${!isOwner and mutualFriendsCount>0}">-->
+<!--        Bạn chung: <span th:text="${mutualFriendsCount}"></span>-->
+<!--    </div>-->
+<!--    <input type="hidden" id="targetUserId" th:value="${targetUserId}" />-->
+<!--    <input type="hidden" id="filterValue" th:value="${filter}" />-->
+<!--    <div class="row" id="friends-list">-->
+<!--        <div class="col-md-3" th:each="friend : ${friends}">-->
+<!--            <th:block-->
+<!--                    th:insert="~{fragments/friendCard :: friendCard(friend=${friend}, nameClass='name-list-friend')}">-->
+<!--            </th:block>-->
+<!--        </div>-->
+<!--    </div>-->
+
+<!--    <div class="loading" id="loading">-->
+<!--        <i class="fas fa-spinner fa-spin"></i> Đang tải...-->
+<!--    </div>-->
+<!--</div>-->
+
+
+<!--</body>-->
+<!--</html>-->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -14,40 +164,45 @@
 <!-- COVER IMAGE + AVATAR -->
 <div class="cover-container">
     <img class="cover-image" th:src="@{/images/default-avatar.jpg}" alt="Ảnh bìa">
-
     <div class="avatar-container">
         <img class="avatar"
              th:if="${user.profilePicture != null and !#strings.isEmpty(user.profilePicture)}"
              th:src="@{${user.profilePicture}}" alt="Avatar">
-
         <img class="avatar"
              th:unless="${user.profilePicture != null and !#strings.isEmpty(user.profilePicture)}"
              th:src="@{/images/default-avatar.jpg}" alt="Avatar">
-
         <div class="user-name" th:text="${user.firstName + ' ' + user.lastName}">Tên người dùng</div>
         <div class="button-group" th:if="${!isOwner}">
             <div th:insert="fragments/friend-button-group :: buttonGroup(${user.username}, ${friendshipStatus}, ${isSender}, ${isReceiver}, ${allowFriendRequests},false)"></div>
-            <button th:if="${canSendMessage}" class="btn btn-primary ">
+            <button th:if="${canSendMessage}" class="btn btn-primary">
                 <i class="fa-solid fa-message"></i> Nhắn tin
             </button>
         </div>
     </div>
 </div>
 
-
 <!-- NAVIGATION TABS -->
 <div class="profile-tabs">
-    <a data-target="postsSection" th:href="@{'/profile/' + ${user.username}}" class="tab active">Bài viết</a>
-    <a data-target="photosSection" href="#" class="tab">Ảnh</a>
-    <a data-target="friendsSection" href="#" class="tab" th:if="${canViewFriendList or mutualFriendsCount>0}">Bạn bè</a>
+    <a th:href="@{'/profile/' + ${user.username} + '?filter=posts'}"
+       th:classappend="${filter == 'posts'} ? 'active' : ''"
+       class="tab">Bài viết</a>
+    <a th:href="@{'/profile/' + ${user.username} + '?filter=photos'}"
+       th:classappend="${filter == 'photos'} ? 'active' : ''"
+       class="tab">Ảnh</a>
+    <a th:href="@{'/profile/' + ${user.username} + '?filter=all'}"
+       th:classappend="${filter == 'all'} ? 'active' : ''"
+       class="tab"
+       th:if="${canViewFriendList or mutualFriendsCount>0}">Bạn bè</a>
+    <a th:href="@{'/profile/' + ${user.username} + '?filter=mutual'}"
+       th:classappend="${filter == 'mutual'} ? 'active' : ''"
+       class="tab"
+       th:if="${!isOwner and mutualFriendsCount>0}">Bạn chung</a>
 </div>
 
-<!-- MAIN CONTENT: 2 CỘT -->
-<!--    Khi nhấn nút Bài viết-->
-<div id="postsSection" class="profile-page-container d-flex profile-section">
-
+<!-- MAIN CONTENT -->
+<div class="profile-page-container d-flex">
     <!-- CỘT TRÁI: Thông tin người dùng -->
-    <div class="profile-left-column">
+    <div th:if="${filter == 'posts' or filter == 'photos' }" class="profile-left-column">
         <div class="card-box profile-content">
             <h2>Thông tin cá nhân</h2>
             <div class="info-item" th:if="${canViewEmail}">
@@ -63,8 +218,6 @@
                 <strong>Giới thiệu:</strong><br>
                 <textarea readonly rows="5" style="width: 100%;" th:text="${user.bio}">...</textarea>
             </div>
-
-
             <div th:if="${isOwner}" class="profile-actions">
                 <a th:href="@{/setting}" class="btn">Chỉnh sửa hồ sơ</a>
             </div>
@@ -79,101 +232,63 @@
                 Bạn chung: <span th:text="${mutualFriendsCount}"></span>
             </div>
             <div class="row">
-                <div class="col-md-4"  th:each="friend, iterStat : ${friends}"
-                     th:if="${iterStat.index} < 9">
+                <div class="col-md-4" th:each="friend, iterStat : ${friends}" th:if="${iterStat.index} < 9">
                     <th:block
                             th:insert="~{fragments/friendCard :: friendCard(friend=${friend}, nameClass='name-profile')}">
                     </th:block>
                 </div>
             </div>
         </div>
-
     </div>
 
-    <!-- CỘT PHẢI: Bài viết -->
-    <div class="card-box posts-container">
-        <h2>Bài viết</h2>
-
-        <div th:if="${posts.isEmpty()}">
-            <p>Chưa có bài viết nào.</p>
-        </div>
-
-        <div th:each="post : ${posts}" class="post-card">
-            <div class="post-header">
-                <img class="post-avatar"
-                     th:src="@{${user.profilePicture != null && !#strings.isEmpty(user.profilePicture) ? user.profilePicture : '/images/default-avatar.jpg'}}"
-                     alt="Avatar">
-
-                <div class="post-user-info">
-                    <div class="post-username" th:text="${user.firstName + ' ' + user.lastName}">Tên người dùng
-                    </div>
-                    <div class="post-time" th:text="${#temporals.format(post.createdAt, 'dd/MM/yyyy HH:mm')}">Ngày
-                        đăng
+    <!-- CỘT PHẢI: Nội dung dựa trên filter -->
+    <div class="card-box posts-container" th:if="${filter == 'posts' or filter == 'photos' }" >
+        <!-- Bài viết -->
+        <div th:if="${filter == 'posts'}">
+            <div th:if="${posts.isEmpty()}">
+                <p>Chưa có bài viết nào.</p>
+            </div>
+            <div th:each="post : ${posts}" class="post-card">
+                <div class="post-header">
+                    <img class="post-avatar"
+                         th:src="@{${user.profilePicture != null && !#strings.isEmpty(user.profilePicture) ? user.profilePicture : '/images/default-avatar.jpg'}}"
+                         alt="Avatar">
+                    <div class="post-user-info">
+                        <div class="post-username" th:text="${user.firstName + ' ' + user.lastName}">Tên người dùng
+                        </div>
+                        <div class="post-time" th:text="${#temporals.format(post.createdAt, 'dd/MM/yyyy HH:mm')}">Ngày
+                            đăng
+                        </div>
                     </div>
                 </div>
-            </div>
-
-            <div class="post-content" th:text="${post.content}">
-                Nội dung bài viết...
+                <div class="post-content" th:text="${post.content}">Nội dung bài viết...</div>
             </div>
         </div>
-    </div>
-</div>
 
-
-<!--    Khi nhấn nút Bạn bè-->
-<div id="friendsSection" class="card-box profile-section d-none " style="margin: 30px 40px;">
-    <h2>Thông tin bạn bè</h2>
-    <div th:if="${canViewFriendList}">
-        Bạn bè: <span th:text="${friendCount}"></span>
-    </div>
-    <div th:if="${!isOwner and mutualFriendsCount>0}">
-        Bạn chung: <span th:text="${mutualFriendsCount}"></span>
-    </div>
-    <input type="hidden" id="targetUserId" th:value="${targetUserId}" />
-    <input type="hidden" id="filterValue" value="all" />
-    <div class="row" id="friends-list">
-        <div class="col-md-3" th:each="friend : ${friends}">
-            <th:block
-                    th:insert="~{fragments/friendCard :: friendCard(friend=${friend}, nameClass='name-list-friend')}">
-            </th:block>
+        <!-- Ảnh -->
+        <div th:if="${filter == 'photos'}">
+            Hình ảnh
         </div>
     </div>
 
-    <div class="loading" id="loading">
-        <i class="fas fa-spinner fa-spin"></i> Đang tải...
+    <!-- Bạn bè -->
+    <div  class="card-box profile-content"  th:if="${filter == 'all' or filter == 'mutual' }">
+        <input type="hidden" id="targetUserId" th:value="${targetUserId}"/>
+        <input type="hidden" id="filterValue" th:value="${filter}"/>
+        <div class="row" id="friends-list">
+            <div class="col-md-3" th:each="friend : ${friends}">
+                <th:block
+                        th:insert="~{fragments/friendCard :: friendCard(friend=${friend}, nameClass='name-list-friend')}">
+                </th:block>
+            </div>
+        </div>
+        <div class="loading" id="loading">
+            <i class="fas fa-spinner fa-spin"></i> Đang tải...
+        </div>
     </div>
-
 </div>
 
 <script th:src="@{/js/load-friend.js}"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const tabs = document.querySelectorAll('.profile-tabs .tab');
-        const sections = document.querySelectorAll('.profile-section');
-
-        tabs.forEach(tab => {
-            tab.addEventListener('click', function (e) {
-                e.preventDefault();
-
-                // Bỏ active tab cũ
-                tabs.forEach(t => t.classList.remove('active'));
-                // Ẩn tất cả sections
-                sections.forEach(section => section.classList.add('d-none'));
-
-                // Thêm active cho tab đang chọn
-                tab.classList.add('active');
-                // Hiện section tương ứng
-                const targetId = tab.getAttribute('data-target');
-                document.getElementById(targetId).classList.remove('d-none');
-            });
-        });
-
-        // Tùy chọn: mặc định hiển thị "Bạn bè" (nếu bạn muốn)
-        // document.querySelector('.tab[data-target="friendsSection"]').click();
-    });
-</script>
-
 <script th:src="@{/js/friend-button.js}"></script>
 </body>
 </html>
