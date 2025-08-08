@@ -68,14 +68,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Gắn sự kiện cho các nút hủy/từ chối/xóa bạn
     $(document).on('click', '.cancelFriendRequestBtn, .reflectFriendBtn, .deleteFriendBtn', function () {
-        swal({
+        Swal.fire({
             title: "Xóa kết bạn?",
-            // text: productName,
             icon: "warning",
-            buttons: ["Hủy", "Xóa"],
-            dangerMode: true,
-        }).then((willDelete) => {
-            if (willDelete) {
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Yes!"
+        }).then((result) => {
+            if (result.isConfirmed) {
                 const username = $(this).data('username');
                 sendRequest(
                     buttonConfigs.deleteActions.url,

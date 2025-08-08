@@ -39,7 +39,7 @@
 <div class="profile-tabs">
     <a data-target="postsSection" th:href="@{'/profile/' + ${user.username}}" class="tab active">Bài viết</a>
     <a data-target="photosSection" href="#" class="tab">Ảnh</a>
-    <a data-target="friendsSection" href="#" class="tab" th:if="${canViewFriendList}">Bạn bè</a>
+    <a data-target="friendsSection" href="#" class="tab" th:if="${canViewFriendList or mutualFriendsCount>0}">Bạn bè</a>
 </div>
 
 <!-- MAIN CONTENT: 2 CỘT -->
@@ -70,9 +70,9 @@
             </div>
         </div>
 
-        <div class="card-box profile-content" th:if="${canViewFriendList}">
+        <div class="card-box profile-content" th:if="${canViewFriendList or mutualFriendsCount>0}">
             <h2>Thông tin bạn bè</h2>
-            <div>
+            <div th:if="${canViewFriendList}">
                 Bạn bè: <span th:text="${friendCount}"></span>
             </div>
             <div th:if="${!isOwner and mutualFriendsCount>0}">
@@ -124,7 +124,7 @@
 <!--    Khi nhấn nút Bạn bè-->
 <div id="friendsSection" class="card-box profile-section d-none " style="margin: 30px 40px;">
     <h2>Thông tin bạn bè</h2>
-    <div>
+    <div th:if="${canViewFriendList}">
         Bạn bè: <span th:text="${friendCount}"></span>
     </div>
     <div th:if="${!isOwner and mutualFriendsCount>0}">

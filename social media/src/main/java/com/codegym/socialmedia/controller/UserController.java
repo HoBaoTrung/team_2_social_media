@@ -68,7 +68,6 @@ public class UserController {
 
         List<Status> posts = new ArrayList<>();
 
-        Page<FriendDto> friends = friendshipService.getVisibleFriendList(viewedUser, 0 ,10);
 
         int friendCount = friendshipService.countFriends(viewedUser.getId());
         int mutualFriendsCount = friendshipService.countMutualFriends(currentUser.getId(), viewedUser.getId());
@@ -77,10 +76,19 @@ public class UserController {
         model.addAttribute("canViewPhone", PrivacyUtils.canView(currentUser, viewedUser, privacy.getShowPhone(), isFriend));
         model.addAttribute("canViewDob", PrivacyUtils.canView(currentUser, viewedUser, privacy.getShowDob(), isFriend));
         model.addAttribute("canViewBio", PrivacyUtils.canView(currentUser, viewedUser, privacy.getShowBio(), isFriend));
+
+        Page<FriendDto> friends = null;
+        if(isFriend || privacy.getShowFriendList().equals(UserPrivacySettings.PrivacyLevel.PRIVATE)){
+            friends = friendshipService.findMutualFriends(viewedUser.getId(),currentUser.getId(),0,10);
+        } else
+        if(isOwner || isFriend || !privacy.getShowFriendList().equals(UserPrivacySettings.PrivacyLevel.PRIVATE)) {
+             friends = friendshipService.getVisibleFriendList(viewedUser, 0 ,10);
+        }
+
         model.addAttribute("canViewFriendList", PrivacyUtils.canView(currentUser, viewedUser, privacy.getShowFriendList(), isFriend));
+
         model.addAttribute("canSendMessage", PrivacyUtils.canView(currentUser, viewedUser, privacy.getAllowSendMessage(), isFriend));
         model.addAttribute("allowFriendRequests", privacy.isAllowFriendRequests());
-
         model.addAttribute("friends", friends.getContent());
         model.addAttribute("friendCount", friendCount);
         model.addAttribute("mutualFriendsCount", mutualFriendsCount);
