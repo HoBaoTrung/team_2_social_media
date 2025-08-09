@@ -14,6 +14,7 @@ import com.codegym.socialmedia.model.social_action.Status;
 import com.codegym.socialmedia.repository.UserPrivacySettingsRepository;
 import com.codegym.socialmedia.service.friend_ship.FriendshipService;
 import com.codegym.socialmedia.service.user.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -110,11 +111,14 @@ public class UserController {
         return "redirect:/login";
     }
 
-    @GetMapping("/login")
+    @GetMapping({"/login", "/admin/login"})
     public String loginForm(@RequestParam(value = "error", required = false) String error,
                             @RequestParam(value = "logout", required = false) String logout,
-                            Model model) {
-
+                            Model model, HttpServletRequest request) {
+        boolean isAdmin = request.getRequestURI().startsWith("/admin");
+        model.addAttribute("loginAction", isAdmin ? "/admin/login" : "/login");
+        model.addAttribute("switchLoginUrl", isAdmin ? "/login" : "/admin/login");
+        model.addAttribute("isAdmin", isAdmin);
         // Luôn thêm object user để tránh lỗi template
         if (!model.containsAttribute("user")) {
             model.addAttribute("user", new UserRegistrationDto());
@@ -167,6 +171,7 @@ public class UserController {
             return "redirect:/login";
 
         } catch (Exception e) {
+            e.printStackTrace();
             model.addAttribute("error", "Có lỗi xảy ra trong quá trình đăng ký. Vui lòng thử lại.");
             model.addAttribute("user", registrationDto);
             return "login";
@@ -230,7 +235,9 @@ public class UserController {
         }
 
         User user = userService.getCurrentUser();
-        userService.save(dto.toUser(user), avatarFile);
+        User updatedUser = userService.save(dto.toUser(user), avatarFile);
+
+        userService.refreshAuthentication(updatedUser.getUsername());
 
         redirectAttributes.addFlashAttribute("success", "Cập nhật thông tin thành công");
         return "redirect:/setting";

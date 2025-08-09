@@ -84,10 +84,10 @@ public class User {
     @OneToMany(mappedBy = "resultUser")
     private List<UserSearchHistory> searchesFoundIn;
 
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private UserPrivacySettings privacySettings;
 
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private NotificationSettings notificationSettings;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
