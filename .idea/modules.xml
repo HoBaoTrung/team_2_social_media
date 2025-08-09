@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/socialmedia.main.iml" filepath="$PROJECT_DIR$/.idea/modules/socialmedia.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/team_2_social_media.iml" filepath="$PROJECT_DIR$/.idea/team_2_social_media.iml" />
     </modules>
   </component>
