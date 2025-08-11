@@ -111,15 +111,14 @@ public class UserController {
         return "redirect:/login";
     }
 
-    @GetMapping({"/login", "/admin/login"})
-    public String loginForm(@RequestParam(value = "error", required = false) String error,
-                            @RequestParam(value = "logout", required = false) String logout,
-                            Model model, HttpServletRequest request) {
-        boolean isAdmin = request.getRequestURI().startsWith("/admin");
-        model.addAttribute("loginAction", isAdmin ? "/admin/login" : "/login");
-        model.addAttribute("switchLoginUrl", isAdmin ? "/login" : "/admin/login");
-        model.addAttribute("isAdmin", isAdmin);
-        // Luôn thêm object user để tránh lỗi template
+    @GetMapping("/login")
+    public String userLoginForm(@RequestParam(value = "error", required = false) String error,
+                                @RequestParam(value = "logout", required = false) String logout,
+                                Model model) {
+        model.addAttribute("loginAction", "/login");
+        model.addAttribute("switchLoginUrl", "/admin/login");
+        model.addAttribute("isAdmin", false);
+
         if (!model.containsAttribute("user")) {
             model.addAttribute("user", new UserRegistrationDto());
         }
@@ -130,6 +129,29 @@ public class UserController {
         if (logout != null) {
             model.addAttribute("message", "Đăng xuất thành công!");
         }
+
+        return "login";
+    }
+
+    @GetMapping("/admin/login")
+    public String adminLoginForm(@RequestParam(value = "error", required = false) String error,
+                                 @RequestParam(value = "logout", required = false) String logout,
+                                 Model model) {
+        model.addAttribute("loginAction", "/admin/login");
+        model.addAttribute("switchLoginUrl", "/login");
+        model.addAttribute("isAdmin", true);
+
+        if (!model.containsAttribute("user")) {
+            model.addAttribute("user", new UserRegistrationDto());
+        }
+
+        if (error != null) {
+            model.addAttribute("error", "Tên đăng nhập hoặc mật khẩu không đúng!");
+        }
+        if (logout != null) {
+            model.addAttribute("message", "Đăng xuất thành công!");
+        }
+
         return "login";
     }
 

@@ -71,7 +71,9 @@
                         <li>
                             <a class="dropdown-item"
                                th:href="@{|/profile/${#authentication.principal.username}|}">
-                                Thông tin cá nhân
+                                <img th:src="${#authentication.principal.avatarUrl}" alt="Avatar"
+                                     class="rounded-circle nav-icon-wrapper"/>
+                                <span th:text="${#authentication.principal.getFullName()}"></span>
                             </a>
                         </li>
                         <li><a class="dropdown-item" th:href="@{/setting}">Cài đặt</a></li>

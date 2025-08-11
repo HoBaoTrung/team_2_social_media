@@ -30,9 +30,9 @@
 <div class="container my-5">
     <div class="row">
         <!-- Sidebar -->
-        <div class="col-md-3">
+        <div class="col-md-3 position-fixed">
             <div class="sidebar">
-                <h2 class="mb-4 bg-dark text-white">Lựa chọn</h2>
+                <h2 class="mb-4 bg-dark text-white text-center">Lựa chọn</h2>
                 <div class="card shadow-sm">
                     <div class="list-group list-group-flush">
                         <a th:class="'list-group-item list-group-item-action ' + (${filter == 'non-friends'} ? 'active' : '')"
@@ -60,9 +60,8 @@
         <input type="hidden" id="filterValue" th:value="${filter}" />
         <input type="hidden" id="targetUserId" th:value="${targetUserId}" />
         <!-- Danh sách bạn bè -->
-        <div class="col-md-9">
-            <h2 class="mb-4 bg-dark text-white" id="list-title" th:text="${listTitle}">Danh sách bạn bè</h2>
-
+        <div class="col-md-9  " style="margin-left: 30%;">
+            <h2 class="mb-4 bg-dark text-white text-center" id="list-title" th:text="${listTitle}">Danh sách bạn bè</h2>
             <div class="row" id="friends-list">
                 <div th:each="friend : ${friends}" class="col-md-3">
                     <div class="friend-action">
