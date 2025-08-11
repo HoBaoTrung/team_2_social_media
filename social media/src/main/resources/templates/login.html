@@ -76,7 +76,7 @@
             <p th:if="${!isAdmin}">Chưa có tài khoản? <a href="#" id="register-link">Đăng ký ngay</a></p>
 
             <!-- Nút chuyển loại đăng nhập -->
-            <a th:href="@{${switchLoginUrl}}"
+            <a th:href="${switchLoginUrl}"
                th:text="${isAdmin} ? 'Chuyển sang đăng nhập User' : 'Chuyển sang đăng nhập Admin'"></a>
         </form>
     </div>

@@ -69,18 +69,22 @@
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end" >
                         <li>
-                            <a class="dropdown-item"
+                            <a class="dropdown-item d-flex align-items-center"
                                th:href="@{|/profile/${#authentication.principal.username}|}">
                                 <img th:src="${#authentication.principal.avatarUrl}" alt="Avatar"
                                      class="rounded-circle nav-icon-wrapper"/>
-                                <span th:text="${#authentication.principal.getFullName()}"></span>
+                                <span class="ms-2" th:text="${#authentication.principal.getFullName()}"></span>
                             </a>
                         </li>
-                        <li><a class="dropdown-item" th:href="@{/setting}">Cài đặt</a></li>
+                        <li><a class="dropdown-item" th:href="@{/setting}">
+                            <i class="fas fa-cog icon"></i>
+                            Cài đặt</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li>
-                            <form th:action="@{/user/logout}" method="post" style="margin: 0;">
-                                <button type="submit" class="dropdown-item text-danger">Đăng xuất</button>
+                            <form th:action="@{/logout}" method="post" style="margin: 0;">
+                                <button type="submit" class="dropdown-item text-danger">
+                                    <i class="fas fa-sign-out-alt icon" ></i>
+                                    Đăng xuất</button>
                             </form>
                         </li>
                     </ul>
@@ -89,7 +93,7 @@
                 <!-- Nếu chưa đăng nhập -->
                 <div class="nav-item nav-icon-wrapper" sec:authorize="!isAuthenticated()" data-bs-toggle="tooltip"
                      data-bs-placement="bottom" title="Đăng nhập">
-                    <a class="nav-icon" th:href="@{/user/login}">
+                    <a class="nav-icon" th:href="@{/login}">
                         <i class="fas fa-sign-in-alt fa-lg"></i>
                     </a>
                 </div>

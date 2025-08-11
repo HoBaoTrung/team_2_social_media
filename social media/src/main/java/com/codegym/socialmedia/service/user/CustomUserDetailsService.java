@@ -3,7 +3,6 @@ package com.codegym.socialmedia.service.user;
 import com.codegym.socialmedia.model.account.User;
 import com.codegym.socialmedia.repository.IUserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
