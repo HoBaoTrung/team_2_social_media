@@ -108,16 +108,18 @@ public class UserController {
 
     @GetMapping("/")
     public String home() {
-        return "redirect:/login";
+        return "redirect:/user/login";
     }
 
-    @GetMapping("/login")
+    @GetMapping("/user/login")
     public String userLoginForm(@RequestParam(value = "error", required = false) String error,
                                 @RequestParam(value = "logout", required = false) String logout,
+                                @RequestParam(value = "username", required = false) String username,
                                 Model model) {
-        model.addAttribute("loginAction", "/login");
+        model.addAttribute("loginAction", "/user/login");
         model.addAttribute("switchLoginUrl", "/admin/login");
         model.addAttribute("isAdmin", false);
+        model.addAttribute("username", username);
 
         if (!model.containsAttribute("user")) {
             model.addAttribute("user", new UserRegistrationDto());
@@ -136,11 +138,12 @@ public class UserController {
     @GetMapping("/admin/login")
     public String adminLoginForm(@RequestParam(value = "error", required = false) String error,
                                  @RequestParam(value = "logout", required = false) String logout,
+                                 @RequestParam(value = "username", required = false) String username,
                                  Model model) {
         model.addAttribute("loginAction", "/admin/login");
-        model.addAttribute("switchLoginUrl", "/login");
+        model.addAttribute("switchLoginUrl", "user/login");
         model.addAttribute("isAdmin", true);
-
+        model.addAttribute("username", username);
         if (!model.containsAttribute("user")) {
             model.addAttribute("user", new UserRegistrationDto());
         }

@@ -79,7 +79,7 @@
                         <li><a class="dropdown-item" th:href="@{/setting}">Cài đặt</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li>
-                            <form th:action="@{/logout}" method="post" style="margin: 0;">
+                            <form th:action="@{/user/logout}" method="post" style="margin: 0;">
                                 <button type="submit" class="dropdown-item text-danger">Đăng xuất</button>
                             </form>
                         </li>
@@ -89,7 +89,7 @@
                 <!-- Nếu chưa đăng nhập -->
                 <div class="nav-item nav-icon-wrapper" sec:authorize="!isAuthenticated()" data-bs-toggle="tooltip"
                      data-bs-placement="bottom" title="Đăng nhập">
-                    <a class="nav-icon" th:href="@{/login}">
+                    <a class="nav-icon" th:href="@{/user/login}">
                         <i class="fas fa-sign-in-alt fa-lg"></i>
                     </a>
                 </div>
