@@ -155,6 +155,7 @@ public class UserController {
         if (result.hasErrors()) {
             // Đảm bảo object user vẫn có trong model khi có lỗi
             model.addAttribute("user", registrationDto);
+            model.addAttribute("isAdmin", false);
             return "login"; // Trả về trang login với form đăng ký active
         }
 
@@ -175,6 +176,7 @@ public class UserController {
             e.printStackTrace();
             model.addAttribute("error", "Có lỗi xảy ra trong quá trình đăng ký. Vui lòng thử lại.");
             model.addAttribute("user", registrationDto);
+            model.addAttribute("isAdmin", false);
             return "login";
         }
     }
