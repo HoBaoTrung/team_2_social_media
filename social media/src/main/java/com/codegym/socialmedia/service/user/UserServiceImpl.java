@@ -9,6 +9,7 @@ import com.codegym.socialmedia.repository.IUserRepository;
 import com.codegym.socialmedia.repository.NotificationSettingsRepository;
 import com.codegym.socialmedia.repository.UserPrivacySettingsRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -54,50 +55,22 @@ public class UserServiceImpl implements UserService {
         user.setAccountStatus(User.AccountStatus.ACTIVE);
         user.setActive(true);
         user.setVerified(false);
-        user.setCanBeFound(true);
-        user.setShowFriendList(true);
-        user.setPrivacyProfile(User.PrivacyProfile.PUBLIC);
+
+        UserPrivacySettings privacySettings = new UserPrivacySettings();
+        privacySettings.setUser(user);
+
+
+        NotificationSettings notificationSettings = new NotificationSettings();
+        notificationSettings.setUser(user);
+
+        user.setPrivacySettings(privacySettings);
+        user.setNotificationSettings(notificationSettings);
 
         User savedUser = iUserRepository.save(user);
-
-        // Tạo privacy settings mặc định
-        createDefaultPrivacySettings(savedUser);
-
-        // Tạo notification settings mặc định
-        createDefaultNotificationSettings(savedUser);
 
         return savedUser;
     }
 
-    private void createDefaultPrivacySettings(User user) {
-        UserPrivacySettings privacySettings = new UserPrivacySettings();
-        privacySettings.setUser(user);
-        privacySettings.setAllowFriendRequests(true);
-        privacySettings.setShowProfileToStrangers(true);
-        privacySettings.setShowFriendListToPublic(true);
-        privacySettings.setShowFriendListToFriends(true);
-        privacySettings.setAllowSearchByEmail(true);
-        privacySettings.setAllowSearchByPhone(true);
-        privacySettings.setWallPostPrivacy(UserPrivacySettings.WallPostPrivacy.PUBLIC);
-
-        userPrivacySettingsRepository.save(privacySettings);
-    }
-
-    private void createDefaultNotificationSettings(User user) {
-        NotificationSettings notificationSettings = new NotificationSettings();
-        notificationSettings.setUser(user);
-        notificationSettings.setFriendRequests(true);
-        notificationSettings.setMessages(true);
-        notificationSettings.setStatusLikes(true);
-        notificationSettings.setStatusComments(true);
-        notificationSettings.setStatusShares(true);
-        notificationSettings.setFriendStatusUpdates(true);
-        notificationSettings.setSystemNotifications(false);
-        notificationSettings.setEmailNotifications(false);
-        notificationSettings.setPushNotifications(false);
-
-        notificationSettingsRepository.save(notificationSettings);
-    }
     
 
     @Override
@@ -123,6 +96,11 @@ public class UserServiceImpl implements UserService {
         }
 
         return null;
+    }
+
+    @Override
+    public User getUserById(Long id) {
+        return iUserRepository.findById(id).orElse(null);
     }
 
 
@@ -155,13 +133,15 @@ public class UserServiceImpl implements UserService {
         if (image != null && !image.isEmpty()) {
             user.setProfilePicture(cloudinaryService.upload(image));
         }
-        refreshAuthentication(user.getUsername());
+//        refreshAuthentication(user.getUsername());
         return iUserRepository.save(user);
     }
 
     @Autowired
+    @Qualifier("customUserDetailsService")
     private UserDetailsService userDetailsService;
 
+    @Override
     public void refreshAuthentication(String username) {
         UserDetails updatedUser = userDetailsService.loadUserByUsername(username);
 
@@ -224,15 +204,18 @@ public class UserServiceImpl implements UserService {
             user.setAccountStatus(User.AccountStatus.ACTIVE);
             user.setActive(true);
             user.setVerified(true); // OAuth2 user đã được verify
-            user.setCanBeFound(true);
-            user.setShowFriendList(true);
-            user.setPrivacyProfile(User.PrivacyProfile.PUBLIC);
+
+            UserPrivacySettings privacySettings = new UserPrivacySettings();
+            privacySettings.setUser(user);
+
+
+            NotificationSettings notificationSettings = new NotificationSettings();
+            notificationSettings.setUser(user);
+
+            user.setPrivacySettings(privacySettings);
+            user.setNotificationSettings(notificationSettings);
 
             User savedUser = iUserRepository.save(user);
-
-            // Tạo settings mặc định cho OAuth2 user
-            createDefaultPrivacySettings(savedUser);
-            createDefaultNotificationSettings(savedUser);
 
             return savedUser;
         } else {

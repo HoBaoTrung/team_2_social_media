@@ -11,7 +11,7 @@ import java.io.Serializable;
 @AllArgsConstructor
 @Embeddable
 public class FriendshipId implements Serializable {
-    private Integer requesterId;
-    private Integer addresseeId;
+    private Long requesterId;
+    private Long addresseeId;
 
 }

@@ -8,6 +8,10 @@
     right: 0;
     width: 100%;
     z-index: 1000;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
 }
 
 
@@ -61,23 +65,24 @@
     color: #ddd;
 }
 
-/* ===== Link trong nav-center hoặc nav-right (nút chữ) ===== */
 .navigation-center a,
 .navigation-right a {
     font-size: 14px;
     border-radius: 5px;
     text-decoration: none;
-    padding: 10px 50px;
+    padding: 8px 16px;  /* 👈 nhỏ gọn hơn */
     color: #fff;
-    /*background: #333;*/
     display: flex;
-    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     text-transform: uppercase;
-    margin: 10px 0px;
-    letter-spacing: 1px;
+    margin: 0 8px;
+    letter-spacing: 0.5px;
     text-align: center;
     transition: 0.3s ease;
+    height: 40px;
 }
+
 
 .navigation-center a:hover,
 .navigation-right a:hover {

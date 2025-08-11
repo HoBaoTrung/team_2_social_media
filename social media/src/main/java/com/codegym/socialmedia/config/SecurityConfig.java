@@ -1,18 +1,22 @@
 package com.codegym.socialmedia.config;
 
-import com.codegym.socialmedia.service.user.CustomOidcUserService;
+import com.codegym.socialmedia.service.admin.AdminDetailsService;
 import com.codegym.socialmedia.service.user.CustomUserDetailsService;
 import com.codegym.socialmedia.service.user.CustomOAuth2UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.core.annotation.Order;
+import org.springframework.security.authentication.ProviderManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -21,37 +25,78 @@ public class SecurityConfig {
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder(10);
     }
-
-    @Autowired
-    private CustomUserDetailsService userDetailsService;
-
+    @Bean
+    @Qualifier("adminPasswordEncoder")
+    public PasswordEncoder adminPasswordEncoder() {
+        return new BCryptPasswordEncoder(12);
+    }
     @Autowired
     private CustomOAuth2UserService oauth2UserService;
 
     @Autowired
-    private CustomOidcUserService customOidcUserService;
+    private CustomUserDetailsService customUserDetailsService;
+    @Autowired
+    private AdminDetailsService adminDetailsService;
+    @Bean
+    public DaoAuthenticationProvider userAuthProvider() {
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+        provider.setUserDetailsService(customUserDetailsService);
+        provider.setPasswordEncoder(passwordEncoder());
+        return provider;
+    }
+    @Bean
+    public DaoAuthenticationProvider adminAuthProvider(
+             PasswordEncoder adminPasswordEncoder) {
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+        provider.setUserDetailsService(adminDetailsService);
+        provider.setPasswordEncoder(adminPasswordEncoder);
+        return provider;
+    }
+
+    // --- Chain cho admin ---
+    @Bean
+    @Order(1)
+    public SecurityFilterChain adminFilterChain(HttpSecurity http) throws Exception {
+        http
+                .securityMatcher("/admin/**")
+                .authenticationProvider(adminAuthProvider(adminPasswordEncoder()))
+                .authorizeHttpRequests(authz -> authz
+                        .requestMatchers("/admin/login", "/admin/css/**", "/admin/js/**").permitAll()
+                        .anyRequest().hasRole("ADMIN")
+                )
+                .formLogin(form -> form
+                        .loginPage("/admin/login")
+                        .loginProcessingUrl("/admin/login")
+                        .usernameParameter("username")
+                        .passwordParameter("password")
+                        .defaultSuccessUrl("/admin/logs", true)
+                        .failureUrl("/admin/login?error=true")
+                        .permitAll()
+                )
+                .logout(logout -> logout
+                        .logoutUrl("/admin/logout")
+                        .logoutSuccessUrl("/admin/login?logout=true")
+                        .permitAll()
+                )
+                .csrf(csrf -> csrf.disable());
+        return http.build();
+    }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    @Order(2)
+    public SecurityFilterChain userFilterChain(HttpSecurity http) throws Exception {
         http
+                .securityMatcher("/**")
+                .authenticationProvider(userAuthProvider())
                 .headers(headers -> headers
                         .contentSecurityPolicy(csp -> csp
-                                .policyDirectives("img-src 'self' " +
-                                        "https://lh3.googleusercontent.com " +
-                                        "https://*.googleusercontent.com " +
-                                        "https://*.fbcdn.net " +  // ✅ Thay vì scontent.*
-                                        "https://res.cloudinary.com " +
-                                        "https://graph.facebook.com " +
-                                        "https://i.imgur.com " +
-                                        "https://secure.gravatar.com data:;")
+                                .policyDirectives("img-src 'self' https://lh3.googleusercontent.com https://*.fbcdn.net https://res.cloudinary.com https://graph.facebook.com https://i.imgur.com https://secure.gravatar.com data: blob:;")
                         )
                 )
-
-
                 .authorizeHttpRequests(authz -> authz
-                .requestMatchers("/", "/login", "/register", "/css/**", "/js/**", "/images/**", "/api/debug/**", "/api/test/**").permitAll()
-                .anyRequest().authenticated()
-        )
+                        .requestMatchers("/", "/login", "/register", "/css/**", "/js/**", "/images/**", "/api/debug/**", "/api/test/**").permitAll()
+                        .anyRequest().authenticated()
+                )
                 .formLogin(form -> form
                         .loginPage("/login")
                         .loginProcessingUrl("/login")
@@ -63,18 +108,14 @@ public class SecurityConfig {
                 )
                 .oauth2Login(oauth2 -> oauth2
                         .loginPage("/login")
-                        .userInfoEndpoint(userInfo -> userInfo
-                                .userService(oauth2UserService)
-                                .oidcUserService(customOidcUserService)
-                        )
+                        .userInfoEndpoint(userInfo -> userInfo.userService(oauth2UserService))
                         .successHandler((request, response, authentication) -> {
-                            System.out.println("OAuth2 login successful for user: " + authentication.getName());
                             response.sendRedirect("/news-feed");
                         })
                         .failureHandler((request, response, exception) -> {
                             System.err.println("OAuth2 login failed: " + exception.getMessage());
                             exception.printStackTrace();
-                            response.sendRedirect("/login?error=oauth2");
+                              response.sendRedirect("/login?error=oauth2");
                         })
                 )
                 .logout(logout -> logout
@@ -87,10 +128,5 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable());
 
         return http.build();
-    }
-
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
-        return config.getAuthenticationManager();
     }
 }

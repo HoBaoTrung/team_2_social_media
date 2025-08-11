@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class BlockedUsers {
 
     @Id
@@ -32,4 +33,6 @@ public class BlockedUsers {
     @Column(columnDefinition = "TEXT")
     private String reason;
 
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
 }

@@ -2,6 +2,7 @@ package com.codegym.socialmedia.model.social_action;
 import com.codegym.socialmedia.model.account.User;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
@@ -28,11 +29,10 @@ public class Friendship {
     @Enumerated(EnumType.STRING)
     private FriendshipStatus status;
 
+    @CreationTimestamp
     private LocalDateTime requestedAt;
 
-    private String note;
-
     public enum FriendshipStatus {
-        PENDING, ACCEPTED
+        PENDING, ACCEPTED, NONE
     }
 }
