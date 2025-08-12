@@ -60,7 +60,7 @@
             </form>
         </div>
 
-        <!-- Sample Posts -->
+        <!-- Posts -->
         <div th:each="status : ${statuses}" class="post">
             <div class="post-header"></div>
 
@@ -104,7 +104,9 @@
     </div>
 </div>
 
-<script>
+<script  th:inline="javascript">
+    const currentUser = [[${#authentication.principal.username}]];
+
     // Kết nối WebSocket
     const socket = new SockJS('/ws');
     const stompClient = Stomp.over(socket);
@@ -117,9 +119,16 @@
             const statusId = post.querySelector('.like-btn').getAttribute('data-status-id');
             stompClient.subscribe('/topic/status/' + statusId + '/likes', function(message) {
                 const data = JSON.parse(message.body);
-                console.log('Dữ liệu data: ')
-                console.log(data)
-                updateLikeUI(data.statusId, data.likeCount, data.isLiked);
+                if (data.userName === currentUser) {
+                    // Chính mình click => update cả likeCount và class .liked
+                    updateLikeUI(data.statusId, data.likeCount, data.isLiked);
+                } else {
+                    // Người khác click => chỉ update số lượng like
+                    const btn = document.querySelector(`.like-btn[data-status-id="${data.statusId}"]`);
+                    if (btn) {
+                        btn.querySelector('.like-count').textContent = data.likeCount;
+                    }
+                }
             });
         });
     });
@@ -138,9 +147,6 @@
         }
     }
 
-
-
-    // Xử lý sự kiện like
     // Xử lý sự kiện like
     document.querySelectorAll('.like-btn').forEach(btn => {
         btn.addEventListener('click', async function() {

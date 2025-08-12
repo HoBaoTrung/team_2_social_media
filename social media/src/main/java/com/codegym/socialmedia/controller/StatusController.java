@@ -59,7 +59,7 @@ public class StatusController {
         response.put("isLiked", isLiked);
         response.put("likeCount", likeCount);
 
-        likeNotificationService.notifyLikeStatusChanged(statusId, likeCount, isLiked);
+//        likeNotificationService.notifyLikeStatusChanged(statusId, likeCount, isLiked);
 
         return ResponseEntity.ok(response);
     }

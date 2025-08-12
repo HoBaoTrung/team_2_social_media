@@ -41,7 +41,8 @@ public class StatusServiceImpl implements StatusService {
             dto.setContent(status.getContent());
             dto.setLikeCount(getLikeCount(status.getId()));
             dto.setId(statusId);
-            dto.setCurrentUserIsLiked(likeStatusRepository.existsById_UserIdAndId_StatusId(userService.getCurrentUser().getId(), statusId));
+            boolean isLiked = likeStatusRepository.findById(getLikeStatusId(statusId,userService.getCurrentUser().getId())).isPresent();
+            dto.setCurrentUserIsLiked(isLiked);
             dtos.add(dto);
         }
         return dtos;
@@ -54,16 +55,13 @@ public class StatusServiceImpl implements StatusService {
     public boolean toggleLikeStatus(Integer statusId, Long userId) {
         User user = userRepository.findById(userId).orElse(null);
         Status status = statusRepository.findById(statusId).orElse(null);
-        LikeStatusId likeStatusId = new LikeStatusId();
-        likeStatusId.setStatusId(statusId);
-        likeStatusId.setUserId(userId);
+        LikeStatusId likeStatusId = getLikeStatusId(statusId, userId);
         boolean isLiked = likeStatusRepository.findById(likeStatusId).isPresent();
         if (isLiked) {
             // Nếu đã like thì unlike
             likeStatusRepository.delete(likeStatusRepository.findById(likeStatusId).get());
 
-            likeNotificationService.notifyLikeStatusChanged(statusId, getLikeCount(statusId), false);
-
+            likeNotificationService.notifyLikeStatusChanged(statusId, getLikeCount(statusId), false, user.getUsername());
 
             return false;
         } else {
@@ -74,9 +72,16 @@ public class StatusServiceImpl implements StatusService {
             like.setStatus(status);
 
             likeStatusRepository.save(like);
-            likeNotificationService.notifyLikeStatusChanged(statusId, getLikeCount(statusId), true);
+            likeNotificationService.notifyLikeStatusChanged(statusId, getLikeCount(statusId), true, user.getUsername());
             return true;
         }
+    }
+
+    private static LikeStatusId getLikeStatusId(Integer statusId, Long userId) {
+        LikeStatusId likeStatusId = new LikeStatusId();
+        likeStatusId.setStatusId(statusId);
+        likeStatusId.setUserId(userId);
+        return likeStatusId;
     }
 
 

@@ -14,11 +14,12 @@ public class LikeNotificationService {
         this.messagingTemplate = messagingTemplate;
     }
 
-    public void notifyLikeStatusChanged(Integer statusId, Integer likeCount, boolean isLiked) {
+    public void notifyLikeStatusChanged(Integer statusId, Integer likeCount, boolean isLiked, String userName) {
         Map<String, Object> payload = new HashMap<>();
         payload.put("statusId", statusId);
         payload.put("likeCount", likeCount);
         payload.put("isLiked", isLiked);
+        payload.put("userName", userName);
 
         // Gửi đến tất cả client đang theo dõi status này
         messagingTemplate.convertAndSend("/topic/status/" + statusId + "/likes", payload);
