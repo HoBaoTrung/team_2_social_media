@@ -6,6 +6,11 @@
     <title>Facebook</title>
     <th:block th:replace="~{fragments/commonHead :: commonHead}"></th:block>
     <link rel="stylesheet" th:href="@{/css/news-feed.css}">
+    <style>
+        .like-btn.liked {
+            color: #3b7cfd;
+        }
+        </style>
 </head>
 <body>
 <div th:replace="~{fragments/header :: header}"></div>
@@ -56,22 +61,17 @@
         </div>
 
         <!-- Sample Posts -->
-        <div class="post">
-            <div class="post-header">
-                <div class="avatar">
-                    <span>S</span>
-                </div>
-                <div>
-                    <h4>Social Media</h4>
-                    <p class="timestamp">2 giờ trước</p>
-                </div>
-            </div>
+        <div th:each="status : ${statuses}" class="post">
+            <div class="post-header"></div>
+
             <div class="post-content">
-                <p>Chào mừng bạn đến với mạng xã hội của chúng tôi! 🎉 Hãy bắt đầu kết nối với bạn bè và chia sẻ những khoảnh khắc đẹp nhất của cuộc sống.</p>
+                <p th:text="${status.content}" >Chào mừng bạn đến với mạng xã hội của chúng tôi</p>
             </div>
             <div class="post-actions">
-                <button class="action-btn">
-                    <i class="fas fa-heart"></i> Thích (0)
+                <button class="action-btn  like-btn"
+                        th:data-status-id="${status.id}"
+                        th:classappend="${status.currentUserIsLiked} ? 'liked' : ''">
+                    <i class="fas fa-heart"></i> Thích (<span class="like-count" th:text="${status.likeCount}"></span>)
                 </button>
                 <button class="action-btn">
                     <i class="fas fa-comment"></i> Bình luận (0)
@@ -82,36 +82,7 @@
             </div>
         </div>
 
-        <div class="post">
-            <div class="post-header">
-                <div class="avatar">
-                    <span>T</span>
-                </div>
-                <div>
-                    <h4>Team Developer</h4>
-                    <p class="timestamp">5 giờ trước</p>
-                </div>
-            </div>
-            <div class="post-content">
-                <p>Hệ thống đăng ký và đăng nhập đã hoàn thành! ✅ Các bạn có thể:</p>
-                <ul class="post-list">
-                    <li>Đăng ký tài khoản mới với email</li>
-                    <li>Đăng nhập bằng username/email</li>
-                    <li>Đăng nhập bằng Google/Facebook</li>
-                </ul>
-            </div>
-            <div class="post-actions">
-                <button class="action-btn">
-                    <i class="fas fa-heart"></i> Thích (5)
-                </button>
-                <button class="action-btn">
-                    <i class="fas fa-comment"></i> Bình luận (2)
-                </button>
-                <button class="action-btn">
-                    <i class="fas fa-share"></i> Chia sẻ (1)
-                </button>
-            </div>
-        </div>
+
     </div>
 
     <!-- Right Sidebar -->
@@ -132,5 +103,68 @@
         </div>
     </div>
 </div>
+
+<script>
+    // Kết nối WebSocket
+    const socket = new SockJS('/ws');
+    const stompClient = Stomp.over(socket);
+
+    stompClient.connect({}, function(frame) {
+        console.log('Connected: ' + frame);
+
+        // Subscribe vào các topic cần thiết
+        document.querySelectorAll('.post').forEach(post => {
+            const statusId = post.querySelector('.like-btn').getAttribute('data-status-id');
+            stompClient.subscribe('/topic/status/' + statusId + '/likes', function(message) {
+                const data = JSON.parse(message.body);
+                console.log('Dữ liệu data: ')
+                console.log(data)
+                updateLikeUI(data.statusId, data.likeCount, data.isLiked);
+            });
+        });
+    });
+
+
+    function updateLikeUI(statusId, likeCount, isLiked) {
+        const likeBtn = document.querySelector(`.like-btn[data-status-id="${statusId}"]`);
+        if (likeBtn) {
+            likeBtn.querySelector('.like-count').textContent = likeCount;
+
+            if (isLiked) {
+                likeBtn.classList.add('liked');
+            } else {
+                likeBtn.classList.remove('liked');
+            }
+        }
+    }
+
+
+
+    // Xử lý sự kiện like
+    document.querySelectorAll('.like-btn').forEach(btn => {
+        btn.addEventListener('click', async function() {
+            const statusId = this.getAttribute('data-status-id');
+
+            try {
+                const response = await fetch(`/api/likes/status/${statusId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Cập nhật giao diện
+                    this.classList.toggle('liked');
+                    this.querySelector('.like-count').textContent = data.likeCount;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        });
+    });
+</script>
 </body>
 </html>

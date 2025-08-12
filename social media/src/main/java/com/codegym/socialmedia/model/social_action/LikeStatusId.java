@@ -12,6 +12,6 @@ import java.io.Serializable;
 @NoArgsConstructor
 @AllArgsConstructor
 public class LikeStatusId implements Serializable {
-    private Integer userId;
+    private Long userId;
     private Integer statusId;
 }

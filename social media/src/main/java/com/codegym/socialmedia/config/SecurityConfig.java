@@ -60,7 +60,7 @@ public class SecurityConfig {
                 .securityMatcher("/admin/**", "/admin/login") // chỉ bắt request /admin
                 .authenticationManager(new ProviderManager(List.of(adminAuthProvider())))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/admin/login", "/css/**", "/js/**").permitAll()
+                        .requestMatchers("/admin/login", "/css/**", "/js/**","/ws/**").permitAll()
                         .anyRequest().hasRole("ADMIN")
                 )
                 .formLogin(form -> form
@@ -92,7 +92,7 @@ public class SecurityConfig {
                         )
                 )
                 .authorizeHttpRequests(authz -> authz
-                        .requestMatchers("/", "/login", "/register", "/css/**", "/js/**", "/images/**", "/api/debug/**", "/api/test/**").permitAll()
+                        .requestMatchers("/", "/login", "/register", "/css/**", "/js/**", "/images/**", "/api/debug/**", "/ws/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form

@@ -181,11 +181,6 @@ public class UserController {
         }
     }
 
-    @GetMapping("/news-feed")
-    public String newsFeed(Model model) {
-        // Trang news feed sau khi đăng nhập thành công
-        return "news-feed";
-    }
 
     @GetMapping("/oauth2/login-success")
     public String oauth2LoginSuccess() {
