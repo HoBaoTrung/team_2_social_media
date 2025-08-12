@@ -1,5 +1,6 @@
 package com.codegym.socialmedia.config;
 
+import com.codegym.socialmedia.component.CustomAuthFailureHandler;
 import com.codegym.socialmedia.service.admin.AdminDetailsService;
 import com.codegym.socialmedia.service.user.CustomUserDetailsService;
 import com.codegym.socialmedia.service.user.CustomOAuth2UserService;
@@ -67,7 +68,7 @@ public class SecurityConfig {
                         .loginPage("/admin/login")
                         .loginProcessingUrl("/admin/login") // phải khác /login của user
                         .defaultSuccessUrl("/admin/dashboard", true)
-                        .failureUrl("/admin/login?error=true")
+                        .failureUrl("/admin/login?error=Username+ho%E1%BA%B7c+password+sai")
                         .permitAll()
                 )
                 .logout(logout -> logout
@@ -78,6 +79,9 @@ public class SecurityConfig {
 
         return http.build();
     }
+
+    @Autowired
+    private CustomAuthFailureHandler customAuthFailureHandler;
 
     // --- Chain cho user ---
     @Bean
@@ -101,7 +105,7 @@ public class SecurityConfig {
                         .usernameParameter("username")
                         .passwordParameter("password")
                         .defaultSuccessUrl("/news-feed", true)
-                        .failureUrl("/login?error=true")
+                        .failureHandler(customAuthFailureHandler)
                         .permitAll()
                 )
                 .oauth2Login(oauth2 -> oauth2
