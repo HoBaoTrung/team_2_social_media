@@ -141,6 +141,7 @@
 
 
     // Xử lý sự kiện like
+    // Xử lý sự kiện like
     document.querySelectorAll('.like-btn').forEach(btn => {
         btn.addEventListener('click', async function() {
             const statusId = this.getAttribute('data-status-id');
@@ -156,15 +157,15 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    // Cập nhật giao diện
-                    this.classList.toggle('liked');
-                    this.querySelector('.like-count').textContent = data.likeCount;
+                    // Không toggle ở đây nữa, chỉ cập nhật bằng server response
+                    updateLikeUI(data.statusId, data.likeCount, data.isLiked);
                 }
             } catch (error) {
                 console.error('Error:', error);
             }
         });
     });
+
 </script>
 </body>
 </html>
