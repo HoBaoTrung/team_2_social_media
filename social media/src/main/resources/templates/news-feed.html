@@ -3,36 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bảng tin - Social Media</title>
+    <title>Facebook</title>
     <th:block th:replace="~{fragments/commonHead :: commonHead}"></th:block>
     <link rel="stylesheet" th:href="@{/css/news-feed.css}">
+    <style>
+        .like-btn.liked {
+            color: #3b7cfd;
+        }
+        </style>
 </head>
 <body>
 <div th:replace="~{fragments/header :: header}"></div>
-
-<!-- Welcome Message -->
-<div class="welcome-message">
-    <h1>Chào mừng đến với Social Media!</h1>
-    <p>Kết nối và chia sẻ với bạn bè của bạn</p>
-</div>
-
-<!-- Main Container -->
 <div class="main-container">
-    <!-- Left Sidebar -->
     <div class="sidebar">
         <h3><i class="fas fa-user"></i> Hồ sơ của tôi</h3>
         <div class="user-profile">
-            <div class="avatar" style="width: 60px; height: 60px; font-size: 1.5rem; margin-bottom: 1rem;">
+            <div class="avatar">
                 <span th:text="${#strings.substring(#authentication.name, 0, 1).toUpperCase()}">U</span>
             </div>
-            <h4 sec:authentication="name">Username</h4>
-            <p style="color: #666; font-size: 0.9rem;">Thành viên mới</p>
+            <h4 th:text="${#authentication.principal.fullName}">Tên người dùng</h4>
+            <p class="user-role">Thành viên mới</p>
         </div>
 
-        <hr style="margin: 1.5rem 0; border: none; height: 1px; background: #eee;">
+        <hr class="divider">
 
         <h3><i class="fas fa-chart-line"></i> Thống kê</h3>
-        <div style="color: #666;">
+        <div class="stats">
             <p><i class="fas fa-users"></i> 0 bạn bè</p>
             <p><i class="fas fa-edit"></i> 0 bài viết</p>
             <p><i class="fas fa-heart"></i> 0 lượt thích</p>
@@ -43,17 +39,17 @@
     <div class="feed">
         <!-- Post Creator -->
         <div class="post-creator">
-            <h3 style="margin-bottom: 1rem; color: #667eea;">
+            <h3 class="post-title">
                 <i class="fas fa-pen"></i> Bạn đang nghĩ gì?
             </h3>
             <form>
                 <textarea class="form-control" rows="3" placeholder="Chia sẻ suy nghĩ của bạn..."></textarea>
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
+                <div class="post-options">
                     <div>
-                        <button type="button" class="action-btn" style="color: #667eea;">
+                        <button type="button" class="action-btn">
                             <i class="fas fa-image"></i> Ảnh
                         </button>
-                        <button type="button" class="action-btn" style="color: #667eea;">
+                        <button type="button" class="action-btn">
                             <i class="fas fa-video"></i> Video
                         </button>
                     </div>
@@ -64,23 +60,18 @@
             </form>
         </div>
 
-        <!-- Sample Posts -->
-        <div class="post">
-            <div class="post-header">
-                <div class="avatar">
-                    <span>S</span>
-                </div>
-                <div>
-                    <h4>Social Media</h4>
-                    <p style="color: #666; font-size: 0.9rem;">2 giờ trước</p>
-                </div>
-            </div>
+        <!-- Posts -->
+        <div th:each="status : ${statuses}" class="post">
+            <div class="post-header"></div>
+
             <div class="post-content">
-                <p>Chào mừng bạn đến với mạng xã hội của chúng tôi! 🎉 Hãy bắt đầu kết nối với bạn bè và chia sẻ những khoảnh khắc đẹp nhất của cuộc sống.</p>
+                <p th:text="${status.content}" >Chào mừng bạn đến với mạng xã hội của chúng tôi</p>
             </div>
             <div class="post-actions">
-                <button class="action-btn">
-                    <i class="fas fa-heart"></i> Thích (0)
+                <button class="action-btn  like-btn"
+                        th:data-status-id="${status.id}"
+                        th:classappend="${status.currentUserIsLiked} ? 'liked' : ''">
+                    <i class="fas fa-heart"></i> Thích (<span class="like-count" th:text="${status.likeCount}"></span>)
                 </button>
                 <button class="action-btn">
                     <i class="fas fa-comment"></i> Bình luận (0)
@@ -91,55 +82,96 @@
             </div>
         </div>
 
-        <div class="post">
-            <div class="post-header">
-                <div class="avatar">
-                    <span>T</span>
-                </div>
-                <div>
-                    <h4>Team Developer</h4>
-                    <p style="color: #666; font-size: 0.9rem;">5 giờ trước</p>
-                </div>
-            </div>
-            <div class="post-content">
-                <p>Hệ thống đăng ký và đăng nhập đã hoàn thành! ✅ Các bạn có thể:</p>
-                <ul style="margin-left: 1.5rem; margin-top: 0.5rem;">
-                    <li>Đăng ký tài khoản mới với email</li>
-                    <li>Đăng nhập bằng username/email</li>
-                    <li>Đăng nhập bằng Google/Facebook</li>
-                </ul>
-            </div>
-            <div class="post-actions">
-                <button class="action-btn">
-                    <i class="fas fa-heart"></i> Thích (5)
-                </button>
-                <button class="action-btn">
-                    <i class="fas fa-comment"></i> Bình luận (2)
-                </button>
-                <button class="action-btn">
-                    <i class="fas fa-share"></i> Chia sẻ (1)
-                </button>
-            </div>
-        </div>
+
     </div>
 
     <!-- Right Sidebar -->
     <div class="sidebar">
         <h3><i class="fas fa-users"></i> Gợi ý kết bạn</h3>
-        <p style="color: #666; text-align: center; margin: 2rem 0;">
+        <p class="text-muted">
             Chưa có gợi ý nào.<br>
             Hãy mời bạn bè tham gia!
         </p>
 
-        <hr style="margin: 1.5rem 0; border: none; height: 1px; background: #eee;">
+        <hr class="divider">
 
         <h3><i class="fas fa-fire"></i> Xu hướng</h3>
-        <div style="color: #666;">
-            <p style="margin: 0.5rem 0;">#ChaoMung</p>
-            <p style="margin: 0.5rem 0;">#SocialMedia</p>
-            <p style="margin: 0.5rem 0;">#KetNoi</p>
+        <div class="trending">
+            <p>#ChaoMung</p>
+            <p>#SocialMedia</p>
+            <p>#KetNoi</p>
         </div>
     </div>
 </div>
+
+<script  th:inline="javascript">
+    const currentUser = [[${#authentication.principal.username}]];
+
+    // Kết nối WebSocket
+    const socket = new SockJS('/ws');
+    const stompClient = Stomp.over(socket);
+
+    stompClient.connect({}, function(frame) {
+        console.log('Connected: ' + frame);
+
+        // Subscribe vào các topic cần thiết
+        document.querySelectorAll('.post').forEach(post => {
+            const statusId = post.querySelector('.like-btn').getAttribute('data-status-id');
+            stompClient.subscribe('/topic/status/' + statusId + '/likes', function(message) {
+                const data = JSON.parse(message.body);
+                if (data.userName === currentUser) {
+                    // Chính mình click => update cả likeCount và class .liked
+                    updateLikeUI(data.statusId, data.likeCount, data.isLiked);
+                } else {
+                    // Người khác click => chỉ update số lượng like
+                    const btn = document.querySelector(`.like-btn[data-status-id="${data.statusId}"]`);
+                    if (btn) {
+                        btn.querySelector('.like-count').textContent = data.likeCount;
+                    }
+                }
+            });
+        });
+    });
+
+
+    function updateLikeUI(statusId, likeCount, isLiked) {
+        const likeBtn = document.querySelector(`.like-btn[data-status-id="${statusId}"]`);
+        if (likeBtn) {
+            likeBtn.querySelector('.like-count').textContent = likeCount;
+
+            if (isLiked) {
+                likeBtn.classList.add('liked');
+            } else {
+                likeBtn.classList.remove('liked');
+            }
+        }
+    }
+
+    // Xử lý sự kiện like
+    document.querySelectorAll('.like-btn').forEach(btn => {
+        btn.addEventListener('click', async function() {
+            const statusId = this.getAttribute('data-status-id');
+
+            try {
+                const response = await fetch(`/api/likes/status/${statusId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Không toggle ở đây nữa, chỉ cập nhật bằng server response
+                    updateLikeUI(data.statusId, data.likeCount, data.isLiked);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        });
+    });
+
+</script>
 </body>
 </html>

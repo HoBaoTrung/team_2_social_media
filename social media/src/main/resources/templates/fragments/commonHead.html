@@ -18,8 +18,12 @@
           integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz"
           crossorigin="anonymous"></script>
   <!-- SweetAlert -->
-  <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
   <!-- Custom CSS cho navbar fixed -->
   <link rel="stylesheet" th:href="@{/css/style.css}" />
+
+  <!-- Thư viện cho WebSocket  -->
+  <script th:src="@{/webjars/sockjs-client/1.5.1/sockjs.min.js}"></script>
+  <script th:src="@{/webjars/stomp-websocket/2.3.4/stomp.min.js}"></script>
 </th:block>

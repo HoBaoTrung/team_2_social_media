@@ -9,11 +9,15 @@ import java.util.List;
 
 public interface UserService {
     User getCurrentUser();
+    void refreshAuthentication(String username);
+    User getUserById(Long id);
 
     User getUserByUsername(String username);
 
     User save(User user);
+
     User save(User user, MultipartFile file);
+
     User save(UserRegistrationDto registrationDto);
 
     User findByEmail(String email);

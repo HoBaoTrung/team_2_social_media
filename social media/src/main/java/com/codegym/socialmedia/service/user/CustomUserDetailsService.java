@@ -1,9 +1,9 @@
 package com.codegym.socialmedia.service.user;
 
+import com.codegym.socialmedia.ErrAccountException;
 import com.codegym.socialmedia.model.account.User;
 import com.codegym.socialmedia.repository.IUserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -45,15 +45,15 @@ public class CustomUserDetailsService implements UserDetailsService {
 
         // Kiểm tra trạng thái tài khoản
         if (!user.isActive()) {
-            throw new UsernameNotFoundException("Tài khoản đã bị vô hiệu hóa: " + username);
+            throw new ErrAccountException("Tài khoản đã bị vô hiệu hóa ");
         }
 
         if (user.getAccountStatus() == User.AccountStatus.BANNED) {
-            throw new UsernameNotFoundException("Tài khoản đã bị cấm: " + username);
+            throw new ErrAccountException("Tài khoản đã bị cấm ");
         }
 
         if (user.getAccountStatus() == User.AccountStatus.SUSPENDED) {
-            throw new UsernameNotFoundException("Tài khoản đã bị tạm khóa: " + username);
+            throw new ErrAccountException("Tài khoản đã bị tạm khóa ");
         }
         return new CustomUserPrincipal(user);
 

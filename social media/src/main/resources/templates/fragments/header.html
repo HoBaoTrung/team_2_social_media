@@ -9,7 +9,7 @@
             <div class="d-flex align-items-center" style="gap: 10px;">
 
                 <a class="navbar-brand me-2 logo" th:href="@{/news-feed}">
-                    <i class="fas fa-share-alt"></i> Social Media
+                    <img th:src="@{/images/2023_Facebook_icon.svg.webp}" alt="Facebook" height="42">
                 </a>
 
                 <form class="d-none d-md-block" role="search">
@@ -19,7 +19,7 @@
             </div>
 
             <!-- CENTER: Navigation icons -->
-            <div class="d-none d-lg-flex justify-content-center flex-grow-1 navigation-center ">
+            <div class="d-none d-lg-flex justify-content-center align-items-center flex-grow-1 navigation-center ">
                 <a class="nav-link nav-icon nav-icon-wrapper" th:href="@{/news-feed}" title="Trang chủ" data-bs-toggle="tooltip"
                    data-bs-placement="bottom">
                     <i class="fas fa-home"></i>
@@ -59,21 +59,32 @@
                 <div class="nav-item dropdown" sec:authorize="isAuthenticated()">
                     <a class="nav-link dropdown-toggle dropdown-toggle p-0 d-flex align-items-center" href="#" role="button"
                         data-bs-toggle="dropdown" aria-expanded="false">
-                        <img th:if="${#authentication.principal.avatarUrl != null
-                            and !#strings.isEmpty(#authentication.principal.avatarUrl)}"
-                             th:src="@{${#authentication.principal.avatarUrl}}" alt="Avatar" class="rounded-circle nav-icon-wrapper">
+                        <img th:if="${#authentication.principal.avatarUrl != null and !#strings.isEmpty(#authentication.principal.avatarUrl)}"
+                             th:src="${#authentication.principal.avatarUrl}" alt="Avatar"
+                             class="rounded-circle nav-icon-wrapper"/>
 
-                        <img th:unless="${#authentication.principal.avatarUrl != null
-                        and !#strings.isEmpty(#authentication.principal.avatarUrl)}"
-                             th:src="@{/images/default-avatar.jpg}" alt="Avatar" class="rounded-circle nav-icon-wrapper">
+                        <img th:unless="${#authentication.principal.avatarUrl != null and !#strings.isEmpty(#authentication.principal.avatarUrl)}"
+                             th:src="@{/images/default-avatar.jpg}" alt="Avatar"
+                             class="rounded-circle nav-icon-wrapper"/>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end" >
-                        <li><a class="dropdown-item" th:href="@{/profile}">Thông tin cá nhân</a></li>
-                        <li><a class="dropdown-item" th:href="@{/setting}">Cài đặt</a></li>
+                        <li>
+                            <a class="dropdown-item d-flex align-items-center"
+                               th:href="@{|/profile/${#authentication.principal.username}|}">
+                                <img th:src="${#authentication.principal.avatarUrl}" alt="Avatar"
+                                     class="rounded-circle nav-icon-wrapper"/>
+                                <span class="ms-2" th:text="${#authentication.principal.getFullName()}"></span>
+                            </a>
+                        </li>
+                        <li><a class="dropdown-item" th:href="@{/setting}">
+                            <i class="fas fa-cog icon"></i>
+                            Cài đặt</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li>
                             <form th:action="@{/logout}" method="post" style="margin: 0;">
-                                <button type="submit" class="dropdown-item text-danger">Đăng xuất</button>
+                                <button type="submit" class="dropdown-item text-danger">
+                                    <i class="fas fa-sign-out-alt icon" ></i>
+                                    Đăng xuất</button>
                             </form>
                         </li>
                     </ul>
