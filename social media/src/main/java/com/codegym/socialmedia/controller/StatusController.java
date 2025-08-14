@@ -1,19 +1,20 @@
 package com.codegym.socialmedia.controller;
 
+import com.codegym.socialmedia.dto.friend.FriendDto;
 import com.codegym.socialmedia.dto.status.StatusDTO;
 import com.codegym.socialmedia.model.account.User;
+import com.codegym.socialmedia.model.account.UserPrivacySettings;
 import com.codegym.socialmedia.model.social_action.Status;
+import com.codegym.socialmedia.service.friend_ship.FriendshipService;
 import com.codegym.socialmedia.service.notification.LikeNotificationService;
 import com.codegym.socialmedia.service.status.StatusService;
 import com.codegym.socialmedia.service.user.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.List;
@@ -28,18 +29,24 @@ public class StatusController {
     @Autowired
     private StatusService statusService;
 
+    @Autowired
+    private FriendshipService friendshipService;
+
     @GetMapping("/news-feed")
-    public String getMainFeeds( Model model) {
+    public String getMainFeeds( Model model,@RequestParam(value = "page", defaultValue = "0") int page,
+                                @RequestParam(value = "size", defaultValue = "10") int size) {
         // Lấy thông tin người dùng hiện tại
         User currentUser = userService.getCurrentUser();
+        Page<User> friends;
 
+        friends = friendshipService.findFriendsWithAllowSendMessage(currentUser, page, size);
         // Lấy danh sách status cho feed (public + của bạn bè)
         List<StatusDTO> statuses = statusService.getFeeds();
 
         // Thêm dữ liệu vào model
         model.addAttribute("currentUser", currentUser);
         model.addAttribute("statuses", statuses);
-
+        model.addAttribute("friends", friends);
         return "news-feed"; // Trả về template news-feed.html
     }
 

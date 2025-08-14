@@ -16,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -172,6 +173,13 @@ public class FriendshipServiceImpl implements FriendshipService {
     }
 
     @Override
+    public Page<User> findFriendsWithAllowSendMessage(User u, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        long currentUserID = userService.getCurrentUser().getId();
+        return friendshipRepository.findFriendsWithAllowSendMessage(u.getId(),pageable );
+    }
+
+    @Override
     public int countFriends(Long userId) {
         return friendshipRepository.countFriendsByUserId(userId);
     }
@@ -189,6 +197,7 @@ public class FriendshipServiceImpl implements FriendshipService {
 
         return optional.get().getStatus();
     }
+
 
     @Override
     public Page<FriendDto> findNonFriends(Long currentUserId, int page, int size) {

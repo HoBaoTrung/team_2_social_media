@@ -2,11 +2,13 @@ package com.codegym.socialmedia.service.friend_ship;
 
 import com.codegym.socialmedia.dto.friend.FriendDto;
 import com.codegym.socialmedia.model.account.User;
+import com.codegym.socialmedia.model.account.UserPrivacySettings;
 import com.codegym.socialmedia.model.social_action.Friendship;
 import com.codegym.socialmedia.model.social_action.FriendshipId;
 import org.springframework.data.domain.Page;
 
 import java.util.List;
+import java.util.function.Function;
 
 public interface FriendshipService {
     boolean addFriendship(User user);
@@ -20,7 +22,7 @@ public interface FriendshipService {
     int countMutualFriends(Long userAId, Long userBId);
 
     Friendship.FriendshipStatus getFriendshipStatus(User user1, User user2);
-
+    Page<User> findFriendsWithAllowSendMessage(User u, int page, int size);
     Page<FriendDto> findNonFriends(Long currentUserId, int page, int size);
     Page<FriendDto> findSentFriendRequests(Long currentUserId, int page, int size);
     Page<FriendDto> findReceivedFriendRequests(Long currentUserId, int page, int size);
