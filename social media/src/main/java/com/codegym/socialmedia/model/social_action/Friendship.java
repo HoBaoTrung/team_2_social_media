@@ -5,6 +5,7 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "friendships")
@@ -35,4 +36,6 @@ public class Friendship {
     public enum FriendshipStatus {
         PENDING, ACCEPTED, NONE
     }
+
+
 }

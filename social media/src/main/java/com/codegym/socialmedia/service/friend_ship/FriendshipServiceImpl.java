@@ -56,6 +56,8 @@ public class FriendshipServiceImpl implements FriendshipService {
         }
     }
 
+
+
     @Override
     public boolean acceptFriendship(User user) {
         User currentUser = userService.getCurrentUser();
@@ -225,4 +227,13 @@ public class FriendshipServiceImpl implements FriendshipService {
 
         return new PageImpl<>(friendDtos, pageable, receivedRequestsPage.getTotalElements());
     }
+
+    @Override
+    public List<Friendship> findAllFriendshipsOfUser(Long userId) {
+        return friendshipRepository.findAllFriendshipsOfUser(userId);
+    }
+
+
+
+
 }

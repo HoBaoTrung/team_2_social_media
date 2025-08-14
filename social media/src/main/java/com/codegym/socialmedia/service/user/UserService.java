@@ -6,6 +6,7 @@ import com.codegym.socialmedia.model.account.User;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 
 public interface UserService {
     User getCurrentUser();
@@ -33,4 +34,7 @@ public interface UserService {
     long countUsers();
 
     void deleteAllUsers();
+
+    Map<String, Long> getUserStats(User user);
+
 }

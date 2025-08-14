@@ -8,6 +8,8 @@ import com.codegym.socialmedia.model.account.UserPrivacySettings;
 import com.codegym.socialmedia.repository.IUserRepository;
 import com.codegym.socialmedia.repository.NotificationSettingsRepository;
 import com.codegym.socialmedia.repository.UserPrivacySettingsRepository;
+import com.codegym.socialmedia.service.friend_ship.FriendshipService;
+import com.codegym.socialmedia.service.post.PostService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -21,7 +23,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
 
 @Service
 @Transactional
@@ -276,4 +281,28 @@ public class UserServiceImpl implements UserService {
     public void deleteAllUsers() {
         iUserRepository.deleteAll();
     }
+
+    @Override
+    public Map<String, Long> getUserStats(User user) {
+        Map<String, Long> stats = new HashMap<>();
+
+        try {
+            // Count friends - GIỮ NGUYÊN
+            long friendsCount = friendshipService.countFriends(user.getId());
+            stats.put("friends", friendsCount);
+        } catch (Exception e) {
+            stats.put("friends", 0L);
+        }
+
+        // TẠM THỜI hardcode posts = 0 để tránh dependency
+        stats.put("posts", 0L);
+
+        // TẠM THỜI hardcode likes = 0
+        stats.put("likes", 0L);
+
+        return stats;
+    }
+    @Autowired
+    private FriendshipService friendshipService;
+
 }

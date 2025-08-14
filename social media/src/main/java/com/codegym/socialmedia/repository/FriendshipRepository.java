@@ -145,4 +145,7 @@ public interface FriendshipRepository extends JpaRepository<Friendship, Friendsh
 
     @Query("SELECT f FROM Friendship f WHERE ((f.requester = :a AND f.addressee = :b) OR (f.requester = :b AND f.addressee = :a))")
     Optional<Friendship> findFriendshipBetween(@Param("a") User a, @Param("b") User b);
+
+
+
 }

@@ -24,4 +24,8 @@ public interface FriendshipService {
     Page<FriendDto> findNonFriends(Long currentUserId, int page, int size);
     Page<FriendDto> findSentFriendRequests(Long currentUserId, int page, int size);
     Page<FriendDto> findReceivedFriendRequests(Long currentUserId, int page, int size);
+
+    List<Friendship> findAllFriendshipsOfUser(Long userId);
+
+
 }
