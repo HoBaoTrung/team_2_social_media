@@ -116,6 +116,7 @@ public class SecurityConfig {
                         })
                         .failureHandler(customAuthFailureHandler)
                 )
+
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/login?logout=true")

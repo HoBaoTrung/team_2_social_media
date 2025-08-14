@@ -39,4 +39,5 @@ public class AdminController {
         adminService.blockUser(userId);
         return "redirect:/admin/dashboard"; // Sau khi block xong, reload lại dashboard
     }
+
 }

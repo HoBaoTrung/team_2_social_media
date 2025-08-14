@@ -25,7 +25,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         OAuth2User oauth2User = super.loadUser(userRequest);
 
-        try {
+
             String registrationId = userRequest.getClientRegistration().getRegistrationId();
             Map<String, Object> attributes = oauth2User.getAttributes();
 
@@ -61,6 +61,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService
                         .getUserInfoEndpoint()
                         .getUserNameAttributeName();
 
+                // Kiểm tra trạng thái tài khoản
                 if (!user.isActive()) {
                     throw new ErrAccountException("Tài khoản đã bị vô hiệu hóa ");
                 }
@@ -80,9 +81,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService
 
             throw new OAuth2AuthenticationException("Email or name missing from OAuth2 provider");
 
-        } catch (Exception e) {
-            throw new OAuth2AuthenticationException("Failed to process OAuth2 user: " + e.getMessage());
         }
     }
-}
+
 
