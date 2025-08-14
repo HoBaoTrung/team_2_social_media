@@ -114,11 +114,7 @@ public class SecurityConfig {
                         .successHandler((request, response, authentication) -> {
                             response.sendRedirect("/news-feed");
                         })
-                        .failureHandler((request, response, exception) -> {
-                            System.err.println("OAuth2 login failed: " + exception.getMessage());
-                            exception.printStackTrace();
-                            response.sendRedirect("/login?error=oauth2");
-                        })
+                        .failureHandler(customAuthFailureHandler)
                 )
                 .logout(logout -> logout
                         .logoutUrl("/logout")

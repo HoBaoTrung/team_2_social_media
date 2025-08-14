@@ -1,5 +1,6 @@
 package com.codegym.socialmedia.service.user;
 
+import com.codegym.socialmedia.ErrAccountException;
 import com.codegym.socialmedia.model.account.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -60,6 +61,9 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService
                         .getUserInfoEndpoint()
                         .getUserNameAttributeName();
 
+                if (!user.isActive()) {
+                    throw new ErrAccountException("Tài khoản đã bị vô hiệu hóa ");
+                }
 
                 // Return custom OAuth2User với ảnh avatar từ DB
                 return new CustomOAuth2User(

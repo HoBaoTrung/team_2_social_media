@@ -57,7 +57,6 @@
       <th>ID</th>
       <th>Tên đăng nhập</th>
       <th>Email</th>
-      <th>Vai trò</th>
       <th>Trạng thái</th>
       <th>Hành động</th>
     </tr>
@@ -71,12 +70,11 @@
                     <span th:text="${user.isActive} ? 'Hoạt động' : 'Bị khóa'"
                           th:classappend="${user.isActive} ? 'text-success' : 'text-danger'"></span>
       </td>
+
       <td>
-        <form th:action="@{'/admin/block/' + ${user.id}}" method="post"
-              th:if="${user.isActive}">
-          <button type="submit" class="btn btn-danger btn-sm">Block</button>
+        <form th:action="@{'/admin/block/' + ${user.id}}" method="post">
+          <button th:text="${!user.isActive ? 'Unblock' : 'Block'}" type="submit" class="btn btn-danger btn-sm">Block</button>
         </form>
-        <span th:if="${!user.isActive}" class="text-muted">Đã bị khóa</span>
       </td>
     </tr>
     </tbody>
