@@ -8,8 +8,6 @@ import com.codegym.socialmedia.model.account.UserPrivacySettings;
 import com.codegym.socialmedia.repository.IUserRepository;
 import com.codegym.socialmedia.repository.NotificationSettingsRepository;
 import com.codegym.socialmedia.repository.UserPrivacySettingsRepository;
-import com.codegym.socialmedia.service.friend_ship.FriendshipService;
-import com.codegym.socialmedia.service.post.PostService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -23,10 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-
 
 @Service
 @Transactional
@@ -47,6 +42,12 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private NotificationSettingsRepository notificationSettingsRepository;
 
+    @Autowired
+    @Qualifier("customUserDetailsService")
+    private UserDetailsService userDetailsService;
+
+    // ✅ REMOVED FriendshipService dependency to fix circular dependency
+
     public User save(UserRegistrationDto registrationDto) {
         User user = new User();
         user.setUsername(registrationDto.getUsername());
@@ -64,7 +65,6 @@ public class UserServiceImpl implements UserService {
         UserPrivacySettings privacySettings = new UserPrivacySettings();
         privacySettings.setUser(user);
 
-
         NotificationSettings notificationSettings = new NotificationSettings();
         notificationSettings.setUser(user);
 
@@ -72,11 +72,8 @@ public class UserServiceImpl implements UserService {
         user.setNotificationSettings(notificationSettings);
 
         User savedUser = iUserRepository.save(user);
-
         return savedUser;
     }
-
-    
 
     @Override
     public User getCurrentUser() {
@@ -95,7 +92,6 @@ public class UserServiceImpl implements UserService {
         } else if (principal instanceof OAuth2User) {
             // OAuth2 login
             OAuth2User oauth2User = (OAuth2User) principal;
-
             String email = (String) oauth2User.getAttribute("email");
             return iUserRepository.findByEmail(email);
         }
@@ -108,12 +104,10 @@ public class UserServiceImpl implements UserService {
         return iUserRepository.findById(id).orElse(null);
     }
 
-
     @Override
     public User getUserByUsername(String username) {
         return iUserRepository.findByUsername(username);
     }
-
 
     @Override
     public User save(User newUser) {
@@ -138,13 +132,8 @@ public class UserServiceImpl implements UserService {
         if (image != null && !image.isEmpty()) {
             user.setProfilePicture(cloudinaryService.upload(image));
         }
-//        refreshAuthentication(user.getUsername());
         return iUserRepository.save(user);
     }
-
-    @Autowired
-    @Qualifier("customUserDetailsService")
-    private UserDetailsService userDetailsService;
 
     @Override
     public void refreshAuthentication(String username) {
@@ -158,8 +147,6 @@ public class UserServiceImpl implements UserService {
 
         SecurityContextHolder.getContext().setAuthentication(newAuth);
     }
-
-
 
     public User findByEmail(String email) {
         return iUserRepository.findByEmail(email);
@@ -213,7 +200,6 @@ public class UserServiceImpl implements UserService {
             UserPrivacySettings privacySettings = new UserPrivacySettings();
             privacySettings.setUser(user);
 
-
             NotificationSettings notificationSettings = new NotificationSettings();
             notificationSettings.setUser(user);
 
@@ -221,7 +207,6 @@ public class UserServiceImpl implements UserService {
             user.setNotificationSettings(notificationSettings);
 
             User savedUser = iUserRepository.save(user);
-
             return savedUser;
         } else {
             // Cập nhật thông tin user hiện có
@@ -282,27 +267,5 @@ public class UserServiceImpl implements UserService {
         iUserRepository.deleteAll();
     }
 
-    @Override
-    public Map<String, Long> getUserStats(User user) {
-        Map<String, Long> stats = new HashMap<>();
-
-        try {
-            // Count friends - GIỮ NGUYÊN
-            long friendsCount = friendshipService.countFriends(user.getId());
-            stats.put("friends", friendsCount);
-        } catch (Exception e) {
-            stats.put("friends", 0L);
-        }
-
-        // TẠM THỜI hardcode posts = 0 để tránh dependency
-        stats.put("posts", 0L);
-
-        // TẠM THỜI hardcode likes = 0
-        stats.put("likes", 0L);
-
-        return stats;
-    }
-    @Autowired
-    private FriendshipService friendshipService;
-
+    // ✅ REMOVED getUserStats method - now handled by UserStatsService
 }

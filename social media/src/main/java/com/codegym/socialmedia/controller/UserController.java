@@ -12,6 +12,7 @@ import com.codegym.socialmedia.model.social_action.Friendship;
 import com.codegym.socialmedia.repository.UserPrivacySettingsRepository;
 import com.codegym.socialmedia.service.friend_ship.FriendshipService;
 import com.codegym.socialmedia.service.user.UserService;
+import com.codegym.socialmedia.service.user.UserStatsService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,6 +45,8 @@ public class UserController {
     @Autowired
     private FriendshipService friendshipService;
 
+    @Autowired
+    private UserStatsService userStatsService;
     // =============== PROFILE ===============
 
     @GetMapping("/profile/{username}")
@@ -293,9 +296,10 @@ public class UserController {
             return ResponseEntity.status(401).build();
         }
 
-        Map<String, Long> stats = userService.getUserStats(currentUser);
+        Map<String, Long> stats = userStatsService.getUserStats(currentUser);
         return ResponseEntity.ok(stats);
     }
+
 
 
 }

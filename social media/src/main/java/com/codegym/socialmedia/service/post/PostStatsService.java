@@ -11,6 +11,7 @@ public class PostStatsService {
     private PostRepository postRepository;
 
     public long countUserPosts(User user) {
-        return postRepository.countByUser(user);
+        // Sửa từ countByUser thành countByUserAndIsDeletedFalse
+        return postRepository.countByUserAndIsDeletedFalse(user);
     }
 }

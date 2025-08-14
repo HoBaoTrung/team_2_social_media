@@ -1,12 +1,10 @@
 package com.codegym.socialmedia.service.user;
 
-
 import com.codegym.socialmedia.dto.UserRegistrationDto;
 import com.codegym.socialmedia.model.account.User;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
-import java.util.Map;
 
 public interface UserService {
     User getCurrentUser();
@@ -35,6 +33,5 @@ public interface UserService {
 
     void deleteAllUsers();
 
-    Map<String, Long> getUserStats(User user);
-
+    // ✅ REMOVED getUserStats method - now handled by UserStatsService
 }

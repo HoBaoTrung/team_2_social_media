@@ -24,8 +24,7 @@ public class Post {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Lob
-    @Column(nullable = false)
+    @Column(nullable = false, length = 5000) // Đủ cho nội dung bài viết
     private String content;
 
     @Column(columnDefinition = "JSON")

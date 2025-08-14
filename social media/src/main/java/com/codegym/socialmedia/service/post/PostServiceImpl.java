@@ -152,19 +152,7 @@ public class PostServiceImpl implements PostService {
 
     @Override
     public Page<PostDisplayDto> searchUserPosts(User user, String keyword, Pageable pageable) {
-        // TẠM THỜI simplified - lấy tất cả posts của user rồi filter trong memory
-        List<Post> allPosts = postRepository.findByUserAndIsDeletedFalseOrderByCreatedAtDesc(user);
-
-        List<Post> filteredPosts = allPosts.stream()
-                .filter(post -> post.getContent().toLowerCase().contains(keyword.toLowerCase()))
-                .toList();
-
-        // Convert to page (simplified pagination)
-        int start = (int) pageable.getOffset();
-        int end = Math.min((start + pageable.getPageSize()), filteredPosts.size());
-        List<Post> pageContent = filteredPosts.subList(start, end);
-
-        Page<Post> posts = new PageImpl<>(pageContent, pageable, filteredPosts.size());
+        Page<Post> posts = postRepository.searchPostsByUserAndContent(user, keyword, pageable);
         return posts.map(post -> convertToDisplayDto(post, user));
     }
 
