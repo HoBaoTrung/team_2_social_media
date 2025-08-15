@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 </head>
 <body>
-<div class="container" id="container">
+<div class="container" id="container" th:classappend="${showRegisterForm} ? 'active' : ''">
 
     <!-- Form Đăng ký (chỉ hiển thị cho user thường) -->
     <div th:if="${!isAdmin}" class="form-container sign-up">
@@ -20,28 +20,32 @@
                 <a href="/oauth2/authorization/facebook" class="icon"><i class="fab fa-facebook-f"></i></a>
             </div>
 
+            <!-- ✅ Hiển thị lỗi tổng quát -->
+            <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
             <input type="text" th:field="*{firstName}" placeholder="Tên">
             <span th:if="${#fields.hasErrors('firstName')}" th:errors="*{firstName}" class="error-message"></span>
 
             <input type="text" th:field="*{lastName}" placeholder="Họ">
             <span th:if="${#fields.hasErrors('lastName')}" th:errors="*{lastName}" class="error-message"></span>
 
-            <input type="text" th:field="*{username}" placeholder="Tên đăng nhập *">
+            <input type="text" th:field="*{username}" placeholder="Tên đăng nhập *" required>
             <span th:if="${#fields.hasErrors('username')}" th:errors="*{username}" class="error-message"></span>
 
-            <input type="email" th:field="*{email}" placeholder="Email *">
+            <input type="email" th:field="*{email}" placeholder="Email *" required>
             <span th:if="${#fields.hasErrors('email')}" th:errors="*{email}" class="error-message"></span>
 
-            <input type="text" th:field="*{phone}" placeholder="Số điện thoại">
+            <!-- ✅ Phone không bắt buộc -->
+            <input type="text" th:field="*{phone}" placeholder="Số điện thoại (tùy chọn)">
             <span th:if="${#fields.hasErrors('phone')}" th:errors="*{phone}" class="error-message"></span>
 
             <input type="date" th:field="*{dateOfBirth}" placeholder="Ngày sinh">
             <span th:if="${#fields.hasErrors('dateOfBirth')}" th:errors="*{dateOfBirth}" class="error-message"></span>
 
-            <input type="password" th:field="*{password}" placeholder="Mật khẩu *">
+            <input type="password" th:field="*{password}" placeholder="Mật khẩu *" required>
             <span th:if="${#fields.hasErrors('password')}" th:errors="*{password}" class="error-message"></span>
 
-            <input type="password" th:field="*{confirmPassword}" placeholder="Xác nhận mật khẩu *">
+            <input type="password" th:field="*{confirmPassword}" placeholder="Xác nhận mật khẩu *" required>
             <span th:if="${#fields.hasErrors('confirmPassword')}" th:errors="*{confirmPassword}" class="error-message"></span>
 
             <button type="submit">Đăng ký</button>
@@ -59,7 +63,7 @@
                 <a href="/oauth2/authorization/facebook" class="icon"><i class="fab fa-facebook-f"></i></a>
             </div>
 
-            <!-- Thông báo lỗi -->
+            <!-- Thông báo lỗi và thành công -->
             <div th:if="${param.error}" class="alert alert-danger">
                 <span th:if="${param.error[0] == 'oauth2'}">Đăng nhập OAuth2 thất bại. Vui lòng thử lại.</span>
                 <span th:unless="${param.error[0] == 'oauth2'}">Tên đăng nhập hoặc mật khẩu không đúng!</span>
@@ -67,7 +71,8 @@
             <div th:if="${param.logout}" class="alert alert-success">Đăng xuất thành công!</div>
             <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
 
-            <input type="text" name="username" placeholder="Tên đăng nhập hoặc Email" required>
+            <input type="text" name="username" placeholder="Tên đăng nhập hoặc Email" required
+                   th:value="${username}">
             <input type="password" name="password" placeholder="Mật khẩu" required>
 
             <a href="#">Quên mật khẩu?</a>
@@ -81,7 +86,7 @@
         </form>
     </div>
 
-    <!-- Toggle panel (chỉ cho user thường) -->
+    <!-- Toggle panel -->
     <div class="toggle-container">
         <div class="toggle">
             <div th:if="${!isAdmin}" class="toggle-panel toggle-left">
@@ -100,7 +105,6 @@
             </div>
         </div>
     </div>
-
 </div>
 
 <script th:if="${!isAdmin}">
@@ -111,15 +115,30 @@
 
     // Chuyển sang form đăng ký
     registerBtn?.addEventListener('click', () => container.classList.add("active"));
-    registerLink?.addEventListener('click', () => container.classList.add("active"));
+    registerLink?.addEventListener('click', (e) => {
+        e.preventDefault();
+        container.classList.add("active");
+    });
 
     // Chuyển sang form đăng nhập
     loginBtn?.addEventListener('click', () => container.classList.remove("active"));
 
-    // Nếu có lỗi ở form đăng ký thì mở sẵn form đăng ký
+    // ✅ Auto-focus vào form có lỗi
     document.addEventListener('DOMContentLoaded', () => {
-        if (document.querySelector('.sign-up .error-message')) {
+        // Nếu có lỗi ở form đăng ký hoặc showRegisterForm=true
+        if (document.querySelector('.sign-up .error-message') || /*[[${showRegisterForm}]]*/ false) {
             container.classList.add("active");
+        }
+
+        // Focus vào input đầu tiên có lỗi
+        const firstErrorInput = document.querySelector('input.is-invalid, input + .error-message');
+        if (firstErrorInput) {
+            const input = firstErrorInput.classList.contains('is-invalid') ?
+                firstErrorInput : firstErrorInput.previousElementSibling;
+            if (input) {
+                input.focus();
+                input.select();
+            }
         }
     });
 

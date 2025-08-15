@@ -16,7 +16,7 @@ import java.util.Optional;
 @Repository
 public interface PostCommentRepository extends JpaRepository<PostComment, Long> {
 
-    // Lấy comments của post
+    // Lấy comments của post - SỬA TÊN METHOD
     @Query("""
         SELECT pc FROM PostComment pc 
         WHERE pc.post = :post 
@@ -24,6 +24,15 @@ public interface PostCommentRepository extends JpaRepository<PostComment, Long> 
         ORDER BY pc.createdAt ASC
     """)
     Page<PostComment> findByPostOrderByCreatedAtAsc(@Param("post") Post post, Pageable pageable);
+
+    // THÊM METHOD ALIAS ĐỂ TƯƠNG THÍCH
+    @Query("""
+        SELECT pc FROM PostComment pc 
+        WHERE pc.post = :post 
+        AND pc.isDeleted = false 
+        ORDER BY pc.createdAt ASC
+    """)
+    Page<PostComment> findByPostAndIsDeletedFalseOrderByCreatedAtAsc(@Param("post") Post post, Pageable pageable);
 
     // Đếm số comments của post
     @Query("""

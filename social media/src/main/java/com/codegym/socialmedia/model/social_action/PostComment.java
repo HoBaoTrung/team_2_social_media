@@ -40,5 +40,14 @@ public class PostComment {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
-}
 
+    // Helper methods
+    public boolean canBeEditedBy(User editor) {
+        return editor != null && user != null &&
+                user.getId().equals(editor.getId());
+    }
+
+    public boolean canBeDeletedBy(User deleter) {
+        return canBeEditedBy(deleter);
+    }
+}

@@ -79,7 +79,7 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // --- Chain cho user ---
+    // --- Chain cho user - FIXED ---
     @Bean
     @Order(2)
     public SecurityFilterChain userFilterChain(HttpSecurity http) throws Exception {
@@ -91,8 +91,13 @@ public class SecurityConfig {
                                 .policyDirectives("img-src 'self' https://lh3.googleusercontent.com https://*.fbcdn.net https://res.cloudinary.com https://graph.facebook.com https://i.imgur.com https://secure.gravatar.com data: blob:;")
                         )
                 )
+                // ✅ GỘP TẤT CẢ PATHS VÀO MỘT authorizeHttpRequests DUY NHẤT
                 .authorizeHttpRequests(authz -> authz
-                        .requestMatchers("/", "/login", "/register", "/css/**", "/js/**", "/images/**", "/api/debug/**", "/api/test/**").permitAll()
+                        .requestMatchers(
+                                "/", "/login", "/register",
+                                "/css/**", "/js/**", "/images/**",
+                                "/api/debug/**", "/api/test/**", "/posts/api/**"
+                        ).permitAll()
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
@@ -123,13 +128,7 @@ public class SecurityConfig {
                         .deleteCookies("JSESSIONID")
                         .permitAll()
                 )
-                .authorizeHttpRequests(authz -> authz
-                        .requestMatchers("/", "/login", "/register", "/css/**", "/js/**", "/images/**",
-                                "/api/debug/**", "/api/test/**", "/posts/api/**").permitAll()
-                        .anyRequest().authenticated()
-                )
                 .csrf(csrf -> csrf.disable());
-
 
         return http.build();
     }

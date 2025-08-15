@@ -35,11 +35,9 @@ public class UserRegistrationDto {
             message = "Email đã được sử dụng")
     private String email;
 
-    @NotBlank(groups = NormalRegister.class, message = "Không để trống")
+    // ✅ FIX: Loại bỏ validation groups cho phone để không bắt buộc
     @Pattern(regexp = "^(\\+84|0)(3[2-9]|5[6,8,9]|7[0,6-9]|8[1-5]|9[0-9])\\d{7}$"
-            ,message = "Sai định dạng"
-            ,groups = NormalRegister.class
-    )
+            ,message = "Sai định dạng số điện thoại")
     @Unique(entityClass = User.class, fieldName = "phone",
             message = "Số điện thoại đã được sử dụng")
     private String phone;
@@ -49,6 +47,4 @@ public class UserRegistrationDto {
 
     private String firstName;
     private String lastName;
-
-
 }

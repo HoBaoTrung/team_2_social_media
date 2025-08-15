@@ -5,10 +5,12 @@ import com.codegym.socialmedia.dto.UserPasswordDto;
 import com.codegym.socialmedia.dto.UserRegistrationDto;
 import com.codegym.socialmedia.dto.UserUpdateDto;
 import com.codegym.socialmedia.dto.friend.FriendDto;
+import com.codegym.socialmedia.dto.post.PostCreateDto;
 import com.codegym.socialmedia.general_interface.NormalRegister;
 import com.codegym.socialmedia.model.account.User;
 import com.codegym.socialmedia.model.account.UserPrivacySettings;
 import com.codegym.socialmedia.model.social_action.Friendship;
+import com.codegym.socialmedia.model.social_action.Post;
 import com.codegym.socialmedia.repository.UserPrivacySettingsRepository;
 import com.codegym.socialmedia.service.friend_ship.FriendshipService;
 import com.codegym.socialmedia.service.user.UserService;
@@ -130,7 +132,10 @@ public class UserController {
     public String loginForm(@RequestParam(value = "error", required = false) String error,
                             @RequestParam(value = "logout", required = false) String logout,
                             Model model, HttpServletRequest request) {
+
         boolean isAdmin = request.getRequestURI().startsWith("/admin");
+        System.out.println("🔍 Login page accessed - isAdmin: " + isAdmin);
+
         model.addAttribute("loginAction", isAdmin ? "/admin/login" : "/login");
         model.addAttribute("switchLoginUrl", isAdmin ? "/login" : "/admin/login");
         model.addAttribute("isAdmin", isAdmin);
@@ -140,9 +145,11 @@ public class UserController {
         }
 
         if (error != null) {
+            System.err.println("❌ Login error: " + error);
             model.addAttribute("error", "Tên đăng nhập hoặc mật khẩu không đúng!");
         }
         if (logout != null) {
+            System.out.println("✅ Logout successful");
             model.addAttribute("message", "Đăng xuất thành công!");
         }
         return "login";
@@ -155,37 +162,70 @@ public class UserController {
     }
 
     @PostMapping("/register")
-    public String registerUser(@Validated(NormalRegister.class)
-                               @ModelAttribute("user") UserRegistrationDto registrationDto,
+    public String registerUser(@Valid @ModelAttribute("user") UserRegistrationDto registrationDto,
                                BindingResult result,
                                Model model,
                                RedirectAttributes redirectAttributes) {
 
-        if (!registrationDto.getPassword().equals(registrationDto.getConfirmPassword())) {
-            result.rejectValue("confirmPassword", null, "Mật khẩu xác nhận không khớp");
+        System.out.println("🔄 Registration attempt for: " + registrationDto.getUsername());
+
+        // ✅ Kiểm tra mật khẩu xác nhận
+        if (registrationDto.getPassword() != null && registrationDto.getConfirmPassword() != null) {
+            if (!registrationDto.getPassword().equals(registrationDto.getConfirmPassword())) {
+                result.rejectValue("confirmPassword", null, "Mật khẩu xác nhận không khớp");
+            }
         }
 
+        // ✅ Kiểm tra có lỗi validation
         if (result.hasErrors()) {
+            System.out.println("❌ Validation errors:");
+            result.getAllErrors().forEach(error -> {
+                System.out.println("   - " + error.getDefaultMessage());
+            });
+
             model.addAttribute("user", registrationDto);
             model.addAttribute("isAdmin", false);
+
+            // ✅ Đảm bảo hiển thị form đăng ký
+            model.addAttribute("showRegisterForm", true);
             return "login";
         }
 
         try {
-            userService.save(registrationDto);
+            User savedUser = userService.save(registrationDto);
+            System.out.println("✅ User registered successfully: " + savedUser.getUsername());
+
             redirectAttributes.addFlashAttribute("success", "Đăng ký thành công! Vui lòng đăng nhập.");
             redirectAttributes.addFlashAttribute("username", registrationDto.getUsername());
             return "redirect:/login";
+
         } catch (Exception e) {
-            model.addAttribute("error", "Có lỗi xảy ra trong quá trình đăng ký. Vui lòng thử lại.");
+            System.out.println("❌ Registration error: " + e.getMessage());
+            e.printStackTrace();
+
+            model.addAttribute("error", "Có lỗi xảy ra trong quá trình đăng ký: " + e.getMessage());
             model.addAttribute("user", registrationDto);
             model.addAttribute("isAdmin", false);
+            model.addAttribute("showRegisterForm", true);
             return "login";
         }
     }
 
+
+
+    // Thêm vào UserController.java
+
     @GetMapping("/news-feed")
     public String newsFeed(Model model) {
+        User currentUser = userService.getCurrentUser();
+        if (currentUser == null) {
+            return "redirect:/login";
+        }
+
+        // ✅ QUAN TRỌNG: Thêm postCreateDto vào model
+        model.addAttribute("postCreateDto", new PostCreateDto());
+        model.addAttribute("privacyLevels", Post.PrivacyLevel.values());
+
         return "news-feed";
     }
 

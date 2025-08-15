@@ -48,31 +48,73 @@ public class UserServiceImpl implements UserService {
 
     // ✅ REMOVED FriendshipService dependency to fix circular dependency
 
+    @Transactional
     public User save(UserRegistrationDto registrationDto) {
-        User user = new User();
-        user.setUsername(registrationDto.getUsername());
-        user.setEmail(registrationDto.getEmail());
-        user.setPasswordHash(passwordEncoder.encode(registrationDto.getPassword()));
-        user.setFirstName(registrationDto.getFirstName());
-        user.setLastName(registrationDto.getLastName());
-        user.setPhone(registrationDto.getPhone());
-        user.setDateOfBirth(registrationDto.getDateOfBirth());
-        user.setLoginMethod(User.LoginMethod.EMAIL);
-        user.setAccountStatus(User.AccountStatus.ACTIVE);
-        user.setActive(true);
-        user.setVerified(false);
+        try {
+            System.out.println("💾 Saving user: " + registrationDto.getUsername());
 
-        UserPrivacySettings privacySettings = new UserPrivacySettings();
-        privacySettings.setUser(user);
+            User user = new User();
+            user.setUsername(registrationDto.getUsername());
+            user.setEmail(registrationDto.getEmail());
+            user.setPasswordHash(passwordEncoder.encode(registrationDto.getPassword()));
+            user.setFirstName(registrationDto.getFirstName());
+            user.setLastName(registrationDto.getLastName());
 
-        NotificationSettings notificationSettings = new NotificationSettings();
-        notificationSettings.setUser(user);
+            // ✅ Phone có thể null
+            if (registrationDto.getPhone() != null && !registrationDto.getPhone().trim().isEmpty()) {
+                user.setPhone(registrationDto.getPhone());
+            }
 
-        user.setPrivacySettings(privacySettings);
-        user.setNotificationSettings(notificationSettings);
+            user.setDateOfBirth(registrationDto.getDateOfBirth());
+            user.setLoginMethod(User.LoginMethod.EMAIL);
+            user.setAccountStatus(User.AccountStatus.ACTIVE);
+            user.setActive(true);
+            user.setVerified(false);
 
-        User savedUser = iUserRepository.save(user);
-        return savedUser;
+            // ✅ Tạo privacy settings mặc định
+            UserPrivacySettings privacySettings = new UserPrivacySettings();
+            privacySettings.setUser(user);
+            privacySettings.setShowProfile(UserPrivacySettings.PrivacyLevel.PUBLIC);
+            privacySettings.setShowFriendList(UserPrivacySettings.PrivacyLevel.PUBLIC);
+            privacySettings.setShowFullName(UserPrivacySettings.PrivacyLevel.PUBLIC);
+            privacySettings.setShowAddress(UserPrivacySettings.PrivacyLevel.PRIVATE);
+            privacySettings.setShowPhone(UserPrivacySettings.PrivacyLevel.PRIVATE);
+            privacySettings.setShowEmail(UserPrivacySettings.PrivacyLevel.PRIVATE);
+            privacySettings.setShowAvatar(UserPrivacySettings.PrivacyLevel.PUBLIC);
+            privacySettings.setShowBio(UserPrivacySettings.PrivacyLevel.PUBLIC);
+            privacySettings.setShowDob(UserPrivacySettings.PrivacyLevel.PRIVATE);
+            privacySettings.setAllowSendMessage(UserPrivacySettings.PrivacyLevel.FRIENDS);
+            privacySettings.setAllowSearchByEmail(true);
+            privacySettings.setAllowSearchByPhone(true);
+            privacySettings.setCanBeFound(true);
+            privacySettings.setAllowFriendRequests(true);
+
+            // ✅ Tạo notification settings mặc định
+            NotificationSettings notificationSettings = new NotificationSettings();
+            notificationSettings.setUser(user);
+            notificationSettings.setFriendRequests(true);
+            notificationSettings.setMessages(true);
+            notificationSettings.setStatusLikes(true);
+            notificationSettings.setStatusComments(true);
+            notificationSettings.setStatusShares(true);
+            notificationSettings.setFriendStatusUpdates(true);
+            notificationSettings.setSystemNotifications(false);
+            notificationSettings.setEmailNotifications(false);
+            notificationSettings.setPushNotifications(false);
+
+            user.setPrivacySettings(privacySettings);
+            user.setNotificationSettings(notificationSettings);
+
+            User savedUser = iUserRepository.save(user);
+            System.out.println("✅ User saved with ID: " + savedUser.getId());
+
+            return savedUser;
+
+        } catch (Exception e) {
+            System.out.println("❌ Error saving user: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Không thể tạo tài khoản: " + e.getMessage(), e);
+        }
     }
 
     @Override

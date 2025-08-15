@@ -1,4 +1,5 @@
 package com.codegym.socialmedia.model.social_action;
+
 import com.codegym.socialmedia.model.account.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -7,6 +8,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.List;
+
 @Entity
 @Table(name = "statuses")
 @Data
@@ -33,7 +35,7 @@ public class Status {
     private PrivacyLevel privacyLevel;
 
     @Enumerated(EnumType.STRING)
-    private StatusType statusType;
+    private StatusType statusType; // ✅ SỬA: Sử dụng StatusType thay vì PostType
 
     @ManyToOne
     @JoinColumn(name = "shared_status_id")
@@ -51,7 +53,7 @@ public class Status {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
-    // Mối quan hệ ngược với Comment
+    // Relationships
     @OneToMany(mappedBy = "status")
     private List<Comment> comments;
 
@@ -61,11 +63,12 @@ public class Status {
     @OneToMany(mappedBy = "status")
     private List<LikeStatus> likedByUsers;
 
+    // ✅ ENUMS ĐÚNG
     public enum PrivacyLevel {
         PUBLIC, FRIENDS, PRIVATE
     }
 
-    public enum StatusType {
+    public enum StatusType { // ✅ SỬA: Tạo enum đúng
         TEXT, IMAGE, VIDEO, SHARE
     }
 }

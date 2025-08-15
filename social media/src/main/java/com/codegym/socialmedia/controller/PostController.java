@@ -5,9 +5,7 @@ import com.codegym.socialmedia.dto.post.PostDisplayDto;
 import com.codegym.socialmedia.dto.post.PostUpdateDto;
 import com.codegym.socialmedia.model.account.User;
 import com.codegym.socialmedia.model.social_action.Post;
-import com.codegym.socialmedia.model.social_action.PostComment;
 import com.codegym.socialmedia.service.post.PostService;
-import com.codegym.socialmedia.service.post.PostCommentService;
 import com.codegym.socialmedia.service.user.UserService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,9 +33,6 @@ public class PostController {
 
     @Autowired
     private UserService userService;
-
-    // LOẠI BỎ: @Autowired private PostRepository postRepository;
-    // LOẠI BỎ: @Autowired private PostCommentService commentService; (tạm thời vì chưa implement)
 
     // ================== WEB PAGES ==================
 
@@ -272,27 +267,7 @@ public class PostController {
         User currentUser = userService.getCurrentUser();
 
         try {
-            // Get all posts with images
-            Page<PostDisplayDto> posts;
-            if (currentUser != null) {
-                posts = postService.getPostsByUser(targetUser, currentUser, PageRequest.of(0, 100));
-            } else {
-                posts = postService.getPublicPostsByUser(targetUser, PageRequest.of(0, 100));
-            }
-
-            // Extract all images from posts
-            List<Map<String, String>> photos = new ArrayList<>();
-            posts.getContent().forEach(post -> {
-                if (post.getImageUrls() != null && !post.getImageUrls().isEmpty()) {
-                    post.getImageUrls().forEach(imageUrl -> {
-                        Map<String, String> photo = new HashMap<>();
-                        photo.put("url", imageUrl);
-                        photo.put("postId", post.getId().toString());
-                        photos.add(photo);
-                    });
-                }
-            });
-
+            List<Map<String, String>> photos = postService.getUserPhotos(targetUser, currentUser);
             return ResponseEntity.ok(photos);
         } catch (Exception e) {
             return ResponseEntity.status(500).build();
@@ -399,15 +374,51 @@ public class PostController {
         }
     }
 
-    // ================== COMMENT API ENDPOINTS (TẠM THỜI COMMENT OUT) ==================
+    // ================== MEDIA AND ADVANCED ENDPOINTS ==================
 
-    /*
-    // Sẽ implement sau khi có PostCommentService
-    @PostMapping("/api/{postId}/comments")
+    @GetMapping("/api/user/{username}/media")
     @ResponseBody
-    public ResponseEntity<Map<String, Object>> createComment(
-            @PathVariable Long postId,
-            @RequestParam String content) {
+    public ResponseEntity<Page<PostDisplayDto>> getUserMediaPosts(
+            @PathVariable String username,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size) {
+
+        User targetUser = userService.getUserByUsername(username);
+        if (targetUser == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        User currentUser = userService.getCurrentUser();
+        Pageable pageable = PageRequest.of(page, size);
+
+        Page<PostDisplayDto> posts = postService.getMediaPostsByUser(targetUser, currentUser, pageable);
+        return ResponseEntity.ok(posts);
+    }
+
+    @GetMapping("/api/user/{username}/videos")
+    @ResponseBody
+    public ResponseEntity<List<Map<String, String>>> getUserVideos(@PathVariable String username) {
+        User targetUser = userService.getUserByUsername(username);
+        if (targetUser == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        User currentUser = userService.getCurrentUser();
+
+        try {
+            List<Map<String, String>> videos = postService.getUserVideos(targetUser, currentUser);
+            return ResponseEntity.ok(videos);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).build();
+        }
+    }
+
+    @PostMapping("/api/share/{id}")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> sharePost(
+            @PathVariable Long id,
+            @RequestParam(required = false) String shareText,
+            @RequestParam(defaultValue = "PUBLIC") String privacyLevel) {
 
         Map<String, Object> response = new HashMap<>();
         User currentUser = userService.getCurrentUser();
@@ -419,9 +430,13 @@ public class PostController {
         }
 
         try {
-            // TODO: Implement when PostCommentService is ready
+            Post.PrivacyLevel privacy = Post.PrivacyLevel.valueOf(privacyLevel.toUpperCase());
+            Post sharedPost = postService.sharePost(id, shareText, currentUser, privacy);
+            PostDisplayDto postDto = postService.getPostById(sharedPost.getId(), currentUser);
+
             response.put("success", true);
-            response.put("message", "Bình luận thành công");
+            response.put("message", "Chia sẻ bài viết thành công!");
+            response.put("post", postDto);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             response.put("success", false);
@@ -429,5 +444,163 @@ public class PostController {
             return ResponseEntity.status(500).body(response);
         }
     }
-    */
+
+    @GetMapping("/api/posts/shared/{id}")
+    @ResponseBody
+    public ResponseEntity<Page<PostDisplayDto>> getSharedPosts(
+            @PathVariable Long id,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size) {
+
+        try {
+            Pageable pageable = PageRequest.of(page, size);
+            Page<PostDisplayDto> sharedPosts = postService.getSharedPosts(id, pageable);
+            return ResponseEntity.ok(sharedPosts);
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @GetMapping("/api/posts/statistics")
+    @ResponseBody
+    public ResponseEntity<Map<String, Long>> getCurrentUserPostStatistics() {
+        User currentUser = userService.getCurrentUser();
+        if (currentUser == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        Map<String, Long> stats = postService.getPostStatistics(currentUser);
+        return ResponseEntity.ok(stats);
+    }
+
+    @GetMapping("/api/posts/type/{postType}")
+    @ResponseBody
+    public ResponseEntity<Page<PostDisplayDto>> getPostsByType(
+            @PathVariable String postType,
+            @RequestParam(value = "username", required = false) String username,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size) {
+
+        User currentUser = userService.getCurrentUser();
+        if (currentUser == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        User targetUser = username != null ? userService.getUserByUsername(username) : currentUser;
+        if (targetUser == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        try {
+            Post.PostType type = Post.PostType.valueOf(postType.toUpperCase());
+            Pageable pageable = PageRequest.of(page, size);
+            Page<PostDisplayDto> posts = postService.getPostsByType(targetUser, currentUser, type, pageable);
+            return ResponseEntity.ok(posts);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    // ================== REACTION ENDPOINTS ==================
+
+    @PostMapping("/api/{id}/reaction")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> toggleReaction(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "LIKE") String reactionType) {
+
+        Map<String, Object> response = new HashMap<>();
+        User currentUser = userService.getCurrentUser();
+
+        if (currentUser == null) {
+            response.put("success", false);
+            response.put("message", "Vui lòng đăng nhập");
+            return ResponseEntity.status(401).body(response);
+        }
+
+        try {
+            boolean hasReaction = postService.toggleReaction(id, currentUser, reactionType);
+
+            response.put("success", true);
+            response.put("hasReaction", hasReaction);
+            response.put("reactionType", reactionType);
+            response.put("message", hasReaction ? "Đã thêm reaction" : "Đã bỏ reaction");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Có lỗi xảy ra: " + e.getMessage());
+            return ResponseEntity.status(500).body(response);
+        }
+    }
+
+    // ================== SAVE/BOOKMARK ENDPOINTS ==================
+
+    @PostMapping("/api/{id}/save")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> savePost(@PathVariable Long id) {
+        Map<String, Object> response = new HashMap<>();
+        User currentUser = userService.getCurrentUser();
+
+        if (currentUser == null) {
+            response.put("success", false);
+            response.put("message", "Vui lòng đăng nhập");
+            return ResponseEntity.status(401).body(response);
+        }
+
+        try {
+            boolean saved = postService.savePost(id, currentUser);
+
+            response.put("success", true);
+            response.put("saved", saved);
+            response.put("message", saved ? "Đã lưu bài viết" : "Đã bỏ lưu bài viết");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Có lỗi xảy ra: " + e.getMessage());
+            return ResponseEntity.status(500).body(response);
+        }
+    }
+
+    @GetMapping("/api/saved")
+    @ResponseBody
+    public ResponseEntity<Page<PostDisplayDto>> getSavedPosts(
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size) {
+
+        User currentUser = userService.getCurrentUser();
+        if (currentUser == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<PostDisplayDto> savedPosts = postService.getSavedPosts(currentUser, pageable);
+        return ResponseEntity.ok(savedPosts);
+    }
+
+    // ================== VIEW TRACKING ==================
+
+    @PostMapping("/api/{id}/view")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> recordView(@PathVariable Long id) {
+        Map<String, Object> response = new HashMap<>();
+        User currentUser = userService.getCurrentUser();
+
+        if (currentUser == null) {
+            response.put("success", false);
+            response.put("message", "Vui lòng đăng nhập");
+            return ResponseEntity.status(401).body(response);
+        }
+
+        try {
+            postService.recordView(id, currentUser);
+
+            response.put("success", true);
+            response.put("message", "View recorded");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Có lỗi xảy ra: " + e.getMessage());
+            return ResponseEntity.status(500).body(response);
+        }
+    }
 }

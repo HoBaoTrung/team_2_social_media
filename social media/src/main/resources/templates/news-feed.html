@@ -1,173 +1,455 @@
-<!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trang chủ - Social Media</title>
-    <th:block th:replace="~{fragments/commonHead :: commonHead}"></th:block>
-    <link rel="stylesheet" th:href="@{/css/news-feed.css}">
-    <link rel="stylesheet" th:href="@{/css/posts.css}">
-</head>
-<body>
-<div th:replace="~{fragments/header :: header}"></div>
+<!-- Enhanced Post Templates - Cập nhật cho news-feed.html và profile templates -->
 
-<div class="main-container">
-    <!-- Left Sidebar -->
-    <div class="sidebar">
-        <h3><i class="fas fa-user"></i> Hồ sơ của tôi</h3>
-        <div class="user-profile">
-            <div class="avatar">
-                <img th:if="${#authentication.principal.avatarUrl != null and !#strings.isEmpty(#authentication.principal.avatarUrl)}"
-                     th:src="${#authentication.principal.avatarUrl}" alt="Avatar"
-                     class="rounded-circle" style="width: 48px; height: 48px; object-fit: cover;">
-                <span th:unless="${#authentication.principal.avatarUrl != null and !#strings.isEmpty(#authentication.principal.avatarUrl)}"
-                      th:text="${#strings.substring(#authentication.name, 0, 1).toUpperCase()}">U</span>
+<!-- 1. Enhanced Post Creator Form -->
+<div class="post-creator-enhanced" sec:authorize="isAuthenticated()" xmlns:sec="http://www.w3.org/1999/xhtml">
+    <h3 class="post-title">
+        <i class="fas fa-pen"></i> Bạn đang nghĩ gì?
+    </h3>
+    <form id="enhanced-create-post-form" enctype="multipart/form-data">
+        <div class="post-creator-header">
+            <img th:if="${#authentication.principal.avatarUrl != null and !#strings.isEmpty(#authentication.principal.avatarUrl)}"
+                 th:src="${#authentication.principal.avatarUrl}" alt="Avatar" class="creator-avatar">
+            <img th:unless="${#authentication.principal.avatarUrl != null and !#strings.isEmpty(#authentication.principal.avatarUrl)}"
+                 th:src="@{/images/default-avatar.jpg}" alt="Avatar" class="creator-avatar">
+
+            <div class="creator-info">
+                <span th:text="${#authentication.principal.fullName}">Tên người dùng</span>
+                <select name="privacyLevel" class="privacy-select">
+                    <option value="PUBLIC">🌍 Công khai</option>
+                    <option value="FRIENDS">👥 Bạn bè</option>
+                    <option value="PRIVATE">🔒 Chỉ mình tôi</option>
+                </select>
             </div>
-            <h4 th:text="${#authentication.principal.fullName}">Tên người dùng</h4>
-            <p class="user-role">Thành viên</p>
         </div>
 
-        <hr class="divider">
+        <textarea name="content" class="form-control post-content-input" rows="3"
+                  placeholder="Chia sẻ suy nghĩ của bạn..." required></textarea>
 
-        <h3><i class="fas fa-chart-line"></i> Thống kê</h3>
-        <div class="stats">
-            <p><i class="fas fa-users"></i> <span id="friends-count">0</span> bạn bè</p>
-            <p><i class="fas fa-edit"></i> <span id="posts-count">0</span> bài viết</p>
-            <p><i class="fas fa-heart"></i> <span id="likes-count">0</span> lượt thích</p>
+        <!-- Enhanced metadata inputs -->
+        <div class="post-metadata-inputs" style="display: none;">
+            <div class="metadata-row">
+                <select name="feeling" class="form-select">
+                    <option value="">Cảm xúc...</option>
+                    <option value="happy">😊 Vui vẻ</option>
+                    <option value="excited">🤩 Phấn khích</option>
+                    <option value="grateful">🙏 Biết ơn</option>
+                    <option value="blessed">😇 Được phước</option>
+                    <option value="loved">🥰 Được yêu</option>
+                    <option value="sad">😢 Buồn</option>
+                    <option value="angry">😡 Tức giận</option>
+                    <option value="tired">😴 Mệt mỏi</option>
+                </select>
+
+                <select name="activity" class="form-select">
+                    <option value="">Hoạt động...</option>
+                    <option value="eating">🍽️ Đang ăn</option>
+                    <option value="drinking">🍺 Đang uống</option>
+                    <option value="traveling">✈️ Đi du lịch</option>
+                    <option value="working">💼 Đang làm việc</option>
+                    <option value="studying">📚 Đang học</option>
+                    <option value="exercising">🏃 Đang tập thể dục</option>
+                    <option value="shopping">🛍️ Đang mua sắm</option>
+                    <option value="reading">📖 Đang đọc</option>
+                    <option value="watching">📺 Đang xem</option>
+                    <option value="listening">🎵 Đang nghe nhạc</option>
+                </select>
+            </div>
+
+            <input type="text" name="location" class="form-control" placeholder="Bạn đang ở đâu?">
+        </div>
+
+        <!-- Enhanced media preview area -->
+        <div id="enhanced-media-preview" class="media-preview-container" style="display: none;">
+            <div id="enhanced-media-list" class="media-preview-list"></div>
+        </div>
+
+        <div class="post-options-enhanced">
+            <div class="post-actions-left">
+                <!-- Image upload -->
+                <label for="enhanced-image-input" class="action-btn">
+                    <i class="fas fa-image"></i> Ảnh
+                </label>
+                <input type="file" id="enhanced-image-input" name="images" accept="image/*" multiple style="display: none;">
+
+                <!-- Video upload -->
+                <label for="enhanced-video-input" class="action-btn">
+                    <i class="fas fa-video"></i> Video
+                </label>
+                <input type="file" id="enhanced-video-input" name="videos" accept="video/*" multiple style="display: none;">
+
+                <!-- Feeling/Activity -->
+                <button type="button" class="action-btn" onclick="toggleMetadataInputs()">
+                    <i class="fas fa-smile"></i> Cảm xúc/Hoạt động
+                </button>
+
+                <!-- Location -->
+                <button type="button" class="action-btn" onclick="toggleLocationInput()">
+                    <i class="fas fa-map-marker-alt"></i> Vị trí
+                </button>
+
+                <!-- Tag friends -->
+                <button type="button" class="action-btn" onclick="openTagFriendsModal()">
+                    <i class="fas fa-user-tag"></i> Tag bạn bè
+                </button>
+            </div>
+
+            <button type="submit" class="btn btn-primary post-btn" id="enhanced-post-submit-btn" disabled>
+                <i class="fas fa-paper-plane"></i> Đăng
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- 2. Enhanced Post Item Template -->
+<div class="post-item-enhanced" th:fragment="enhancedPostItem(post)" th:data-post-id="${post.id}" th:id="'post-' + ${post.id}">
+    <!-- Pin indicator -->
+    <div th:if="${post.isPinned}" class="pin-indicator">
+        <i class="fas fa-thumbtack"></i> Bài viết đã ghim
+    </div>
+
+    <!-- Post header -->
+    <div class="post-header">
+        <img th:src="${post.userAvatarUrl ?: '/images/default-avatar.jpg'}" alt="Avatar" class="post-avatar">
+        <div class="post-user-info">
+            <a th:href="@{'/profile/' + ${post.username}}" class="post-username">
+                <span th:text="${post.userFullName}">Tên người dùng</span>
+            </a>
+            <div class="post-meta">
+                <span class="post-time" th:text="${post.createdAt}">Thời gian</span>
+                <span class="post-privacy">
+                    <span th:if="${post.privacyLevel == 'PUBLIC'}" class="privacy-icon">🌍</span>
+                    <span th:if="${post.privacyLevel == 'FRIENDS'}" class="privacy-icon">👥</span>
+                    <span th:if="${post.privacyLevel == 'PRIVATE'}" class="privacy-icon">🔒</span>
+                    <span th:text="${post.privacyLevel.displayName}">Công khai</span>
+                </span>
+                <span th:if="${post.postType == 'SHARED'}" class="post-type-indicator shared">
+                    <i class="fas fa-share"></i> Đã chia sẻ
+                </span>
+                <span th:if="${post.isPinned}" class="post-type-indicator pinned">
+                    <i class="fas fa-thumbtack"></i> Đã ghim
+                </span>
+            </div>
+        </div>
+
+        <!-- Post actions menu -->
+        <div th:if="${post.canEdit || post.canDelete || post.canPin}" class="post-actions-menu">
+            <button class="post-menu-btn" th:onclick="'enhancedPostManager.togglePostMenu(' + ${post.id} + ')'">
+                <i class="fas fa-ellipsis-h"></i>
+            </button>
+            <div class="dropdown-menu" th:id="'post-menu-' + ${post.id}" style="display: none;">
+                <a th:if="${post.canEdit}" class="dropdown-item" href="#"
+                   th:onclick="'enhancedPostManager.editPost(' + ${post.id} + ')'">
+                    <i class="fas fa-edit"></i> Chỉnh sửa
+                </a>
+                <a th:if="${post.canPin}" class="dropdown-item" href="#"
+                   th:onclick="'enhancedPostManager.togglePinPost(' + ${post.id} + ')'">
+                    <i class="fas fa-thumbtack"></i>
+                    <span th:text="${post.isPinned} ? 'Bỏ ghim' : 'Ghim bài viết'">Ghim</span>
+                </a>
+                <a th:if="${post.canDelete}" class="dropdown-item text-danger" href="#"
+                   th:onclick="'enhancedPostManager.deletePost(' + ${post.id} + ')'">
+                    <i class="fas fa-trash"></i> Xóa
+                </a>
+            </div>
         </div>
     </div>
 
-    <!-- Main Feed -->
-    <div class="feed">
-        <!-- Post Creator -->
-        <div class="post-creator" sec:authorize="isAuthenticated()">
-            <h3 class="post-title">
-                <i class="fas fa-pen"></i> Bạn đang nghĩ gì?
-            </h3>
-            <form id="create-post-form" enctype="multipart/form-data">
-                <div class="post-creator-header">
-                    <img th:if="${#authentication.principal.avatarUrl != null and !#strings.isEmpty(#authentication.principal.avatarUrl)}"
-                         th:src="${#authentication.principal.avatarUrl}" alt="Avatar"
-                         class="creator-avatar">
-                    <img th:unless="${#authentication.principal.avatarUrl != null and !#strings.isEmpty(#authentication.principal.avatarUrl)}"
-                         th:src="@{/images/default-avatar.jpg}" alt="Avatar"
-                         class="creator-avatar">
+    <!-- Post metadata (feeling, activity, location) -->
+    <div th:if="${post.feeling != null || post.activity != null || post.location != null}" class="post-metadata">
+        <span th:if="${post.feeling != null}" class="post-feeling">
+            <i class="fas fa-smile"></i> Cảm thấy <span th:text="${post.feeling}">vui vẻ</span>
+        </span>
+        <span th:if="${post.activity != null}" class="post-activity">
+            <i class="fas fa-clock"></i> <span th:text="${post.activity}">đang ăn</span>
+        </span>
+        <span th:if="${post.location != null}" class="post-location">
+            <i class="fas fa-map-marker-alt"></i> tại <span th:text="${post.location}">Hà Nội</span>
+        </span>
+    </div>
 
-                    <div class="creator-info">
-                        <span th:text="${#authentication.principal.fullName}">Tên người dùng</span>
-                        <select name="privacyLevel" class="privacy-select">
-                            <option value="PUBLIC">🌍 Công khai</option>
-                            <option value="FRIENDS">👥 Bạn bè</option>
-                            <option value="PRIVATE">🔒 Chỉ mình tôi</option>
-                        </select>
-                    </div>
+    <!-- Post content -->
+    <div class="post-content" th:text="${post.content}">Nội dung bài viết</div>
+
+    <!-- Tagged users -->
+    <div th:if="${post.taggedUsers != null && !post.taggedUsers.isEmpty()}" class="tagged-users">
+        <span>với </span>
+        <span th:each="tag, iterStat : ${post.taggedUsers}">
+            <a th:href="@{'/profile/' + ${tag.username}}" class="tagged-user" th:text="${tag.fullName}">Tên bạn</a>
+            <span th:if="${!iterStat.last}">, </span>
+        </span>
+    </div>
+
+    <!-- Shared post content -->
+    <div th:if="${post.isSharedPost}" class="shared-post-wrapper">
+        <div th:if="${post.shareText != null && !post.shareText.isEmpty()}" class="share-text" th:text="${post.shareText}">
+            Nội dung chia sẻ
+        </div>
+        <div class="original-post-content">
+            <div th:insert="~{:: enhancedPostItem(${post.originalPost})}"></div>
+        </div>
+    </div>
+
+    <!-- Enhanced media display -->
+    <div th:if="${(post.imageUrls != null && !post.imageUrls.isEmpty()) || (post.videoUrls != null && !post.videoUrls.isEmpty())}"
+         class="post-media-enhanced">
+        <div th:with="imageCount=${post.imageUrls != null ? #lists.size(post.imageUrls) : 0}"
+             th:class="'media-container layout-' + ${imageCount > 4 ? 4 : imageCount}">
+            <!-- Images -->
+            <div th:each="imageUrl, iterStat : ${post.imageUrls}"
+                 th:if="${iterStat.index < 4}"
+                 class="mixed-media-item"
+                 th:classappend="${iterStat.index == 0 && totalMedia == 3} ? 'span-rows' : ''"
+                 th:onclick="'enhancedPostManager.viewImage(\'' + ${imageUrl} + '\')'">
+                <img th:src="${imageUrl}" alt="Post image">
+                <div th:if="${iterStat.index == 3 && totalMedia > 4}"
+                     class="media-more-overlay"
+                     th:text="'+' + ${totalMedia - 4}">+2</div>
+            </div>
+
+            <!-- Videos -->
+            <div th:each="videoUrl, iterStat : ${post.videoUrls}"
+                 th:if="${iterStat.index + (post.imageUrls?.size() ?: 0) < 4}"
+                 class="mixed-media-item"
+                 th:onclick="'enhancedPostManager.viewVideo(\'' + ${videoUrl} + '\')'">
+                <video th:src="${videoUrl}" muted></video>
+                <div class="media-overlay">🎥</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enhanced post stats -->
+    <div th:if="${post.reactionsCount > 0 || post.commentsCount > 0 || post.sharesCount > 0}" class="post-stats-enhanced">
+        <div class="post-reactions-summary" th:if="${post.reactionsCount > 0}">
+            <div class="reaction-summary" th:id="'reaction-summary-' + ${post.id}">
+                <div th:each="reaction : ${post.topReactions}" class="reaction-count">
+                    <span th:text="${reaction.emoji}">👍</span>
+                    <span th:text="${reaction.count}">5</span>
                 </div>
+            </div>
+        </div>
+        <div class="post-interactions-count">
+            <span th:if="${post.commentsCount > 0}" class="comments-count"
+                  th:text="${post.commentsCount} + ' bình luận'">5 bình luận</span>
+            <span th:if="${post.sharesCount > 0}" class="shares-count"
+                  th:text="${post.sharesCount} + ' lượt chia sẻ'">2 lượt chia sẻ</span>
+            <span th:if="${post.viewsCount > 0}" class="views-count"
+                  th:text="${post.viewsCount} + ' lượt xem'">100 lượt xem</span>
+        </div>
+    </div>
 
-                <textarea name="content" class="form-control post-content-input" rows="3"
-                          placeholder="Chia sẻ suy nghĩ của bạn..." required></textarea>
+    <!-- Enhanced post actions -->
+    <div class="post-actions-enhanced">
+        <div class="post-action-group">
+            <!-- Enhanced reaction button with picker -->
+            <button class="post-action-enhanced reaction-btn"
+                    th:data-post-id="${post.id}"
+                    th:data-reaction-type="${post.currentUserReaction?.reactionType?.name() ?: 'LIKE'}"
+                    th:classappend="${post.currentUserReaction != null} ? 'liked' : ''">
+                <span class="reaction-emoji"
+                      th:text="${post.currentUserReaction?.reactionType?.emoji ?: '👍'}">👍</span>
+                <span class="reaction-text"
+                      th:text="${post.currentUserReaction?.reactionType?.displayName ?: 'Thích'}">Thích</span>
 
-                <!-- Image preview area -->
-                <div id="image-preview-container" class="image-preview-container" style="display: none;">
-                    <div id="image-preview-list" class="image-preview-list"></div>
+                <!-- Reaction picker dropdown -->
+                <div class="reaction-picker">
+                    <div class="reaction-picker-item" data-reaction="LIKE" data-tooltip="Thích"
+                         th:onclick="'enhancedPostManager.selectReaction(' + ${post.id} + ', \'LIKE\', this)'">👍</div>
+                    <div class="reaction-picker-item" data-reaction="LOVE" data-tooltip="Yêu thích"
+                         th:onclick="'enhancedPostManager.selectReaction(' + ${post.id} + ', \'LOVE\', this)'">❤️</div>
+                    <div class="reaction-picker-item" data-reaction="HAHA" data-tooltip="Haha"
+                         th:onclick="'enhancedPostManager.selectReaction(' + ${post.id} + ', \'HAHA\', this)'">😂</div>
+                    <div class="reaction-picker-item" data-reaction="WOW" data-tooltip="Wow"
+                         th:onclick="'enhancedPostManager.selectReaction(' + ${post.id} + ', \'WOW\', this)'">😮</div>
+                    <div class="reaction-picker-item" data-reaction="SAD" data-tooltip="Buồn"
+                         th:onclick="'enhancedPostManager.selectReaction(' + ${post.id} + ', \'SAD\', this)'">😢</div>
+                    <div class="reaction-picker-item" data-reaction="ANGRY" data-tooltip="Tức giận"
+                         th:onclick="'enhancedPostManager.selectReaction(' + ${post.id} + ', \'ANGRY\', this)'">😡</div>
                 </div>
+            </button>
 
-                <div class="post-options">
-                    <div class="post-actions-left">
-                        <label for="image-input" class="action-btn">
-                            <i class="fas fa-image"></i> Ảnh
-                        </label>
-                        <input type="file" id="image-input" name="images" accept="image/*" multiple style="display: none;">
-                    </div>
-                    <button type="submit" class="btn btn-primary post-btn" id="post-submit-btn" disabled>
-                        <i class="fas fa-paper-plane"></i> Đăng
+            <!-- Comment button -->
+            <button class="post-action-enhanced" th:onclick="'enhancedPostManager.toggleComments(' + ${post.id} + ')'">
+                <i class="fas fa-comment"></i>
+                <span>Bình luận</span>
+            </button>
+
+            <!-- Share button -->
+            <button class="post-action-enhanced share-btn"
+                    th:data-post-id="${post.id}"
+                    th:classappend="${post.isSharedByCurrentUser} ? 'shared' : ''"
+                    th:if="${post.canShare}">
+                <i class="fas fa-share"></i>
+                <span>Chia sẻ</span>
+            </button>
+        </div>
+
+        <div class="post-action-group">
+            <!-- Save button -->
+            <button class="post-action-enhanced save-btn"
+                    th:data-post-id="${post.id}"
+                    th:classappend="${post.isSavedByCurrentUser} ? 'saved' : ''">
+                <i th:class="${post.isSavedByCurrentUser} ? 'fas fa-bookmark' : 'far fa-bookmark'"></i>
+                <span class="save-text" th:text="${post.isSavedByCurrentUser} ? 'Đã lưu' : 'Lưu'">Lưu</span>
+            </button>
+
+            <!-- Pin button (only for own posts) -->
+            <button th:if="${post.canPin}" class="post-action-enhanced pin-btn"
+                    th:data-post-id="${post.id}"
+                    th:classappend="${post.isPinned} ? 'pinned' : ''">
+                <i class="fas fa-thumbtack"></i>
+                <span class="pin-text" th:text="${post.isPinned} ? 'Đã ghim' : 'Ghim'">Ghim</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Enhanced comments section -->
+    <div class="post-comments-enhanced" th:id="'comments-' + ${post.id}" style="display: none;">
+        <!-- Comment form -->
+        <div class="comment-form-enhanced">
+            <img th:src="${#authentication.principal.avatarUrl ?: '/images/default-avatar.jpg'}"
+                 alt="Avatar" class="comment-avatar">
+            <div class="comment-input-container-enhanced">
+                <textarea class="comment-input-enhanced"
+                          th:placeholder="'Bình luận với tư cách ' + ${#authentication.principal.fullName} + '...'"
+                          th:onkeypress="'enhancedPostManager.handleCommentKeyPress(event, ' + ${post.id} + ')'"></textarea>
+                <div class="comment-input-actions">
+                    <label class="comment-image-btn">
+                        <i class="fas fa-image"></i>
+                        <input type="file" accept="image/*" style="display: none;">
+                    </label>
+                    <button class="comment-submit-enhanced"
+                            th:onclick="'enhancedPostManager.submitComment(' + ${post.id} + ')'">
+                        <i class="fas fa-paper-plane"></i>
                     </button>
                 </div>
-            </form>
+            </div>
         </div>
 
-        <!-- Posts Feed -->
-        <div id="posts-container">
-            <!-- Posts will be loaded here dynamically -->
-        </div>
+        <!-- Comments list -->
+        <div class="comments-list-enhanced" th:id="'comments-list-' + ${post.id}">
+            <!-- Preview comments -->
+            <div th:each="comment : ${post.previewComments}"
+                 th:insert="~{:: enhancedCommentItem(${comment})}"></div>
 
-        <!-- Loading indicator -->
-        <div id="loading-indicator" class="text-center py-3" style="display: none;">
-            <i class="fas fa-spinner fa-spin"></i> Đang tải...
-        </div>
-
-        <!-- No more posts indicator -->
-        <div id="no-more-posts" class="text-center py-3 text-muted" style="display: none;">
-            <i class="fas fa-check-circle"></i> Bạn đã xem hết tất cả bài viết
-        </div>
-    </div>
-
-    <!-- Right Sidebar -->
-    <div class="sidebar">
-        <h3><i class="fas fa-users"></i> Gợi ý kết bạn</h3>
-        <div id="friend-suggestions">
-            <p class="text-muted">
-                Chưa có gợi ý nào.<br>
-                Hãy mời bạn bè tham gia!
-            </p>
-        </div>
-
-        <hr class="divider">
-
-        <h3><i class="fas fa-fire"></i> Xu hướng</h3>
-        <div class="trending">
-            <p>#ChaoMung</p>
-            <p>#SocialMedia</p>
-            <p>#KetNoi</p>
+            <!-- Load more comments button -->
+            <button th:if="${post.commentsCount > 2}"
+                    class="load-more-comments-btn"
+                    th:onclick="'enhancedPostManager.loadMoreComments(' + ${post.id} + ')'">
+                Xem thêm bình luận...
+            </button>
         </div>
     </div>
 </div>
 
-<!-- Edit Post Modal -->
-<div class="modal fade" id="editPostModal" tabindex="-1">
+<!-- 3. Enhanced Comment Item Template -->
+<div class="comment-item-enhanced" th:fragment="enhancedCommentItem(comment)"
+     th:id="'comment-' + ${comment.id}" th:data-comment-id="${comment.id}">
+    <img th:src="${comment.userAvatarUrl ?: '/images/default-avatar.jpg'}"
+         alt="Avatar" class="comment-avatar">
+
+    <div class="comment-content-enhanced">
+        <div class="comment-author-enhanced" th:text="${comment.userFullName}">Tên người dùng</div>
+        <div class="comment-text-enhanced" th:text="${comment.content}">Nội dung bình luận</div>
+        <img th:if="${comment.imageUrl}" th:src="${comment.imageUrl}"
+             class="comment-image" alt="Comment image">
+    </div>
+
+    <div class="comment-actions-enhanced">
+        <button class="comment-action-btn comment-like-btn"
+                th:data-comment-id="${comment.id}"
+                th:classappend="${comment.isLikedByCurrentUser} ? 'liked' : ''">
+            <span th:text="${comment.isLikedByCurrentUser} ? 'Đã thích' : 'Thích'">Thích</span>
+        </button>
+        <button class="comment-action-btn reply-btn" th:data-comment-id="${comment.id}">
+            Phản hồi
+        </button>
+        <span class="comment-time" th:text="${comment.createdAt}">2 phút trước</span>
+        <span th:if="${comment.likesCount > 0}" class="like-count" th:text="${comment.likesCount}">5</span>
+    </div>
+
+    <!-- Replies section -->
+    <div th:if="${comment.repliesCount > 0}" class="comment-replies" th:id="'replies-' + ${comment.id}">
+        <!-- Recent replies preview -->
+        <div th:each="reply : ${comment.recentReplies}"
+             th:insert="~{:: enhancedCommentItem(${reply})}"></div>
+
+        <!-- Load more replies button -->
+        <button th:if="${comment.repliesCount > 2}"
+                class="load-more-replies"
+                th:data-comment-id="${comment.id}"
+                th:data-page="0">
+            Xem thêm phản hồi...
+        </button>
+    </div>
+</div>
+
+<!-- 4. Enhanced Share Modal -->
+<div class="modal fade" id="sharePostModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content share-modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-share"></i> Chia sẻ bài viết
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Content will be loaded dynamically -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 5. Enhanced Save Collections Modal -->
+<div class="modal fade" id="savePostModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Chỉnh sửa bài viết</h5>
+                <h5 class="modal-title">
+                    <i class="fas fa-bookmark"></i> Lưu vào bộ sưu tập
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form id="edit-post-form">
-                <div class="modal-body">
-                    <input type="hidden" id="edit-post-id">
-
-                    <div class="mb-3">
-                        <label>Quyền riêng tư:</label>
-                        <select id="edit-privacy-level" class="form-select">
-                            <option value="PUBLIC">🌍 Công khai</option>
-                            <option value="FRIENDS">👥 Bạn bè</option>
-                            <option value="PRIVATE">🔒 Chỉ mình tôi</option>
-                        </select>
+            <div class="modal-body">
+                <div class="existing-collections">
+                    <div class="collection-item" onclick="selectCollection('Đã lưu')">
+                        <i class="fas fa-bookmark"></i> Đã lưu
                     </div>
-
-                    <div class="mb-3">
-                        <textarea id="edit-content" class="form-control" rows="4" required></textarea>
-                    </div>
-
-                    <div class="mb-3">
-                        <label>Ảnh hiện tại:</label>
-                        <div id="edit-existing-images" class="existing-images-container"></div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="edit-new-images" class="form-label">Thêm ảnh mới:</label>
-                        <input type="file" id="edit-new-images" class="form-control" accept="image/*" multiple>
+                    <div class="collection-item" onclick="selectCollection('Yêu thích')">
+                        <i class="fas fa-heart"></i> Yêu thích
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                    <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                <div class="create-collection">
+                    <input type="text" class="form-control" placeholder="Tạo bộ sưu tập mới...">
+                    <button class="btn btn-primary">Tạo</button>
                 </div>
-            </form>
+            </div>
         </div>
     </div>
 </div>
 
-<script th:src="@{/js/posts.js}"></script>
-<script th:src="@{/js/news-feed.js}"></script>
+<!-- 6. JavaScript functions -->
+<script>
+    function toggleMetadataInputs() {
+        const container = document.querySelector('.post-metadata-inputs');
+        container.style.display = container.style.display === 'none' ? 'block' : 'none';
+    }
 
-</body>
-</html>
+    function toggleLocationInput() {
+        const locationInput = document.querySelector('input[name="location"]');
+        locationInput.style.display = locationInput.style.display === 'none' ? 'block' : 'none';
+        if (locationInput.style.display === 'block') {
+            locationInput.focus();
+        }
+    }
+
+    function openTagFriendsModal() {
+        // Implementation for friend tagging modal
+        console.log('Opening friend tagging modal...');
+    }
+
+    function selectCollection(collectionName) {
+        // Implementation for collection selection
+        console.log('Selected collection:', collectionName);
+    }
+</script>
