@@ -29,10 +29,12 @@ public class AdminServiceImpl implements AdminService {
     @Override
     public void blockUser(Long userId) {
         userRepository.findById(userId).ifPresent(user -> {
-            user.setActive(false); // Giả sử có field 'active'
+            user.setActive(!user.isActive()); // Giả sử có field 'active'
             userRepository.save(user);
         });
     }
+
+
 
     @Override
     public Map<String, Long> getVisitStatistics() {

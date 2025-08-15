@@ -61,9 +61,9 @@
 
             <!-- Thông báo lỗi -->
             <div th:if="${param.error}" class="alert alert-danger">
-                <span th:if="${param.error[0] == 'oauth2'}">Đăng nhập OAuth2 thất bại. Vui lòng thử lại.</span>
-                <span th:unless="${param.error[0] == 'oauth2'}">Tên đăng nhập hoặc mật khẩu không đúng!</span>
+                <span th:text="${param.error}"></span>
             </div>
+
             <div th:if="${param.logout}" class="alert alert-success">Đăng xuất thành công!</div>
             <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
 

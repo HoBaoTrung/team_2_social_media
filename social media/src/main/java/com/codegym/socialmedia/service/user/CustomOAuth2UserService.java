@@ -1,5 +1,6 @@
 package com.codegym.socialmedia.service.user;
 
+import com.codegym.socialmedia.ErrAccountException;
 import com.codegym.socialmedia.model.account.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -24,7 +25,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         OAuth2User oauth2User = super.loadUser(userRequest);
 
-        try {
+
             String registrationId = userRequest.getClientRegistration().getRegistrationId();
             Map<String, Object> attributes = oauth2User.getAttributes();
 
@@ -60,6 +61,10 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService
                         .getUserInfoEndpoint()
                         .getUserNameAttributeName();
 
+                // Kiểm tra trạng thái tài khoản
+                if (!user.isActive()) {
+                    throw new ErrAccountException("Tài khoản đã bị vô hiệu hóa ");
+                }
 
                 // Return custom OAuth2User với ảnh avatar từ DB
                 return new CustomOAuth2User(
@@ -76,9 +81,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService
 
             throw new OAuth2AuthenticationException("Email or name missing from OAuth2 provider");
 
-        } catch (Exception e) {
-            throw new OAuth2AuthenticationException("Failed to process OAuth2 user: " + e.getMessage());
         }
     }
-}
+
 

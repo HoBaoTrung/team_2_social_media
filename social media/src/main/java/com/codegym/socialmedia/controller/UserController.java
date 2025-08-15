@@ -15,6 +15,7 @@ import com.codegym.socialmedia.repository.UserPrivacySettingsRepository;
 import com.codegym.socialmedia.service.friend_ship.FriendshipService;
 import com.codegym.socialmedia.service.user.UserService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -112,7 +113,7 @@ public class UserController {
     }
 
     @GetMapping({"/login", "/admin/login"})
-    public String loginForm(@RequestParam(value = "error", required = false) String error,
+    public String loginForm(
                             @RequestParam(value = "logout", required = false) String logout,
                             Model model, HttpServletRequest request) {
         boolean isAdmin = request.getRequestURI().startsWith("/admin");
@@ -124,9 +125,6 @@ public class UserController {
             model.addAttribute("user", new UserRegistrationDto());
         }
 
-        if (error != null) {
-            model.addAttribute("error", "Tên đăng nhập hoặc mật khẩu không đúng!");
-        }
         if (logout != null) {
             model.addAttribute("message", "Đăng xuất thành công!");
         }
@@ -181,11 +179,6 @@ public class UserController {
         }
     }
 
-    @GetMapping("/news-feed")
-    public String newsFeed(Model model) {
-        // Trang news feed sau khi đăng nhập thành công
-        return "news-feed";
-    }
 
     @GetMapping("/oauth2/login-success")
     public String oauth2LoginSuccess() {

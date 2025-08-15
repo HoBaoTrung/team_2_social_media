@@ -1,5 +1,6 @@
 package com.codegym.socialmedia.config;
 
+import com.codegym.socialmedia.component.CustomAuthFailureHandler;
 import com.codegym.socialmedia.service.admin.AdminDetailsService;
 import com.codegym.socialmedia.service.user.CustomUserDetailsService;
 import com.codegym.socialmedia.service.user.CustomOAuth2UserService;
@@ -60,14 +61,14 @@ public class SecurityConfig {
                 .securityMatcher("/admin/**", "/admin/login") // chỉ bắt request /admin
                 .authenticationManager(new ProviderManager(List.of(adminAuthProvider())))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/admin/login", "/css/**", "/js/**").permitAll()
+                        .requestMatchers("/admin/login", "/css/**", "/js/**","/ws/**").permitAll()
                         .anyRequest().hasRole("ADMIN")
                 )
                 .formLogin(form -> form
                         .loginPage("/admin/login")
                         .loginProcessingUrl("/admin/login") // phải khác /login của user
                         .defaultSuccessUrl("/admin/dashboard", true)
-                        .failureUrl("/admin/login?error=true")
+                        .failureUrl("/admin/login?error=Username+ho%E1%BA%B7c+password+sai")
                         .permitAll()
                 )
                 .logout(logout -> logout
@@ -78,6 +79,9 @@ public class SecurityConfig {
 
         return http.build();
     }
+
+    @Autowired
+    private CustomAuthFailureHandler customAuthFailureHandler;
 
     // --- Chain cho user ---
     @Bean
@@ -92,7 +96,7 @@ public class SecurityConfig {
                         )
                 )
                 .authorizeHttpRequests(authz -> authz
-                        .requestMatchers("/", "/login", "/register", "/css/**", "/js/**", "/images/**", "/api/debug/**", "/api/test/**").permitAll()
+                        .requestMatchers("/", "/login", "/register", "/css/**", "/js/**", "/images/**", "/api/debug/**", "/ws/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
@@ -101,7 +105,7 @@ public class SecurityConfig {
                         .usernameParameter("username")
                         .passwordParameter("password")
                         .defaultSuccessUrl("/news-feed", true)
-                        .failureUrl("/login?error=true")
+                        .failureHandler(customAuthFailureHandler)
                         .permitAll()
                 )
                 .oauth2Login(oauth2 -> oauth2
@@ -110,12 +114,9 @@ public class SecurityConfig {
                         .successHandler((request, response, authentication) -> {
                             response.sendRedirect("/news-feed");
                         })
-                        .failureHandler((request, response, exception) -> {
-                            System.err.println("OAuth2 login failed: " + exception.getMessage());
-                            exception.printStackTrace();
-                            response.sendRedirect("/login?error=oauth2");
-                        })
+                        .failureHandler(customAuthFailureHandler)
                 )
+
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/login?logout=true")
