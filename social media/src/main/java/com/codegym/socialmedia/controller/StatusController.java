@@ -50,41 +50,25 @@ public class StatusController {
         return "news-feed";
     }
 
-//    @GetMapping("/news-feed")
-//    public String getMainFeeds( Model model) {
-//        // Lấy thông tin người dùng hiện tại
-//        User currentUser = userService.getCurrentUser();
-//
-//        // Lấy danh sách status cho feed (public + của bạn bè)
-//        List<StatusDTO> statuses = statusService.getFeeds();
-//
-//        // Thêm dữ liệu vào model
-//        model.addAttribute("currentUser", currentUser);
-//        model.addAttribute("statuses", statuses);
-//
-//        return "news-feed"; // Trả về template news-feed.html
-//    }
 
     @Autowired
     private LikeNotificationService likeNotificationService;
 
-//    @PostMapping("/api/likes/status/{statusId}")
-//    @ResponseBody
-//    public ResponseEntity<Map<String, Object>> toggleLikeStatus(@PathVariable Integer statusId) {
-//        Long userId = userService.getCurrentUser().getId();
-//
-//        boolean isLiked = statusService.toggleLikeStatus(statusId, userId);
-//        int likeCount = statusService.getLikeCount(statusId);
-//
-//        Map<String, Object> response = new HashMap<>();
-//        response.put("statusId", statusId);
-//        response.put("isLiked", isLiked);
-//        response.put("likeCount", likeCount);
-//
-////        likeNotificationService.notifyLikeStatusChanged(statusId, likeCount, isLiked);
-//
-//        return ResponseEntity.ok(response);
-//    }
+    @PostMapping("/api/likes/status/{statusId}")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> toggleLikeStatus(@PathVariable Long statusId) {
+        User user = userService.getCurrentUser();
+        Post post = postService.getPostById(statusId);
+        boolean isLiked = postService.toggleLike(statusId, user);
+        int likeCount = postService.getLikeCount(post);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("statusId", statusId);
+        response.put("isLiked", isLiked);
+        response.put("likeCount", likeCount);
+
+        return ResponseEntity.ok(response);
+    }
 
 //    @GetMapping("/status/{statusId}/info")
 //    public ResponseEntity<Map<String, Object>> getLikeInfo(@PathVariable Integer statusId) {

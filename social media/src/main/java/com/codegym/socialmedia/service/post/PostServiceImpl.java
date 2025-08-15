@@ -11,6 +11,7 @@ import com.codegym.socialmedia.model.social_action.Post;
 import com.codegym.socialmedia.repository.post.PostCommentRepository;
 import com.codegym.socialmedia.repository.post.PostLikeRepository;
 import com.codegym.socialmedia.repository.post.PostRepository;
+import com.codegym.socialmedia.service.notification.LikeNotificationService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -37,6 +38,9 @@ public class PostServiceImpl implements PostService {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private LikeNotificationService likeNotificationService;
 
     // ❌ LOẠI BỎ HOÀN TOÀN các dependencies gây circular dependency
     // @Autowired private FriendshipRepository friendshipRepository;
@@ -124,6 +128,11 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
+    public Post getPostById(long id) {
+        return postRepository.findById(id).orElse(null);
+    }
+
+    @Override
     public Page<PostDisplayDto> getPostsForNewsFeed(User currentUser, Pageable pageable) {
         // TẠM THỜI simplified - chỉ lấy posts của chính user
         Page<Post> posts = postRepository.findByUserAndIsDeletedFalseOrderByCreatedAtDesc(currentUser, pageable);
@@ -171,7 +180,7 @@ public class PostServiceImpl implements PostService {
 
         if (isLiked) {
             postLikeRepository.deleteByPostAndUser(post, user);
-//            likeNotificationService.notifyLikeStatusChanged(statusId, getLikeCount(statusId), false, user.getUsername());
+            likeNotificationService.notifyLikeStatusChanged(postId, getLikeCount(post), false, user.getUsername());
             return false;
         } else {
             LikePost like = new LikePost();
@@ -179,7 +188,7 @@ public class PostServiceImpl implements PostService {
             like.setUser(user);
             like.setId(likePostId);
             postLikeRepository.save(like);
-//            likeNotificationService.notifyLikeStatusChanged(statusId, getLikeCount(statusId), true, user.getUsername());
+            likeNotificationService.notifyLikeStatusChanged(postId, getLikeCount(post), true, user.getUsername());
             return true;
         }
     }

@@ -14,7 +14,7 @@ public class LikeNotificationService {
         this.messagingTemplate = messagingTemplate;
     }
 
-    public void notifyLikeStatusChanged(Integer statusId, Integer likeCount, boolean isLiked, String userName) {
+    public void notifyLikeStatusChanged(Long statusId, Integer likeCount, boolean isLiked, String userName) {
         Map<String, Object> payload = new HashMap<>();
         payload.put("statusId", statusId);
         payload.put("likeCount", likeCount);
