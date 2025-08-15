@@ -20,7 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Controller
-public class StatusController {
+public class LikeController {
 
     @Autowired
    private UserService userService;
