@@ -124,7 +124,9 @@ public class SecurityConfig {
                         .deleteCookies("JSESSIONID")
                         .permitAll()
                 )
+
                 .csrf(csrf -> csrf.disable());
+
 
         return http.build();
     }

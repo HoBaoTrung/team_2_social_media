@@ -11,7 +11,7 @@ import java.io.Serializable;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class LikeStatusId implements Serializable {
+public class LikePostId implements Serializable {
     private Long userId;
-    private Integer statusId;
+    private Long postId;
 }

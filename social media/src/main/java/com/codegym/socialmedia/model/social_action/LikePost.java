@@ -11,10 +11,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "like_status")
-public class LikeStatus {
+public class LikePost {
 
     @EmbeddedId
-    private LikeStatusId id;
+    private LikePostId id;
 
     @ManyToOne
     @MapsId("userId")
@@ -22,7 +22,7 @@ public class LikeStatus {
     private User user;
 
     @ManyToOne
-    @MapsId("statusId")
-    @JoinColumn(name = "status_id")
-    private Status status;
+    @MapsId("postId")
+    @JoinColumn(name = "post_id")
+    private Post post;
 }

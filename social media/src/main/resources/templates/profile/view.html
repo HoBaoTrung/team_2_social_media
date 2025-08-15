@@ -1,9 +1,11 @@
+<!-- Cập nhật file profile/view.html để tích hợp posts -->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <title th:text="${user.firstName + ' ' + user.lastName + ' | Hồ sơ cá nhân'}">Trang cá nhân</title>
     <link rel="stylesheet" th:href="@{/css/view_profile.css}">
     <link rel="stylesheet" th:href="@{/css/friend_card.css}">
+    <link rel="stylesheet" th:href="@{/css/post.css}">
     <th:block th:replace="~{fragments/commonHead :: commonHead}"></th:block>
 </head>
 <body>
@@ -92,37 +94,93 @@
     </div>
 
     <!-- CỘT PHẢI: Nội dung dựa trên filter -->
-    <div class="card-box posts-container" th:if="${filter == 'posts' or filter == 'photos' }" >
-        <!-- Bài viết -->
-        <div th:if="${filter == 'posts'}">
-            <div th:if="${posts.isEmpty()}">
-                <p>Chưa có bài viết nào.</p>
-            </div>
-            <div th:each="post : ${posts}" class="post-card">
-                <div class="post-header">
-                    <img class="post-avatar"
-                         th:src="@{${user.profilePicture != null && !#strings.isEmpty(user.profilePicture) ? user.profilePicture : '/images/default-avatar.jpg'}}"
-                         alt="Avatar">
-                    <div class="post-user-info">
-                        <div class="post-username" th:text="${user.firstName + ' ' + user.lastName}">Tên người dùng
-                        </div>
-                        <div class="post-time" th:text="${#temporals.format(post.createdAt, 'dd/MM/yyyy HH:mm')}">Ngày
-                            đăng
-                        </div>
+    <div class="card-box posts-container" th:if="${filter == 'posts'}" >
+        <!-- Post Creator cho chủ trang -->
+        <div th:if="${isOwner}" class="post-creator mb-4">
+            <h3 class="post-title">
+                <i class="fas fa-pen"></i> Chia sẻ suy nghĩ
+            </h3>
+            <form id="profile-post-form" enctype="multipart/form-data">
+                <div class="post-creator-header">
+                    <img th:src="${user.profilePicture ?: '/images/default-avatar.jpg'}"
+                         alt="Avatar" class="creator-avatar">
+
+                    <div class="creator-info">
+                        <span th:text="${user.firstName + ' ' + user.lastName}">Tên người dùng</span>
+                        <select name="privacyLevel" class="privacy-select">
+                            <option value="PUBLIC">🌍 Công khai</option>
+                            <option value="FRIENDS">👥 Bạn bè</option>
+                            <option value="PRIVATE">🔒 Chỉ mình tôi</option>
+                        </select>
                     </div>
                 </div>
-                <div class="post-content" th:text="${post.content}">Nội dung bài viết...</div>
-            </div>
+
+                <textarea name="content" class="form-control post-content-input" rows="3"
+                          placeholder="Bạn đang nghĩ gì?" required></textarea>
+
+                <!-- Image preview area -->
+                <div id="profile-image-preview-container" class="image-preview-container" style="display: none;">
+                    <div id="profile-image-preview-list" class="image-preview-list"></div>
+                </div>
+
+                <div class="post-options">
+                    <div class="post-actions-left">
+                        <label for="profile-image-input" class="action-btn">
+                            <i class="fas fa-image"></i> Ảnh
+                        </label>
+                        <input type="file" id="profile-image-input" name="images" accept="image/*" multiple style="display: none;">
+                    </div>
+                    <button type="submit" class="btn btn-primary post-btn" id="profile-post-submit-btn" disabled>
+                        <i class="fas fa-paper-plane"></i> Đăng
+                    </button>
+                </div>
+            </form>
         </div>
 
-        <!-- Ảnh -->
-        <div th:if="${filter == 'photos'}">
-            Hình ảnh
+        <!-- Posts Feed -->
+        <div id="profile-posts-container" th:data-username="${user.username}">
+            <!-- Posts will be loaded here dynamically -->
+        </div>
+
+        <!-- Loading indicator -->
+        <div id="profile-loading-indicator" class="text-center py-3" style="display: none;">
+            <i class="fas fa-spinner fa-spin"></i> Đang tải...
+        </div>
+
+        <!-- No posts message -->
+        <div id="profile-no-posts" class="text-center py-5 text-muted" style="display: none;">
+            <div class="mb-3">
+                <i class="fas fa-edit fa-3x"></i>
+            </div>
+            <h5>Chưa có bài viết nào</h5>
+            <p th:if="${isOwner}">Hãy chia sẻ suy nghĩ đầu tiên của bạn!</p>
+            <p th:unless="${isOwner}" th:text="${user.firstName + ' chưa đăng bài viết nào.'}"></p>
+        </div>
+    </div>
+
+    <!-- Photos tab -->
+    <div class="card-box posts-container" th:if="${filter == 'photos'}" >
+        <h2>Ảnh</h2>
+        <div id="profile-photos-container" th:data-username="${user.username}">
+            <!-- Photos will be loaded here -->
+        </div>
+
+        <div id="photos-loading" class="text-center py-3" style="display: none;">
+            <i class="fas fa-spinner fa-spin"></i> Đang tải...
+        </div>
+
+        <div id="no-photos" class="text-center py-5 text-muted" style="display: none;">
+            <div class="mb-3">
+                <i class="fas fa-camera fa-3x"></i>
+            </div>
+            <h5>Chưa có ảnh nào</h5>
+            <p th:if="${isOwner}">Hãy thêm ảnh vào bài viết để hiển thị tại đây!</p>
+            <p th:unless="${isOwner}" th:text="${user.firstName + ' chưa có ảnh nào.'}"></p>
         </div>
     </div>
 
     <!-- Bạn bè -->
-    <div  class="card-box profile-content"  th:if="${filter == 'all' or filter == 'mutual' }">
+    <div class="card-box profile-content" th:if="${filter == 'all' or filter == 'mutual' }">
         <input type="hidden" id="targetUserId" th:value="${targetUserId}"/>
         <input type="hidden" id="filterValue" th:value="${filter}"/>
         <div class="row" id="friends-list">
@@ -138,7 +196,141 @@
     </div>
 </div>
 
+<!-- Post Search Modal (for posts tab) -->
+<div class="modal fade" id="searchPostsModal" tabindex="-1" th:if="${filter == 'posts' and isOwner}">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-search"></i> Tìm kiếm bài viết
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <input type="text" id="post-search-input" class="form-control"
+                           placeholder="Nhập từ khóa tìm kiếm...">
+                </div>
+                <div id="search-results-container">
+                    <!-- Search results will appear here -->
+                </div>
+                <div id="search-loading" class="text-center py-3" style="display: none;">
+                    <i class="fas fa-spinner fa-spin"></i> Đang tìm kiếm...
+                </div>
+                <div id="no-search-results" class="text-center py-3 text-muted" style="display: none;">
+                    <i class="fas fa-search"></i> Không tìm thấy bài viết nào
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Post Modal (reuse from news-feed) -->
+<div class="modal fade" id="editPostModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Chỉnh sửa bài viết</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="edit-post-form">
+                <div class="modal-body">
+                    <input type="hidden" id="edit-post-id">
+
+                    <div class="mb-3">
+                        <label>Quyền riêng tư:</label>
+                        <select id="edit-privacy-level" class="form-select">
+                            <option value="PUBLIC">🌍 Công khai</option>
+                            <option value="FRIENDS">👥 Bạn bè</option>
+                            <option value="PRIVATE">🔒 Chỉ mình tôi</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <textarea id="edit-content" class="form-control" rows="4" required></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label>Ảnh hiện tại:</label>
+                        <div id="edit-existing-images" class="existing-images-container"></div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="edit-new-images" class="form-label">Thêm ảnh mới:</label>
+                        <input type="file" id="edit-new-images" class="form-control" accept="image/*" multiple>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add search button for posts tab -->
+<div th:if="${filter == 'posts' and isOwner}" class="floating-search-btn">
+    <button class="btn btn-primary rounded-circle" data-bs-toggle="modal" data-bs-target="#searchPostsModal">
+        <i class="fas fa-search"></i>
+    </button>
+</div>
+
+<script th:src="@{/js/posts.js}"></script>
+<script th:src="@{/js/profile-posts.js}"></script>
 <script th:src="@{/js/load-friend.js}"></script>
 <script th:src="@{/js/friend-button.js}"></script>
+
+<style>
+    .floating-search-btn {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 1000;
+    }
+
+    .floating-search-btn button {
+        width: 56px;
+        height: 56px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    #profile-photos-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 12px;
+        margin-top: 20px;
+    }
+
+    .photo-item {
+        position: relative;
+        aspect-ratio: 1;
+        border-radius: 8px;
+        overflow: hidden;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+
+    .photo-item:hover {
+        transform: scale(1.02);
+    }
+
+    .photo-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    @media (max-width: 768px) {
+        .floating-search-btn {
+            bottom: 80px; /* Account for mobile navigation */
+        }
+
+        #profile-photos-container {
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        }
+    }
+</style>
+
 </body>
 </html>

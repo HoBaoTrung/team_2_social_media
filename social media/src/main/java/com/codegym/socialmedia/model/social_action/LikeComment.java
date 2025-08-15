@@ -24,5 +24,5 @@ public class LikeComment {
     @ManyToOne
     @MapsId("commentId")
     @JoinColumn(name = "comment_id")
-    private Comment comment;
+    private PostComment comment;
 }
