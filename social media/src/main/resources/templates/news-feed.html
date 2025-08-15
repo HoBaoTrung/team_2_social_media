@@ -6,6 +6,7 @@
     <title>Facebook</title>
     <th:block th:replace="~{fragments/commonHead :: commonHead}"></th:block>
     <link rel="stylesheet" th:href="@{/css/news-feed.css}">
+    <link rel="stylesheet" th:href="@{/css/chat.css}">
     <style>
         .like-btn.liked {
             color: #3b7cfd;
@@ -45,8 +46,9 @@
             border-radius: 8px;
             display: none; /* Ẩn mặc định */
             flex-direction: column;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
+
         .chat-box-header {
             padding: 10px;
             background: #007bff;
@@ -54,16 +56,19 @@
             border-top-left-radius: 8px;
             border-top-right-radius: 8px;
         }
+
         .chat-box-messages {
             flex: 1;
             padding: 10px;
             overflow-y: auto;
         }
+
         .chat-box-input {
             display: flex;
             padding: 10px;
             border-top: 1px solid #ccc;
         }
+
         .chat-box-input input {
             flex: 1;
             padding: 5px;
@@ -147,7 +152,8 @@
     <div class="sidebar">
         <h5><i class="fas fa-users"></i> Người liên hệ</h5>
         <div class="friend-item" th:each="friend : ${friends}"
-             th:attr="data-friend-id=${friend.id},data-friend-name=${friend.firstName + ' ' + friend.lastName}">
+             th:attr="data-id=${friend.id},data-name=${friend.firstName + ' ' + friend.lastName},data-type='friend'
+                ,data-avatar=${friend.profilePicture}">
             <img th:if="${friend.profilePicture != null and !#strings.isEmpty(friend.profilePicture)}"
                  th:src="${friend.profilePicture}" alt="Avatar"
                  class="rounded-circle nav-icon-wrapper me-3"/>
@@ -156,54 +162,20 @@
                  th:src="@{/images/default-avatar.jpg}" alt="Avatar"
                  class="rounded-circle nav-icon-wrapper me-3"/>
 
-
-<!--            <img th:src="${friend.profilePicture}" alt="Avatar">-->
             <span th:text="${friend.firstName + ' ' + friend.lastName}"></span>
         </div>
 
         <hr class="divider">
 
         <h5><i class="fas fa-fire"></i> Nhóm</h5>
-        <div>
-            <p>#ChaoMung</p>
-            <p>#SocialMedia</p>
-            <p>#KetNoi</p>
+        <div class="group-item">
         </div>
     </div>
 </div>
 
-<div id="chatBox" class="chat-box">
-    <div class="chat-box-header" id="chatHeader">Chat</div>
-    <div class="chat-box-messages" id="chatMessages">
-        <!-- Tin nhắn sẽ load ở đây -->
-    </div>
-    <div class="chat-box-input">
-        <input type="text" id="chatInput" placeholder="Nhập tin nhắn...">
-        <button id="sendBtn">Gửi</button>
-    </div>
-</div>
-
+<div class="chat-container" id="chatContainer"></div>
+<script th:src="@{/js/chat.js}"></script>
 <script th:inline="javascript">
-
-    document.querySelectorAll('.friend-item').forEach(item => {
-        item.addEventListener('click', function() {
-            const friendId = this.getAttribute('data-friend-id');
-            const friendName = this.getAttribute('data-friend-name');
-
-            // Cập nhật tiêu đề khung chat
-            document.getElementById('chatHeader').textContent = friendName;
-
-            // Hiện khung chat
-            document.getElementById('chatBox').style.display = 'flex';
-
-            // Ở đây bạn có thể gọi API để load lịch sử chat theo friendId
-            console.log("Open chat with:", friendId);
-        });
-    });
-
-
-
-
 
     const currentUser = [[${#authentication.principal.username}]];
 
