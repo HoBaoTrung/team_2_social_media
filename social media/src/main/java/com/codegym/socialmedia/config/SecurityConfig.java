@@ -127,7 +127,13 @@ public class SecurityConfig {
                         .deleteCookies("JSESSIONID")
                         .permitAll()
                 )
+                .authorizeHttpRequests(authz -> authz
+                        .requestMatchers("/", "/login", "/register", "/css/**", "/js/**", "/images/**",
+                                "/api/debug/**", "/api/test/**", "/posts/api/**").permitAll()
+                        .anyRequest().authenticated()
+                )
                 .csrf(csrf -> csrf.disable());
+
 
         return http.build();
     }
