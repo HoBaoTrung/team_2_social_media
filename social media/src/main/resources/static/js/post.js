@@ -182,19 +182,20 @@ class PostManager {
     }
 
     async loadPosts() {
-        if (this.isLoading || !this.hasMorePosts) return;
+        if (this.isLoading || !this.hasMorePosts || this.hasError) return;
 
         this.isLoading = true;
         this.showLoading(true);
 
         try {
-            const response = await fetch(`/posts/api/feed?page=${this.currentPage}&size=10`);
-
-            if (!response.ok) {
-                throw new Error('Failed to load posts');
-            }
-
-            const data = await response.json();
+            const data = await $.ajax({
+                url: `/posts/api/feed?page=${this.currentPage}&size=10`,
+                method: "GET",
+                dataType: "json",
+                xhrFields: {
+                    withCredentials: true
+                }
+            });
 
             if (data.content && data.content.length > 0) {
                 data.content.forEach(post => {
@@ -209,11 +210,24 @@ class PostManager {
             }
         } catch (error) {
             console.error('Error loading posts:', error);
-            this.showNotification('Không thể tải bài viết', 'error');
+
+            // Hiển thị thông báo lỗi chi tiết hơn
+            const errorMessage = error.responseJSON?.message || error.statusText || 'Không thể tải bài viết';
+            this.showNotification(errorMessage, 'error');
+
+            this.hasError = true; // Ngăn không cho load tiếp khi có lỗi
         } finally {
             this.isLoading = false;
             this.showLoading(false);
         }
+    }
+
+    setupInfiniteScroll() {
+        window.addEventListener('scroll', () => {
+            if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 100) {
+                this.loadPosts();
+            }
+        });
     }
 
     prependPost(post) {
@@ -366,13 +380,6 @@ class PostManager {
         return html;
     }
 
-    setupInfiniteScroll() {
-        window.addEventListener('scroll', () => {
-            if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 1000) {
-                this.loadPosts();
-            }
-        });
-    }
 
     async toggleLike(postId) {
         try {

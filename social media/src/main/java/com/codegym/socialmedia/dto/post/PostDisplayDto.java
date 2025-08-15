@@ -2,6 +2,7 @@
 package com.codegym.socialmedia.dto.post;
 
 import com.codegym.socialmedia.model.social_action.Post;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -18,7 +19,9 @@ public class PostDisplayDto {
     private String content;
     private List<String> imageUrls;
     private Post.PrivacyLevel privacyLevel;
+    @JsonFormat(pattern = "dd/MM/yyyy HH:mm")
     private LocalDateTime createdAt;
+    @JsonFormat(pattern = "dd/MM/yyyy HH:mm")
     private LocalDateTime updatedAt;
 
     // User info
