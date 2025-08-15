@@ -1,5 +1,5 @@
 // PostCommentRepository.java
-package com.codegym.socialmedia.repository;
+package com.codegym.socialmedia.repository.post;
 
 import com.codegym.socialmedia.model.account.User;
 import com.codegym.socialmedia.model.social_action.Post;
@@ -31,7 +31,7 @@ public interface PostCommentRepository extends JpaRepository<PostComment, Long> 
         WHERE pc.post = :post 
         AND pc.isDeleted = false
     """)
-    long countByPost(@Param("post") Post post);
+    int countByPost(@Param("post") Post post);
 
     // Tìm comment theo ID và user (để kiểm tra quyền sở hữu)
     Optional<PostComment> findByIdAndUser(Long id, User user);

@@ -47,8 +47,6 @@ public class PostDisplayDto {
         this.userFullName = post.getUser().getFirstName() + " " + post.getUser().getLastName();
         this.userAvatarUrl = post.getUser().getProfilePicture();
 
-        this.likesCount = post.getLikesCount();
-        this.commentsCount = post.getCommentsCount();
         this.isLikedByCurrentUser = isLikedByCurrentUser;
         this.canEdit = canEdit;
         this.canDelete = canDelete;

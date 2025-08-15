@@ -45,7 +45,7 @@ public class Post {
 
     // Relationships
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<PostLike> likes;
+    private List<LikePost> likes;
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PostComment> comments;
@@ -67,11 +67,12 @@ public class Post {
     }
 
     // Helper methods
-    public int getLikesCount() {
-        return likes != null ? likes.size() : 0;
-    }
+//    public int getLikesCount() {
+//        return likes != null ? likes.size() : 0;
+//    }
+//
+//    public int getCommentsCount() {
+//        return comments != null ? comments.size() : 0;
+//    }
 
-    public int getCommentsCount() {
-        return comments != null ? comments.size() : 0;
-    }
 }

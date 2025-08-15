@@ -28,7 +28,8 @@ public interface PostService {
     // Like functionality
     boolean toggleLike(Long postId, User user);
     List<User> getUsersWhoLiked(Long postId);
-
+    int getLikeCount(Post id);
+    int countCommentsByPost(Post post);
     // Privacy check
     boolean canUserViewPost(Post post, User viewer);
 

@@ -3,7 +3,7 @@ package com.codegym.socialmedia.service.post;
 import com.codegym.socialmedia.model.account.User;
 import com.codegym.socialmedia.model.social_action.Post;
 import com.codegym.socialmedia.model.social_action.PostComment;
-import com.codegym.socialmedia.repository.PostCommentRepository;
+import com.codegym.socialmedia.repository.post.PostCommentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -40,10 +40,6 @@ public class PostCommentServiceImpl implements PostCommentService {
         return commentRepository.findByPostOrderByCreatedAtAsc(post, pageable);
     }
 
-    @Override
-    public long countCommentsByPost(Post post) {
-        return commentRepository.countByPost(post);
-    }
 
 
 }

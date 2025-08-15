@@ -5,14 +5,15 @@ import com.codegym.socialmedia.dto.post.PostCreateDto;
 import com.codegym.socialmedia.dto.post.PostDisplayDto;
 import com.codegym.socialmedia.dto.post.PostUpdateDto;
 import com.codegym.socialmedia.model.account.User;
+import com.codegym.socialmedia.model.social_action.LikePost;
+import com.codegym.socialmedia.model.social_action.LikePostId;
 import com.codegym.socialmedia.model.social_action.Post;
-import com.codegym.socialmedia.model.social_action.PostLike;
-import com.codegym.socialmedia.repository.PostLikeRepository;
-import com.codegym.socialmedia.repository.PostRepository;
+import com.codegym.socialmedia.repository.post.PostCommentRepository;
+import com.codegym.socialmedia.repository.post.PostLikeRepository;
+import com.codegym.socialmedia.repository.post.PostRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -158,25 +159,36 @@ public class PostServiceImpl implements PostService {
 
     @Override
     public boolean toggleLike(Long postId, User user) {
+
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
 
         if (!canUserViewPost(post, user)) {
             throw new RuntimeException("Access denied");
         }
-
-        boolean isLiked = postLikeRepository.existsByPostAndUser(post, user);
+        LikePostId likePostId = getLikeStatusId(postId, user.getId());
+        boolean isLiked = postLikeRepository.findById(likePostId).isPresent();
 
         if (isLiked) {
             postLikeRepository.deleteByPostAndUser(post, user);
+//            likeNotificationService.notifyLikeStatusChanged(statusId, getLikeCount(statusId), false, user.getUsername());
             return false;
         } else {
-            PostLike like = new PostLike();
+            LikePost like = new LikePost();
             like.setPost(post);
             like.setUser(user);
+            like.setId(likePostId);
             postLikeRepository.save(like);
+//            likeNotificationService.notifyLikeStatusChanged(statusId, getLikeCount(statusId), true, user.getUsername());
             return true;
         }
+    }
+
+    private static LikePostId getLikeStatusId(Long postId, Long userId) {
+        LikePostId likeStatusId = new LikePostId();
+        likeStatusId.setPostId(postId);
+        likeStatusId.setUserId(userId);
+        return likeStatusId;
     }
 
     @Override
@@ -208,15 +220,32 @@ public class PostServiceImpl implements PostService {
 
     // Helper methods
     private PostDisplayDto convertToDisplayDto(Post post, User currentUser) {
+        LikePostId likePostId = getLikeStatusId(post.getId(), currentUser.getId());
         boolean isLiked = currentUser != null &&
-                postLikeRepository.existsByPostAndUser(post, currentUser);
+                postLikeRepository.findById(likePostId).isPresent();
 
         boolean canEdit = currentUser != null &&
                 post.getUser().getId().equals(currentUser.getId());
 
         boolean canDelete = canEdit;
 
-        return new PostDisplayDto(post, isLiked, canEdit, canDelete);
+        PostDisplayDto dto = new PostDisplayDto(post, isLiked, canEdit, canDelete);
+        dto.setLikesCount(getLikeCount(post));
+        dto.setCommentsCount(countCommentsByPost(post));
+        return dto;
+    }
+
+    @Override
+    public int getLikeCount(Post post) {
+        return postLikeRepository.countByPost(post);
+    }
+
+    @Autowired
+    private PostCommentRepository postCommentRepository;
+
+    @Override
+    public int countCommentsByPost(Post post) {
+        return postCommentRepository.countByPost(post);
     }
 
     private String convertListToJson(List<String> list) {

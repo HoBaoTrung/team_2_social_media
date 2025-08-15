@@ -10,5 +10,4 @@ public interface PostCommentService {
     PostComment createComment(Post post, User user, String content);
     void deleteComment(Long commentId, User user);
     Page<PostComment> getCommentsByPost(Post post, Pageable pageable);
-    long countCommentsByPost(Post post);
 }

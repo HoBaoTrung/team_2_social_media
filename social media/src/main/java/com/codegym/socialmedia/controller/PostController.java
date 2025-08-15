@@ -41,25 +41,6 @@ public class PostController {
 
     // ================== WEB PAGES ==================
 
-    @GetMapping
-    public String postsPage(Model model,
-                            @RequestParam(value = "page", defaultValue = "0") int page,
-                            @RequestParam(value = "size", defaultValue = "10") int size) {
-        User currentUser = userService.getCurrentUser();
-        if (currentUser == null) {
-            return "redirect:/login";
-        }
-
-        Pageable pageable = PageRequest.of(page, size);
-        Page<PostDisplayDto> posts = postService.getPostsForNewsFeed(currentUser, pageable);
-
-        model.addAttribute("posts", posts);
-        model.addAttribute("postCreateDto", new PostCreateDto());
-        model.addAttribute("privacyLevels", Post.PrivacyLevel.values());
-
-        return "posts/index";
-    }
-
     @GetMapping("/user/{username}")
     public String userPosts(@PathVariable String username,
                             Model model,

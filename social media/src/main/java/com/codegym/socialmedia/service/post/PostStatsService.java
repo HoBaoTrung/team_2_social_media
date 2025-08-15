@@ -1,7 +1,7 @@
 package com.codegym.socialmedia.service.post;
 
 import com.codegym.socialmedia.model.account.User;
-import com.codegym.socialmedia.repository.PostRepository;
+import com.codegym.socialmedia.repository.post.PostRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
