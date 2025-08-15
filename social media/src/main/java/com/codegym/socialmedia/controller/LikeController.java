@@ -70,17 +70,4 @@ public class LikeController {
         return ResponseEntity.ok(response);
     }
 
-//    @GetMapping("/status/{statusId}/info")
-//    public ResponseEntity<Map<String, Object>> getLikeInfo(@PathVariable Integer statusId) {
-//        Long userId = userService.getCurrentUser().getId();
-//
-//        boolean isLiked = statusService.toggleLikeStatus(statusId, userId);
-//        int likeCount = statusService.getLikeCount(statusId);
-//
-//        Map<String, Object> response = new HashMap<>();
-//        response.put("isLiked", isLiked);
-//        response.put("likeCount", likeCount);
-//
-//        return ResponseEntity.ok(response);
-//    }
 }
