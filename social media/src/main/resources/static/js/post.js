@@ -24,6 +24,7 @@ class PostManager {
         this.loadInitialPosts();
         this.setupInfiniteScroll();
     }
+
     handleSubmit() {
         // Disable nút
         this.submitBtn.disabled = true;
@@ -38,6 +39,7 @@ class PostManager {
         });
 
     }
+
     setupEventListeners() {
 
         // Content input validation
@@ -182,8 +184,7 @@ class PostManager {
 
                 this.currentPage++;
                 this.hasMorePosts = !data.last;
-            }
-            else {
+            } else {
                 this.hasMorePosts = false;
                 if (this.currentPage === 0) {
                     const noPostsEl = document.getElementById('profile-no-posts');
@@ -234,7 +235,15 @@ class PostManager {
         postsContainer.insertAdjacentHTML('beforeend', postElement);
     }
 
+    subscribeAllPosts() {
+        document.querySelectorAll(".post-item").forEach(postEl => {
+            const postId = postEl.getAttribute("data-post-id");
+            this.subscribeToPostLikes(postId);
+        });
+    }
+
     createPostElement(post) {
+
         const privacyIcons = {
             'PUBLIC': '🌍',
             'FRIENDS': '👥',
@@ -298,7 +307,7 @@ class PostManager {
               
                 
                 <div class="post-actions">
-                    <button class="post-action ${post.isLikedByCurrentUser ? 'liked' : ''}" 
+                    <button class="post-action ${post.likedByCurrentUser ? 'liked' : ''}" 
                             onclick="postManager.toggleLike(${post.id})">
                         <i class="fas fa-heart"></i>
                         <span>Thích</span>
@@ -368,20 +377,22 @@ class PostManager {
         return html;
     }
 
-
+    // toggle like (gửi API)
     async toggleLike(postId) {
         try {
             const response = await fetch(`/posts/api/like/${postId}`, {
                 method: 'POST',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
+                headers: {'X-Requested-With': 'XMLHttpRequest'}
             });
 
             const result = await response.json();
 
             if (result.success) {
+                // cập nhật nút like ngay lập tức cho user hiện tại
                 this.updateLikeButton(postId, result.isLiked);
+
+                // số lượng like sẽ được cập nhật realtime qua websocket (subscribeToPostLikes)
+                // không cần subscribe ở đây nữa
             } else {
                 this.showNotification(result.message || 'Có lỗi xảy ra', 'error');
             }
@@ -391,20 +402,81 @@ class PostManager {
         }
     }
 
+    // cập nhật class liked của nút like
     updateLikeButton(postId, isLiked) {
-        const postElement = document.querySelector(`[data-post-id="${postId}"]`);
-        const likeButton = postElement.querySelector('.post-action');
-
-        if (isLiked) {
-            likeButton.classList.add('liked');
-        } else {
-            likeButton.classList.remove('liked');
+        const likeBtn = document.querySelector(
+            `.post-item[data-post-id="${postId}"] .post-action`
+        );
+        if (likeBtn) {
+            if (isLiked) {
+                likeBtn.classList.add("liked");
+            } else {
+                likeBtn.classList.remove("liked");
+            }
         }
-
-        // Update like count (you might want to fetch fresh data or increment/decrement)
-        // For now, we'll reload the post stats
-        this.refreshPostStats(postId);
     }
+
+    // subscribe cập nhật realtime likes qua websocket
+    subscribeToPostLikes(postId) {
+        stompClient.subscribe(`/topic/status/${postId}/likes`, (message) => {
+            const data = JSON.parse(message.body);
+
+            // update số lượng like
+            const likesSpan = document.querySelector(
+                `.post-item[data-post-id="${postId}"] .post-likes span`
+            );
+
+            if (likesSpan) {
+                likesSpan.textContent = data.likeCount + " lượt thích";
+            }
+
+            // update nút like (cho user khác nhìn thấy realtime)
+            this.updateLikeButton(data.postId, data.likedByCurrentUser);
+        });
+    }
+
+    // hiện thông báo lỗi/thành công
+    showNotification(msg, type = 'info') {
+        alert(msg); // hoặc custom UI notification
+    }
+
+
+    // async toggleLike(postId) {
+    //     try {
+    //         const response = await fetch(`/posts/api/like/${postId}`, {
+    //             method: 'POST',
+    //             headers: {
+    //                 'X-Requested-With': 'XMLHttpRequest'
+    //             }
+    //         });
+    //
+    //         const result = await response.json();
+    //
+    //         if (result.success) {
+    //             this.updateLikeButton(postId, result.isLiked);
+    //         } else {
+    //             this.showNotification(result.message || 'Có lỗi xảy ra', 'error');
+    //         }
+    //     } catch (error) {
+    //         console.error('Error toggling like:', error);
+    //         this.showNotification('Có lỗi xảy ra', 'error');
+    //     }
+    // }
+
+    // updateLikeButton(postId, isLiked) {
+    //     const postElement = document.querySelector(`[data-post-id="${postId}"]`);
+    //     const likeButton = postElement.querySelector('.post-action');
+    //
+    //     if (isLiked) {
+    //         likeButton.classList.add('liked');
+    //     } else {
+    //         likeButton.classList.remove('liked');
+    //     }
+    //
+    //     // Update like count (you might want to fetch fresh data or increment/decrement)
+    //     // For now, we'll reload the post stats
+    //     // this.refreshPostStats(postId);
+    // }
 
     async refreshPostStats(postId) {
         try {
@@ -753,7 +825,7 @@ class PostManager {
         this.viewImage(imageUrls[startIndex]);
     }
 
-     formatTimeAgo(dateString) {
+    formatTimeAgo(dateString) {
         // Tách ngày, tháng, năm và giờ, phút
         const [datePart, timePart] = dateString.split(" ");
         const [day, month, year] = datePart.split("/").map(Number);
@@ -835,18 +907,23 @@ class PostManager {
         }
     }
 }
-
+let stompClient = null;
 // Initialize PostManager when DOM is loaded
 document.addEventListener('DOMContentLoaded', function () {
+    // connect WebSocket
+    const socket = new SockJS('/ws'); // endpoint websocket spring boot
+    stompClient = Stomp.over(socket);
+
+    stompClient.connect({}, (frame) => {
+        console.log('Connected: ' + frame);
+
+        // 👉 chỉ subscribe sau khi connect thành công
+        postManager.subscribeAllPosts();
+    });
+
     window.postManager = new PostManager();
+
 });
 
-// Handle page visibility change to refresh feed
-// document.addEventListener('visibilitychange', function() {
-//     if (!document.hidden && window.postManager) {
-//         // Refresh feed when user comes back to page
-//         setTimeout(() => {
-//             window.postManager.loadInitialPosts();
-//         }, 1000);
-//     }
-// });
+
+

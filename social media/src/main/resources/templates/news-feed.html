@@ -7,11 +7,7 @@
     <th:block th:replace="~{fragments/common/commonHead :: commonHead}"></th:block>
     <link rel="stylesheet" th:href="@{/css/news-feed.css}">
     <link rel="stylesheet" th:href="@{/css/post.css}">
-    <style>
-        .like-btn.liked {
-            color: #3b7cfd;
-        }
-        </style>
+
 </head>
 <body>
 <div th:replace="~{fragments/common/header :: header}"></div>
@@ -131,75 +127,5 @@
 <script th:src="@{/js/post.js}"></script>
 <script th:src="@{/js/news-feed.js}"></script>
 
-
-<script  th:inline="javascript">
-    const currentUser = [[${#authentication.principal.username}]];
-
-    // Kết nối WebSocket
-    const socket = new SockJS('/ws');
-    const stompClient = Stomp.over(socket);
-
-    stompClient.connect({}, function(frame) {
-        console.log('Connected: ' + frame);
-
-        // Subscribe vào các topic cần thiết
-        document.querySelectorAll('.post').forEach(post => {
-            const statusId = post.querySelector('.like-btn').getAttribute('data-status-id');
-            stompClient.subscribe('/topic/status/' + statusId + '/likes', function(message) {
-                const data = JSON.parse(message.body);
-                if (data.userName === currentUser) {
-                    // Chính mình click => update cả likeCount và class .liked
-                    updateLikeUI(data.statusId, data.likeCount, data.isLiked);
-                } else {
-                    // Người khác click => chỉ update số lượng like
-                    const btn = document.querySelector(`.like-btn[data-status-id="${data.statusId}"]`);
-                    if (btn) {
-                        btn.querySelector('.like-count').textContent = data.likeCount;
-                    }
-                }
-            });
-        });
-    });
-
-
-    function updateLikeUI(statusId, likeCount, isLiked) {
-        const likeBtn = document.querySelector(`.like-btn[data-status-id="${statusId}"]`);
-        if (likeBtn) {
-            likeBtn.querySelector('.like-count').textContent = likeCount;
-
-            if (isLiked) {
-                likeBtn.classList.add('liked');
-            } else {
-                likeBtn.classList.remove('liked');
-            }
-        }
-    }
-
-    // Xử lý sự kiện like
-    document.querySelectorAll('.like-btn').forEach(btn => {
-        btn.addEventListener('click', async function() {
-            const statusId = this.getAttribute('data-status-id');
-
-            try {
-                const response = await fetch(`/api/likes/status/${statusId}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    // Không toggle ở đây nữa, chỉ cập nhật bằng server response
-                    updateLikeUI(data.statusId, data.likeCount, data.isLiked);
-                }
-            } catch (error) {
-                console.error('Error:', error);
-            }
-        });
-    });
-
-</script>
 </body>
 </html>
