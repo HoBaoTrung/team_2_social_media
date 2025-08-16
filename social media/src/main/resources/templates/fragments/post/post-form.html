@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head></head>
+<body>
+<div th:fragment="create-post-form">
+<div class="post-creator" sec:authorize="isAuthenticated()">
+  <h3 class="post-title">
+    <i class="fas fa-pen"></i> Bạn đang nghĩ gì?
+  </h3>
+  <form method="post" th:action="@{/posts/create}" id="create-post-form"  enctype="multipart/form-data">
+    <div class="post-creator-header">
+      <img th:if="${#authentication.principal.avatarUrl != null and !#strings.isEmpty(#authentication.principal.avatarUrl)}"
+           th:src="${#authentication.principal.avatarUrl}" alt="Avatar"
+           class="creator-avatar">
+      <img th:unless="${#authentication.principal.avatarUrl != null and !#strings.isEmpty(#authentication.principal.avatarUrl)}"
+           th:src="@{/images/default-avatar.jpg}" alt="Avatar"
+           class="creator-avatar">
+
+      <div class="creator-info">
+        <span th:text="${#authentication.principal.fullName}">Tên người dùng</span>
+        <select name="privacyLevel" class="privacy-select">
+          <option value="PUBLIC">🌍 Công khai</option>
+          <option value="FRIENDS">👥 Bạn bè</option>
+          <option value="PRIVATE">🔒 Chỉ mình tôi</option>
+        </select>
+      </div>
+    </div>
+
+    <textarea name="content" class="form-control post-content-input" rows="3"
+              placeholder="Chia sẻ suy nghĩ của bạn..." required></textarea>
+
+    <!-- Image preview area -->
+    <div id="image-preview-container" class="image-preview-container" style="display: none;">
+      <div id="image-preview-list" class="image-preview-list"></div>
+    </div>
+
+    <div class="post-options">
+      <div class="post-actions-left">
+        <label for="image-input" class="action-btn">
+          <i class="fas fa-image"></i> Ảnh
+        </label>
+        <input type="file" id="image-input" name="images" accept="image/*" multiple style="display: none;">
+      </div>
+      <button type="submit" class="btn btn-primary post-btn" id="post-submit-btn" disabled>
+        <i class="fas fa-paper-plane"></i> Đăng
+      </button>
+    </div>
+  </form>
+</div>
+</div>
+
+</body>
+</html>

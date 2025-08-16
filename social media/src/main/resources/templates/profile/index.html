@@ -3,13 +3,13 @@
 >
 <head>
 
-    <th:block th:replace="~{fragments/commonHead :: commonHead}"></th:block>
+    <th:block th:replace="~{fragments/common/commonHead :: commonHead}"></th:block>
     <link rel="stylesheet" th:href="@{/css/profile.css}">
     <link rel="stylesheet" th:href="@{/css/button.css}">
 </head>
 <body onload="showSectionFromServer()">
 
-<div th:replace="~{fragments/header :: header}"></div>
+<div th:replace="~{fragments/common/header :: header}"></div>
 <div class="container">
 
     <div th:if="${error != null}" class="alert alert-danger" th:text="${error}"></div>

@@ -6,12 +6,12 @@
     <link rel="stylesheet" th:href="@{/css/view_profile.css}">
     <link rel="stylesheet" th:href="@{/css/friend_card.css}">
     <link rel="stylesheet" th:href="@{/css/post.css}">
-    <th:block th:replace="~{fragments/commonHead :: commonHead}"></th:block>
+    <th:block th:replace="~{fragments/common/commonHead :: commonHead}"></th:block>
 </head>
 <body>
 
 <!-- HEADER -->
-<div th:replace="~{fragments/header :: header}"></div>
+<div th:replace="~{fragments/common/header :: header}"></div>
 
 <!-- COVER IMAGE + AVATAR -->
 <div class="cover-container">
@@ -25,7 +25,7 @@
              th:src="@{/images/default-avatar.jpg}" alt="Avatar">
         <div class="user-name" th:text="${user.firstName + ' ' + user.lastName}">Tên người dùng</div>
         <div class="button-group" th:if="${!isOwner}">
-            <div th:insert="fragments/friend-button-group :: buttonGroup(${user.username}, ${friendshipStatus}, ${isSender}, ${isReceiver}, ${allowFriendRequests},false)"></div>
+            <div th:insert="fragments/friend/friend-button-group :: buttonGroup(${user.username}, ${friendshipStatus}, ${isSender}, ${isReceiver}, ${allowFriendRequests},false)"></div>
             <button th:if="${canSendMessage}" class="btn btn-primary">
                 <i class="fa-solid fa-message"></i> Nhắn tin
             </button>
@@ -86,7 +86,7 @@
             <div class="row">
                 <div class="col-md-4" th:each="friend, iterStat : ${friends}" th:if="${iterStat.index} < 9">
                     <th:block
-                            th:insert="~{fragments/friendCard :: friendCard(friend=${friend}, nameClass='name-profile')}">
+                            th:insert="~{fragments/friend/friendCard :: friendCard(friend=${friend}, nameClass='name-profile')}">
                     </th:block>
                 </div>
             </div>
@@ -94,49 +94,51 @@
     </div>
 
     <!-- CỘT PHẢI: Nội dung dựa trên filter -->
-    <div class="card-box posts-container" th:if="${filter == 'posts'}" >
+    <div class="card-box posts-container" th:if="${filter == 'posts'}">
         <!-- Post Creator cho chủ trang -->
-        <div th:if="${isOwner}" class="post-creator mb-4">
-            <h3 class="post-title">
-                <i class="fas fa-pen"></i> Chia sẻ suy nghĩ
-            </h3>
-            <form id="profile-post-form" enctype="multipart/form-data">
-                <div class="post-creator-header">
-                    <img th:src="${user.profilePicture ?: '/images/default-avatar.jpg'}"
-                         alt="Avatar" class="creator-avatar">
+        <!--        <div th:if="${isOwner}" class="post-creator mb-4">-->
+        <!--            <h3 class="post-title">-->
+        <!--                <i class="fas fa-pen"></i> Chia sẻ suy nghĩ-->
+        <!--            </h3>-->
+        <!--            <form id="create-post-form" enctype="multipart/form-data">-->
+        <!--                <div class="post-creator-header">-->
+        <!--                    <img th:src="${user.profilePicture ?: '/images/default-avatar.jpg'}"-->
+        <!--                         alt="Avatar" class="creator-avatar">-->
 
-                    <div class="creator-info">
-                        <span th:text="${user.firstName + ' ' + user.lastName}">Tên người dùng</span>
-                        <select name="privacyLevel" class="privacy-select">
-                            <option value="PUBLIC">🌍 Công khai</option>
-                            <option value="FRIENDS">👥 Bạn bè</option>
-                            <option value="PRIVATE">🔒 Chỉ mình tôi</option>
-                        </select>
-                    </div>
-                </div>
+        <!--                    <div class="creator-info">-->
+        <!--                        <span th:text="${user.firstName + ' ' + user.lastName}">Tên người dùng</span>-->
+        <!--                        <select name="privacyLevel" class="privacy-select">-->
+        <!--                            <option value="PUBLIC">🌍 Công khai</option>-->
+        <!--                            <option value="FRIENDS">👥 Bạn bè</option>-->
+        <!--                            <option value="PRIVATE">🔒 Chỉ mình tôi</option>-->
+        <!--                        </select>-->
+        <!--                    </div>-->
+        <!--                </div>-->
 
-                <textarea name="content" class="form-control post-content-input" rows="3"
-                          placeholder="Bạn đang nghĩ gì?" required></textarea>
+        <!--                <textarea name="content" class="form-control post-content-input" rows="3"-->
+        <!--                          placeholder="Bạn đang nghĩ gì?" required></textarea>-->
 
-                <!-- Image preview area -->
-                <div id="profile-image-preview-container" class="image-preview-container" style="display: none;">
-                    <div id="profile-image-preview-list" class="image-preview-list"></div>
-                </div>
+        <!--                &lt;!&ndash; Image preview area &ndash;&gt;-->
+        <!--                <div id="profile-image-preview-container" class="image-preview-container" style="display: none;">-->
+        <!--                    <div id="profile-image-preview-list" class="image-preview-list"></div>-->
+        <!--                </div>-->
 
-                <div class="post-options">
-                    <div class="post-actions-left">
-                        <label for="profile-image-input" class="action-btn">
-                            <i class="fas fa-image"></i> Ảnh
-                        </label>
-                        <input type="file" id="profile-image-input" name="images" accept="image/*" multiple style="display: none;">
-                    </div>
-                    <button type="submit" class="btn btn-primary post-btn" id="profile-post-submit-btn" disabled>
-                        <i class="fas fa-paper-plane"></i> Đăng
-                    </button>
-                </div>
-            </form>
-        </div>
-
+        <!--                <div class="post-options">-->
+        <!--                    <div class="post-actions-left">-->
+        <!--                        <label for="profile-image-input" class="action-btn">-->
+        <!--                            <i class="fas fa-image"></i> Ảnh-->
+        <!--                        </label>-->
+        <!--                        <input type="file" id="profile-image-input" name="images" accept="image/*" multiple style="display: none;">-->
+        <!--                    </div>-->
+        <!--                    <button type="submit" class="btn btn-primary post-btn" id="profile-post-submit-btn" disabled>-->
+        <!--                        <i class="fas fa-paper-plane"></i> Đăng-->
+        <!--                    </button>-->
+        <!--                </div>-->
+        <!--            </form>-->
+        <!--        </div>-->
+        <span th:if="${isOwner}">
+            <div th:replace="fragments/post/post-form :: create-post-form"></div>
+        </span>
         <!-- Posts Feed -->
         <div id="profile-posts-container" th:data-username="${user.username}">
             <!-- Posts will be loaded here dynamically -->
@@ -159,7 +161,7 @@
     </div>
 
     <!-- Photos tab -->
-    <div class="card-box posts-container" th:if="${filter == 'photos'}" >
+    <div class="card-box posts-container" th:if="${filter == 'photos'}">
         <h2>Ảnh</h2>
         <div id="profile-photos-container" th:data-username="${user.username}">
             <!-- Photos will be loaded here -->
@@ -186,7 +188,7 @@
         <div class="row" id="friends-list">
             <div class="col-md-3" th:each="friend : ${friends}">
                 <th:block
-                        th:insert="~{fragments/friendCard :: friendCard(friend=${friend}, nameClass='name-list-friend')}">
+                        th:insert="~{fragments/friend/friendCard :: friendCard(friend=${friend}, nameClass='name-list-friend')}">
                 </th:block>
             </div>
         </div>
@@ -276,7 +278,7 @@
     </button>
 </div>
 
-<script th:src="@{/js/posts.js}"></script>
+<script th:src="@{/js/post.js}"></script>
 <script th:src="@{/js/profile-posts.js}"></script>
 <script th:src="@{/js/load-friend.js}"></script>
 <script th:src="@{/js/friend-button.js}"></script>
@@ -292,7 +294,7 @@
     .floating-search-btn button {
         width: 56px;
         height: 56px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     }
 
     #profile-photos-container {

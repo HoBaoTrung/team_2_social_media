@@ -31,10 +31,10 @@ class ProfilePostManager {
 
     setupEventListeners() {
         // Profile post creation form
-        const profileForm = document.getElementById('profile-post-form');
-        if (profileForm) {
-            profileForm.addEventListener('submit', (e) => this.handleProfilePostCreate(e));
-        }
+        // const profileForm = document.getElementById('profile-post-form');
+        // if (profileForm) {
+        //     profileForm.addEventListener('submit', (e) => this.handleProfilePostCreate(e));
+        // }
 
         // Profile content input validation
         const profileContentInput = document.querySelector('#profile-post-form .post-content-input');

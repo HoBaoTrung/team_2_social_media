@@ -19,10 +19,10 @@ class PostManager {
 
     setupEventListeners() {
         // Post creation form
-        const createForm = document.getElementById('create-post-form');
-        if (createForm) {
-            createForm.addEventListener('submit', (e) => this.handleCreatePost(e));
-        }
+        // const createForm = document.getElementById('create-post-form');
+        // if (createForm) {
+        //     createForm.addEventListener('submit', (e) => this.handleCreatePost(e));
+        // }
 
         // Content input validation
         const contentInput = document.querySelector('.post-content-input');

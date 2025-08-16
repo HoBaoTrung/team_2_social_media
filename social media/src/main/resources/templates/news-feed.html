@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Facebook</title>
-    <th:block th:replace="~{fragments/commonHead :: commonHead}"></th:block>
+    <th:block th:replace="~{fragments/common/commonHead :: commonHead}"></th:block>
     <link rel="stylesheet" th:href="@{/css/news-feed.css}">
     <link rel="stylesheet" th:href="@{/css/post.css}">
     <style>
@@ -14,7 +14,7 @@
         </style>
 </head>
 <body>
-<div th:replace="~{fragments/header :: header}"></div>
+<div th:replace="~{fragments/common/header :: header}"></div>
 
 <div class="main-container">
     <!-- Left Sidebar -->
@@ -45,50 +45,7 @@
     <!-- Main Feed -->
     <div class="feed">
         <!-- Post Creator -->
-        <div class="post-creator" sec:authorize="isAuthenticated()">
-            <h3 class="post-title">
-                <i class="fas fa-pen"></i> Bạn đang nghĩ gì?
-            </h3>
-            <form id="create-post-form" enctype="multipart/form-data">
-                <div class="post-creator-header">
-                    <img th:if="${#authentication.principal.avatarUrl != null and !#strings.isEmpty(#authentication.principal.avatarUrl)}"
-                         th:src="${#authentication.principal.avatarUrl}" alt="Avatar"
-                         class="creator-avatar">
-                    <img th:unless="${#authentication.principal.avatarUrl != null and !#strings.isEmpty(#authentication.principal.avatarUrl)}"
-                         th:src="@{/images/default-avatar.jpg}" alt="Avatar"
-                         class="creator-avatar">
-
-                    <div class="creator-info">
-                        <span th:text="${#authentication.principal.fullName}">Tên người dùng</span>
-                        <select name="privacyLevel" class="privacy-select">
-                            <option value="PUBLIC">🌍 Công khai</option>
-                            <option value="FRIENDS">👥 Bạn bè</option>
-                            <option value="PRIVATE">🔒 Chỉ mình tôi</option>
-                        </select>
-                    </div>
-                </div>
-
-                <textarea name="content" class="form-control post-content-input" rows="3"
-                          placeholder="Chia sẻ suy nghĩ của bạn..." required></textarea>
-
-                <!-- Image preview area -->
-                <div id="image-preview-container" class="image-preview-container" style="display: none;">
-                    <div id="image-preview-list" class="image-preview-list"></div>
-                </div>
-
-                <div class="post-options">
-                    <div class="post-actions-left">
-                        <label for="image-input" class="action-btn">
-                            <i class="fas fa-image"></i> Ảnh
-                        </label>
-                        <input type="file" id="image-input" name="images" accept="image/*" multiple style="display: none;">
-                    </div>
-                    <button type="submit" class="btn btn-primary post-btn" id="post-submit-btn" disabled>
-                        <i class="fas fa-paper-plane"></i> Đăng
-                    </button>
-                </div>
-            </form>
-        </div>
+        <div th:replace="fragments/post/post-form :: create-post-form"></div>
 
         <!-- Posts Feed -->
         <div id="posts-container">
