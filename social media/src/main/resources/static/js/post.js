@@ -9,13 +9,17 @@ class PostManager {
         this.imagesToDelete = [];
         this.form = document.getElementById("create-post-form");
         this.submitBtn = document.getElementById("post-submit-btn");
+        const container = document.getElementById('posts-container');
+        this.username = container.getAttribute('data-username');
         this.init();
     }
 
     init() {
-        this.form.addEventListener("submit", (e) => {
-            this.handleSubmit();
-        });
+        if (this.form != null && this.form != undefined) {
+            this.form.addEventListener("submit", (e) => {
+                this.handleSubmit();
+            });
+        }
         this.setupEventListeners();
         this.loadInitialPosts();
         this.setupInfiniteScroll();
@@ -155,9 +159,15 @@ class PostManager {
         this.isLoading = true;
         this.showLoading(true);
 
+        let controllerURL = `/posts/api/feed?page=${this.currentPage}&size=10`;
+
+        if (this.username != null && this.username != undefined && this.username.trim() != '') {
+            controllerURL = `/posts/api/user/${this.username}?page=${this.currentPage}&size=10`;
+        }
+
         try {
             const data = await $.ajax({
-                url: `/posts/api/feed?page=${this.currentPage}&size=10`,
+                url: controllerURL,
                 method: "GET",
                 dataType: "json",
                 xhrFields: {
@@ -172,8 +182,15 @@ class PostManager {
 
                 this.currentPage++;
                 this.hasMorePosts = !data.last;
-            } else {
+            }
+            else {
                 this.hasMorePosts = false;
+                if (this.currentPage === 0) {
+                    const noPostsEl = document.getElementById('profile-no-posts');
+                    if (noPostsEl) {
+                        noPostsEl.style.display = 'block';
+                    }
+                }
                 this.showNoMorePosts();
             }
         } catch (error) {
@@ -187,6 +204,13 @@ class PostManager {
         } finally {
             this.isLoading = false;
             this.showLoading(false);
+        }
+    }
+
+    showNoMorePosts() {
+        const noMorePosts = document.getElementById('no-more-posts');
+        if (noMorePosts) {
+            noMorePosts.style.display = 'block';
         }
     }
 
@@ -216,7 +240,7 @@ class PostManager {
             'FRIENDS': '👥',
             'PRIVATE': '🔒'
         };
-        console.log(post)
+
         const imagesHtml = this.createImagesHtml(post.imageUrls);
         const timeAgo = this.formatTimeAgo(post.createdAt);
 
@@ -772,13 +796,6 @@ class PostManager {
         const loadingIndicator = document.getElementById('loading-indicator');
         if (loadingIndicator) {
             loadingIndicator.style.display = show ? 'block' : 'none';
-        }
-    }
-
-    showNoMorePosts() {
-        const noMorePosts = document.getElementById('no-more-posts');
-        if (noMorePosts) {
-            noMorePosts.style.display = 'block';
         }
     }
 

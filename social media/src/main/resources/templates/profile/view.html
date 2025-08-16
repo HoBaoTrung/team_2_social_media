@@ -95,54 +95,16 @@
 
     <!-- CỘT PHẢI: Nội dung dựa trên filter -->
     <div class="card-box posts-container" th:if="${filter == 'posts'}">
-        <!-- Post Creator cho chủ trang -->
-        <!--        <div th:if="${isOwner}" class="post-creator mb-4">-->
-        <!--            <h3 class="post-title">-->
-        <!--                <i class="fas fa-pen"></i> Chia sẻ suy nghĩ-->
-        <!--            </h3>-->
-        <!--            <form id="create-post-form" enctype="multipart/form-data">-->
-        <!--                <div class="post-creator-header">-->
-        <!--                    <img th:src="${user.profilePicture ?: '/images/default-avatar.jpg'}"-->
-        <!--                         alt="Avatar" class="creator-avatar">-->
-
-        <!--                    <div class="creator-info">-->
-        <!--                        <span th:text="${user.firstName + ' ' + user.lastName}">Tên người dùng</span>-->
-        <!--                        <select name="privacyLevel" class="privacy-select">-->
-        <!--                            <option value="PUBLIC">🌍 Công khai</option>-->
-        <!--                            <option value="FRIENDS">👥 Bạn bè</option>-->
-        <!--                            <option value="PRIVATE">🔒 Chỉ mình tôi</option>-->
-        <!--                        </select>-->
-        <!--                    </div>-->
-        <!--                </div>-->
-
-        <!--                <textarea name="content" class="form-control post-content-input" rows="3"-->
-        <!--                          placeholder="Bạn đang nghĩ gì?" required></textarea>-->
-
-        <!--                &lt;!&ndash; Image preview area &ndash;&gt;-->
-        <!--                <div id="profile-image-preview-container" class="image-preview-container" style="display: none;">-->
-        <!--                    <div id="profile-image-preview-list" class="image-preview-list"></div>-->
-        <!--                </div>-->
-
-        <!--                <div class="post-options">-->
-        <!--                    <div class="post-actions-left">-->
-        <!--                        <label for="profile-image-input" class="action-btn">-->
-        <!--                            <i class="fas fa-image"></i> Ảnh-->
-        <!--                        </label>-->
-        <!--                        <input type="file" id="profile-image-input" name="images" accept="image/*" multiple style="display: none;">-->
-        <!--                    </div>-->
-        <!--                    <button type="submit" class="btn btn-primary post-btn" id="profile-post-submit-btn" disabled>-->
-        <!--                        <i class="fas fa-paper-plane"></i> Đăng-->
-        <!--                    </button>-->
-        <!--                </div>-->
-        <!--            </form>-->
-        <!--        </div>-->
         <span th:if="${isOwner}">
             <div th:replace="fragments/post/post-form :: create-post-form"></div>
         </span>
         <!-- Posts Feed -->
-        <div id="profile-posts-container" th:data-username="${user.username}">
+        <div id="posts-container" th:data-username="${user.username}">
             <!-- Posts will be loaded here dynamically -->
         </div>
+<!--        <div id="profile-posts-container" th:data-username="${user.username}">-->
+<!--            &lt;!&ndash; Posts will be loaded here dynamically &ndash;&gt;-->
+<!--        </div>-->
 
         <!-- Loading indicator -->
         <div id="profile-loading-indicator" class="text-center py-3" style="display: none;">
@@ -279,7 +241,7 @@
 </div>
 
 <script th:src="@{/js/post.js}"></script>
-<script th:src="@{/js/profile-posts.js}"></script>
+<!--<script th:src="@{/js/profile-posts.js}"></script>-->
 <script th:src="@{/js/load-friend.js}"></script>
 <script th:src="@{/js/friend-button.js}"></script>
 
