@@ -46,6 +46,19 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             "ORDER BY p.createdAt DESC")
     Page<Post> findPostsForNewsFeed(@Param("user") User user, Pageable pageable);
 
+    @Query("""
+                SELECT p FROM Post p
+                WHERE p.privacyLevel = 'PUBLIC'
+                   OR (p.privacyLevel = 'FRIENDS' AND 
+                       EXISTS (SELECT f FROM Friendship f 
+                               WHERE f.status = 'ACCEPTED'
+                               AND (f.requester.id = :currentUser OR f.addressee.id = :currentUser)
+                                 ))
+                   OR (p.user.id = :currentUser) ORDER BY p.createdAt DESC
+            """)
+    Page<Post> findVisiblePosts(@Param("currentUser") Long currentUser, Pageable pageable);
+
+
     // 8. Find posts by user list (for friends' posts) - THÊM METHOD NÀY
     @Query("SELECT p FROM Post p WHERE p.user IN :users AND p.isDeleted = false " +
             "AND (p.privacyLevel = 'PUBLIC' OR p.privacyLevel = 'FRIENDS') " +

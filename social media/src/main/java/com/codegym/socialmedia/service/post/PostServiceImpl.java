@@ -4,13 +4,17 @@ import com.codegym.socialmedia.component.CloudinaryService;
 import com.codegym.socialmedia.dto.post.PostCreateDto;
 import com.codegym.socialmedia.dto.post.PostDisplayDto;
 import com.codegym.socialmedia.dto.post.PostUpdateDto;
+import com.codegym.socialmedia.model.PrivacyLevel;
 import com.codegym.socialmedia.model.account.User;
+import com.codegym.socialmedia.model.social_action.Friendship;
 import com.codegym.socialmedia.model.social_action.LikePost;
 import com.codegym.socialmedia.model.social_action.LikePostId;
 import com.codegym.socialmedia.model.social_action.Post;
+import com.codegym.socialmedia.repository.FriendshipRepository;
 import com.codegym.socialmedia.repository.post.PostCommentRepository;
 import com.codegym.socialmedia.repository.post.PostLikeRepository;
 import com.codegym.socialmedia.repository.post.PostRepository;
+import com.codegym.socialmedia.service.friend_ship.FriendshipService;
 import com.codegym.socialmedia.service.notification.LikeNotificationService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +26,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.codegym.socialmedia.component.PrivacyUtils.canView;
 
 @Service
 @Transactional
@@ -41,10 +47,6 @@ public class PostServiceImpl implements PostService {
 
     @Autowired
     private LikeNotificationService likeNotificationService;
-
-    // ❌ LOẠI BỎ HOÀN TOÀN các dependencies gây circular dependency
-    // @Autowired private FriendshipRepository friendshipRepository;
-    // @Autowired private UserService userService;
 
     @Override
     public Post createPost(PostCreateDto dto, User user) {
@@ -134,8 +136,9 @@ public class PostServiceImpl implements PostService {
 
     @Override
     public Page<PostDisplayDto> getPostsForNewsFeed(User currentUser, Pageable pageable) {
-        // TẠM THỜI simplified - chỉ lấy posts của chính user
-        Page<Post> posts = postRepository.findByUserAndIsDeletedFalseOrderByCreatedAtDesc(currentUser, pageable);
+
+        Page<Post> posts = postRepository.findVisiblePosts(currentUser.getId(), pageable);
+
         return posts.map(post -> convertToDisplayDto(post, currentUser));
     }
 
@@ -219,7 +222,7 @@ public class PostServiceImpl implements PostService {
             return true; // Owner can view
         }
 
-        return post.getPrivacyLevel() == Post.PrivacyLevel.PUBLIC;
+        return post.getPrivacyLevel() == PrivacyLevel.PUBLIC;
     }
 
     @Override
