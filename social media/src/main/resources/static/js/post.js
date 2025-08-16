@@ -7,22 +7,34 @@ class PostManager {
         this.selectedImages = [];
         this.editingPostId = null;
         this.imagesToDelete = [];
-
+        this.form = document.getElementById("create-post-form");
+        this.submitBtn = document.getElementById("post-submit-btn");
         this.init();
     }
 
     init() {
+        this.form.addEventListener("submit", (e) => {
+            this.handleSubmit();
+        });
         this.setupEventListeners();
         this.loadInitialPosts();
         this.setupInfiniteScroll();
     }
+    handleSubmit() {
+        // Disable nút
+        this.submitBtn.disabled = true;
+        this.submitBtn.innerText = "Đang đăng...";
+        this.form.querySelectorAll("button").forEach(el => {
+            if (el !== this.submitBtn) {
+                el.disabled = true;
+            }
+        });
+        this.form.querySelectorAll("input, textarea").forEach(el => {
+            el.readOnly = true; // thay vì el.disabled = true
+        });
 
+    }
     setupEventListeners() {
-        // Post creation form
-        // const createForm = document.getElementById('create-post-form');
-        // if (createForm) {
-        //     createForm.addEventListener('submit', (e) => this.handleCreatePost(e));
-        // }
 
         // Content input validation
         const contentInput = document.querySelector('.post-content-input');
@@ -51,21 +63,33 @@ class PostManager {
 
     validatePostForm() {
         const content = document.querySelector('.post-content-input').value.trim();
-        const submitBtn = document.getElementById('post-submit-btn');
+        // const submitBtn = document.getElementById('post-submit-btn');
 
         if (content.length > 0 || this.selectedImages.length > 0) {
-            submitBtn.disabled = false;
+            this.submitBtn.disabled = false;
         } else {
-            submitBtn.disabled = true;
+            this.submitBtn.disabled = true;
         }
+
     }
 
     handleImageSelection(event) {
         const files = Array.from(event.target.files);
-        this.selectedImages = files;
-        this.displayImagePreview(files);
+
+        // Gộp file mới vào selectedImages
+        this.selectedImages = this.selectedImages.concat(files);
+
+        // Update lại input file duy nhất bằng DataTransfer
+        const dt = new DataTransfer();
+        this.selectedImages.forEach(file => dt.items.add(file));
+        event.target.files = dt.files;
+
+        // Hiển thị preview
+        this.displayImagePreview(this.selectedImages);
         this.validatePostForm();
+
     }
+
 
     displayImagePreview(files) {
         const container = document.getElementById('image-preview-container');
@@ -106,62 +130,6 @@ class PostManager {
         const dt = new DataTransfer();
         this.selectedImages.forEach(file => dt.items.add(file));
         imageInput.files = dt.files;
-    }
-
-    async handleCreatePost(event) {
-        event.preventDefault();
-
-        if (this.isLoading) return;
-
-        const form = event.target;
-        const formData = new FormData(form);
-
-        // Add selected images
-        this.selectedImages.forEach(image => {
-            formData.append('images', image);
-        });
-
-        const submitBtn = form.querySelector('.post-btn');
-        const originalText = submitBtn.innerHTML;
-
-        try {
-            this.isLoading = true;
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang đăng...';
-
-            const response = await fetch('/posts/api/create', {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            });
-
-            const result = await response.json();
-
-            if (result.success) {
-                // Reset form
-                this.resetCreateForm();
-
-                // Add new post to top of feed
-                this.prependPost(result.post);
-
-                // Show success message
-                this.showNotification('Đăng bài thành công!', 'success');
-
-                // Update stats
-                this.updatePostsCount();
-            } else {
-                this.showNotification(result.message || 'Có lỗi xảy ra', 'error');
-            }
-        } catch (error) {
-            console.error('Error creating post:', error);
-            this.showNotification('Có lỗi xảy ra khi đăng bài', 'error');
-        } finally {
-            this.isLoading = false;
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = originalText;
-        }
     }
 
     resetCreateForm() {
@@ -848,16 +816,16 @@ class PostManager {
 }
 
 // Initialize PostManager when DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     window.postManager = new PostManager();
 });
 
 // Handle page visibility change to refresh feed
-document.addEventListener('visibilitychange', function() {
-    if (!document.hidden && window.postManager) {
-        // Refresh feed when user comes back to page
-        setTimeout(() => {
-            window.postManager.loadInitialPosts();
-        }, 1000);
-    }
-});
+// document.addEventListener('visibilitychange', function() {
+//     if (!document.hidden && window.postManager) {
+//         // Refresh feed when user comes back to page
+//         setTimeout(() => {
+//             window.postManager.loadInitialPosts();
+//         }, 1000);
+//     }
+// });

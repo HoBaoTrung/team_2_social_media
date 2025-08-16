@@ -97,7 +97,7 @@ public class PostController {
 
     @PostMapping("/create")
     public String createPost(@Valid @ModelAttribute PostCreateDto dto,
-                             BindingResult result,
+                             BindingResult result, @RequestParam(value = "redirectUrl", required = false) String redirectUrl,
                              RedirectAttributes redirectAttributes) {
         User currentUser = userService.getCurrentUser();
         if (currentUser == null) {
@@ -106,7 +106,7 @@ public class PostController {
 
         if (result.hasErrors()) {
             redirectAttributes.addFlashAttribute("error", "Vui lòng kiểm tra lại thông tin");
-            return "redirect:/news-feed";
+            return "redirect:" + (redirectUrl != null ? redirectUrl : "/news-feed");
         }
 
         try {
@@ -116,7 +116,7 @@ public class PostController {
             redirectAttributes.addFlashAttribute("error", "Có lỗi xảy ra: " + e.getMessage());
         }
 
-        return "redirect:/news-feed";
+        return "redirect:" + (redirectUrl != null ? redirectUrl : "/news-feed");
     }
 
     @PostMapping("/update/{id}")

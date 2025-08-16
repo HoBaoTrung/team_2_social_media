@@ -16,7 +16,6 @@ import java.util.List;
 @AllArgsConstructor
 public class PostCreateDto {
 
-    @NotBlank(message = "Nội dung không được để trống")
     @Size(max = 5000, message = "Nội dung không được vượt quá 5000 ký tự")
     private String content;
 
