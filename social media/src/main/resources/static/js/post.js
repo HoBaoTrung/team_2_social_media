@@ -216,7 +216,7 @@ class PostManager {
             'FRIENDS': '👥',
             'PRIVATE': '🔒'
         };
-
+        console.log(post)
         const imagesHtml = this.createImagesHtml(post.imageUrls);
         const timeAgo = this.formatTimeAgo(post.createdAt);
 
@@ -259,23 +259,19 @@ class PostManager {
                 
                 ${imagesHtml}
                 
-                ${post.likesCount > 0 || post.commentsCount > 0 ? `
                     <div class="post-stats">
                         <div class="post-likes">
-                            ${post.likesCount > 0 ? `
                                 <div class="post-likes-icon">
                                     <i class="fas fa-heart"></i>
                                 </div>
                                 <span>${post.likesCount} lượt thích</span>
-                            ` : ''}
+                           
                         </div>
                         <div>
-                            ${post.commentsCount > 0 ? `
                                 <span class="post-comments-count">${post.commentsCount} bình luận</span>
-                            ` : ''}
                         </div>
                     </div>
-                ` : ''}
+              
                 
                 <div class="post-actions">
                     <button class="post-action ${post.isLikedByCurrentUser ? 'liked' : ''}" 
@@ -733,8 +729,15 @@ class PostManager {
         this.viewImage(imageUrls[startIndex]);
     }
 
-    formatTimeAgo(dateString) {
-        const date = new Date(dateString);
+     formatTimeAgo(dateString) {
+        // Tách ngày, tháng, năm và giờ, phút
+        const [datePart, timePart] = dateString.split(" ");
+        const [day, month, year] = datePart.split("/").map(Number);
+        const [hour, minute] = timePart.split(":").map(Number);
+
+        // Tạo đối tượng Date (lưu ý month phải -1 vì JS tính từ 0-11)
+        const date = new Date(year, month - 1, day, hour, minute);
+
         const now = new Date();
         const diffInMs = now - date;
         const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
@@ -757,6 +760,7 @@ class PostManager {
             });
         }
     }
+
 
     getCurrentUserAvatar() {
         // Get current user avatar from page context

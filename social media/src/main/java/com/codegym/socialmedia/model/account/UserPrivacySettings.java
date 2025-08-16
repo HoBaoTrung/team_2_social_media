@@ -1,5 +1,6 @@
 package com.codegym.socialmedia.model.account;
 
+import com.codegym.socialmedia.model.PrivacyLevel;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -61,7 +62,4 @@ public class UserPrivacySettings {
     // Tùy chọn kết bạn
     private boolean allowFriendRequests = true;
 
-    public enum PrivacyLevel {
-        PUBLIC, FRIENDS, PRIVATE
-    }
 }

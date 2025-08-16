@@ -3,6 +3,7 @@ package com.codegym.socialmedia.controller;
 import com.codegym.socialmedia.dto.post.PostCreateDto;
 import com.codegym.socialmedia.dto.post.PostDisplayDto;
 import com.codegym.socialmedia.dto.post.PostUpdateDto;
+import com.codegym.socialmedia.model.PrivacyLevel;
 import com.codegym.socialmedia.model.account.User;
 import com.codegym.socialmedia.model.social_action.Post;
 import com.codegym.socialmedia.model.social_action.PostComment;
@@ -68,7 +69,7 @@ public class PostController {
 
         if (currentUser != null && currentUser.getId().equals(targetUser.getId())) {
             model.addAttribute("postCreateDto", new PostCreateDto());
-            model.addAttribute("privacyLevels", Post.PrivacyLevel.values());
+            model.addAttribute("privacyLevels", PrivacyLevel.values());
         }
 
         return "posts/user-posts";

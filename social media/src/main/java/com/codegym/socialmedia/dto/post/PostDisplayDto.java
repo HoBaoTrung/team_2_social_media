@@ -1,6 +1,7 @@
 // PostDisplayDto.java
 package com.codegym.socialmedia.dto.post;
 
+import com.codegym.socialmedia.model.PrivacyLevel;
 import com.codegym.socialmedia.model.social_action.Post;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
@@ -18,7 +19,7 @@ public class PostDisplayDto {
     private Long id;
     private String content;
     private List<String> imageUrls;
-    private Post.PrivacyLevel privacyLevel;
+    private PrivacyLevel privacyLevel;
     @JsonFormat(pattern = "dd/MM/yyyy HH:mm")
     private LocalDateTime createdAt;
     @JsonFormat(pattern = "dd/MM/yyyy HH:mm")

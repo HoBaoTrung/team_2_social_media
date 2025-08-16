@@ -6,6 +6,7 @@ import com.codegym.socialmedia.dto.UserPasswordDto;
 import com.codegym.socialmedia.dto.UserUpdateDto;
 import com.codegym.socialmedia.dto.friend.FriendDto;
 import com.codegym.socialmedia.general_interface.NormalRegister;
+import com.codegym.socialmedia.model.PrivacyLevel;
 import com.codegym.socialmedia.model.account.User;
 import com.codegym.socialmedia.model.account.UserPrivacySettings;
 import com.codegym.socialmedia.model.social_action.Friendship;
@@ -95,9 +96,9 @@ public class UserController {
         // Danh sách bạn cho tab Friends/Mutual
         Page<FriendDto> friends = Page.empty();
         if ("mutual".equalsIgnoreCase(filter)
-                || (!isFriend && !privacy.getShowFriendList().equals(UserPrivacySettings.PrivacyLevel.PUBLIC))) {
+                || (!isFriend && !privacy.getShowFriendList().equals(PrivacyLevel.PUBLIC))) {
             friends = friendshipService.findMutualFriends(viewedUser.getId(), currentUser.getId(), 0, 10);
-        } else if (isOwner || isFriend || !privacy.getShowFriendList().equals(UserPrivacySettings.PrivacyLevel.PRIVATE)) {
+        } else if (isOwner || isFriend || !privacy.getShowFriendList().equals(PrivacyLevel.PRIVATE)) {
             friends = friendshipService.getVisibleFriendList(viewedUser, 0, 10);
         } else {
             friends = Page.empty(); // Tránh NullPointer
@@ -223,7 +224,7 @@ public class UserController {
         if (!model.containsAttribute("privacySettings")) {
             model.addAttribute("privacySettings", settings);
         }
-        model.addAttribute("privacyLevels", UserPrivacySettings.PrivacyLevel.values());
+        model.addAttribute("privacyLevels", PrivacyLevel.values());
         model.addAttribute("title", "User Profile");
         return "profile/index";
     }

@@ -2,6 +2,7 @@ package com.codegym.socialmedia.controller;
 
 import com.codegym.socialmedia.dto.post.PostCreateDto;
 import com.codegym.socialmedia.dto.post.PostDisplayDto;
+import com.codegym.socialmedia.model.PrivacyLevel;
 import com.codegym.socialmedia.model.account.User;
 import com.codegym.socialmedia.model.social_action.Post;
 import com.codegym.socialmedia.service.notification.LikeNotificationService;
@@ -45,7 +46,7 @@ public class LikeController {
 
         model.addAttribute("posts", posts);
         model.addAttribute("postCreateDto", new PostCreateDto());
-        model.addAttribute("privacyLevels", Post.PrivacyLevel.values());
+        model.addAttribute("privacyLevels", PrivacyLevel.values());
 
         return "news-feed";
     }

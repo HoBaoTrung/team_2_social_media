@@ -1,5 +1,6 @@
 package com.codegym.socialmedia.model.social_action;
 
+import com.codegym.socialmedia.model.PrivacyLevel;
 import com.codegym.socialmedia.model.account.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -37,9 +38,11 @@ public class Post {
     @Column(nullable = false)
     private boolean isDeleted = false;
 
+    @Column(name = "created_at", columnDefinition = "DATETIME")
     @CreationTimestamp
     private LocalDateTime createdAt;
 
+    @Column(name = "updated_at", columnDefinition = "DATETIME")
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
@@ -50,29 +53,8 @@ public class Post {
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PostComment> comments;
 
-    public enum PrivacyLevel {
-        PUBLIC("Công khai"),
-        FRIENDS("Bạn bè"),
-        PRIVATE("Chỉ mình tôi");
-
-        private final String displayName;
-
-        PrivacyLevel(String displayName) {
-            this.displayName = displayName;
-        }
-
-        public String getDisplayName() {
-            return displayName;
-        }
+    @Override
+    public String toString() {
+        return "[id: " + id + ", content: " + content + "]";
     }
-
-    // Helper methods
-//    public int getLikesCount() {
-//        return likes != null ? likes.size() : 0;
-//    }
-//
-//    public int getCommentsCount() {
-//        return comments != null ? comments.size() : 0;
-//    }
-
 }

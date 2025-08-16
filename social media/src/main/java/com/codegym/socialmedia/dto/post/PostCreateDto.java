@@ -1,6 +1,7 @@
 // PostCreateDto.java
 package com.codegym.socialmedia.dto.post;
 
+import com.codegym.socialmedia.model.PrivacyLevel;
 import com.codegym.socialmedia.model.social_action.Post;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -19,7 +20,7 @@ public class PostCreateDto {
     @Size(max = 5000, message = "Nội dung không được vượt quá 5000 ký tự")
     private String content;
 
-    private Post.PrivacyLevel privacyLevel = Post.PrivacyLevel.PUBLIC;
+    private PrivacyLevel privacyLevel = PrivacyLevel.PUBLIC;
 
     private List<MultipartFile> images;
 }
