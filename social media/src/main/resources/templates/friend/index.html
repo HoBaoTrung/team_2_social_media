@@ -30,43 +30,35 @@
 <div class="container my-5">
     <div class="row">
         <!-- Sidebar -->
-        <div class="col-md-3 position-fixed">
+        <div class="col-md-3 sticky-top">
             <div class="sidebar">
                 <h2 class="mb-4 bg-dark text-white text-center">Lựa chọn</h2>
                 <div class="card shadow-sm">
                     <div class="list-group list-group-flush">
                         <a th:class="'list-group-item list-group-item-action ' + (${filter == 'non-friends'} ? 'active' : '')"
-                           th:href="@{/friends(filter='non-friends')}">
-                            Trang chủ
-                        </a>
+                           th:href="@{/friends(filter='non-friends')}">Trang chủ</a>
                         <a th:class="'list-group-item list-group-item-action ' + (${filter == 'all'} ? 'active' : '')"
-                           th:href="@{/friends(filter='all')}">
-                            Tất cả bạn bè
-                        </a>
+                           th:href="@{/friends(filter='all')}">Tất cả bạn bè</a>
                         <a th:class="'list-group-item list-group-item-action ' + (${filter == 'sent-requests'} ? 'active' : '')"
-                           th:href="@{/friends(filter='sent-requests')}">
-                            Lời mời đã gửi
-                        </a>
+                           th:href="@{/friends(filter='sent-requests')}">Lời mời đã gửi</a>
                         <a th:class="'list-group-item list-group-item-action ' + (${filter == 'received-requests'} ? 'active' : '')"
-                           th:href="@{/friends(filter='received-requests')}">
-                            Lời mời nhận được
-                        </a>
+                           th:href="@{/friends(filter='received-requests')}">Lời mời nhận được</a>
                     </div>
                 </div>
             </div>
-
         </div>
 
-        <input type="hidden" id="filterValue" th:value="${filter}" />
-        <input type="hidden" id="targetUserId" th:value="${targetUserId}" />
         <!-- Danh sách bạn bè -->
-        <div class="col-md-9  " style="margin-left: 30%;">
+        <div class="col-md-9">
+            <input type="hidden" id="filterValue" th:value="${filter}" />
+            <input type="hidden" id="targetUserId" th:value="${targetUserId}" />
+
             <h2 class="mb-4 bg-dark text-white text-center" id="list-title" th:text="${listTitle}">Danh sách bạn bè</h2>
             <div class="row" id="friends-list">
                 <div th:each="friend : ${friends}" class="col-md-3">
                     <div class="friend-action">
                         <th:block th:replace="~{fragments/friend/friendCard :: friendCard(friend=${friend}, nameClass='name-list-friend')}"></th:block>
-                        <div th:insert="fragments/friend/friend-button-group :: buttonGroup(${friend.username}, ${friendshipStatus}, ${isSender}, ${isReceiver}, ${friend.allowFriendRequests},true)"></div>
+                        <th:block th:replace="fragments/friend/friend-button-group :: buttonGroup(${friend.username}, ${friendshipStatus}, ${isSender}, ${isReceiver}, ${friend.allowFriendRequests},true)"></th:block>
                     </div>
                 </div>
             </div>
@@ -77,6 +69,57 @@
         </div>
     </div>
 </div>
+
+<!--<div class="container my-5">-->
+<!--    <div class="row">-->
+<!--        &lt;!&ndash; Sidebar &ndash;&gt;-->
+<!--        <div class="col-md-3 position-fixed">-->
+<!--            <div class="sidebar">-->
+<!--                <h2 class="mb-4 bg-dark text-white text-center">Lựa chọn</h2>-->
+<!--                <div class="card shadow-sm">-->
+<!--                    <div class="list-group list-group-flush">-->
+<!--                        <a th:class="'list-group-item list-group-item-action ' + (${filter == 'non-friends'} ? 'active' : '')"-->
+<!--                           th:href="@{/friends(filter='non-friends')}">-->
+<!--                            Trang chủ-->
+<!--                        </a>-->
+<!--                        <a th:class="'list-group-item list-group-item-action ' + (${filter == 'all'} ? 'active' : '')"-->
+<!--                           th:href="@{/friends(filter='all')}">-->
+<!--                            Tất cả bạn bè-->
+<!--                        </a>-->
+<!--                        <a th:class="'list-group-item list-group-item-action ' + (${filter == 'sent-requests'} ? 'active' : '')"-->
+<!--                           th:href="@{/friends(filter='sent-requests')}">-->
+<!--                            Lời mời đã gửi-->
+<!--                        </a>-->
+<!--                        <a th:class="'list-group-item list-group-item-action ' + (${filter == 'received-requests'} ? 'active' : '')"-->
+<!--                           th:href="@{/friends(filter='received-requests')}">-->
+<!--                            Lời mời nhận được-->
+<!--                        </a>-->
+<!--                    </div>-->
+<!--                </div>-->
+<!--            </div>-->
+
+<!--        </div>-->
+
+<!--        <input type="hidden" id="filterValue" th:value="${filter}" />-->
+<!--        <input type="hidden" id="targetUserId" th:value="${targetUserId}" />-->
+<!--        &lt;!&ndash; Danh sách bạn bè &ndash;&gt;-->
+<!--        <div class="col-md-9  " style="margin-left: 30%;">-->
+<!--            <h2 class="mb-4 bg-dark text-white text-center" id="list-title" th:text="${listTitle}">Danh sách bạn bè</h2>-->
+<!--            <div class="row" id="friends-list">-->
+<!--                <div th:each="friend : ${friends}" class="col-md-3">-->
+<!--                    <div class="friend-action">-->
+<!--                        <th:block th:replace="~{fragments/friend/friendCard :: friendCard(friend=${friend}, nameClass='name-list-friend')}"></th:block>-->
+<!--                        <div th:insert="fragments/friend/friend-button-group :: buttonGroup(${friend.username}, ${friendshipStatus}, ${isSender}, ${isReceiver}, ${friend.allowFriendRequests},true)"></div>-->
+<!--                    </div>-->
+<!--                </div>-->
+<!--            </div>-->
+
+<!--            <div class="loading" id="loading">-->
+<!--                <i class="fas fa-spinner fa-spin"></i> Đang tải...-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--</div>-->
 
 <script th:src="@{/js/load-friend.js}"></script>
 <script th:src="@{/js/friend-button.js}"></script>

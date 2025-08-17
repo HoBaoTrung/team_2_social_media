@@ -58,6 +58,7 @@ class PostManager {
         const editForm = document.getElementById('edit-post-form');
         if (editForm) {
             editForm.addEventListener('submit', (e) => this.handleEditPost(e));
+
         }
 
         // Edit modal events
@@ -65,7 +66,47 @@ class PostManager {
         if (editModal) {
             editModal.addEventListener('hidden.bs.modal', () => this.resetEditForm());
         }
+
+        document.getElementById('edit-new-images').addEventListener('change', function (e) {
+            postManager.displayNewImages(e.target.files);
+        });
+
     }
+
+    displayNewImages(files) {
+        const container = document.getElementById('edit-existing-images');
+
+        Array.from(files).forEach((file, index) => {
+            if (!file.type.startsWith('image/')) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const item = document.createElement('div');
+                item.className = 'new-image-item';
+                item.innerHTML = `
+                <img src="${e.target.result}" alt="New image">
+                <button type="button" class="new-image-remove" onclick="postManager.removeNewImage(this, ${index})">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+                container.appendChild(item);
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+    removeNewImage(button, index) {
+        // Xóa preview khỏi DOM
+        button.parentElement.remove();
+
+        // Xóa file trong input
+        const input = document.getElementById('edit-new-images');
+        const dt = new DataTransfer();
+        Array.from(input.files)
+            .filter((_, i) => i !== index)
+            .forEach(file => dt.items.add(file));
+        input.files = dt.files;
+    }
+
 
     validatePostForm() {
         const content = document.querySelector('.post-content-input').value.trim();
@@ -96,17 +137,17 @@ class PostManager {
 
     }
 
-
-    displayImagePreview(files) {
-        const container = document.getElementById('image-preview-container');
-        const list = document.getElementById('image-preview-list');
+    displayImagePreview(files, containerId = 'image-preview-container', listId = 'image-preview-list') {
+        const container = document.getElementById(containerId);
+        const list = document.getElementById(listId);
 
         if (files.length === 0) {
             container.style.display = 'none';
             return;
         }
 
-        container.style.display = 'block';
+        if (container != null)  container.style.display = 'block';
+
         list.innerHTML = '';
 
         files.forEach((file, index) => {
@@ -115,16 +156,45 @@ class PostManager {
                 const item = document.createElement('div');
                 item.className = 'image-preview-item';
                 item.innerHTML = `
-                    <img src="${e.target.result}" alt="Preview">
-                    <button type="button" class="image-preview-remove" onclick="postManager.removeSelectedImage(${index})">
-                        <i class="fas fa-times"></i>
-                    </button>
-                `;
+                <img src="${e.target.result}" alt="Preview">
+                <button type="button" class="image-preview-remove" onclick="postManager.removeSelectedImage(${index})">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
                 list.appendChild(item);
             };
             reader.readAsDataURL(file);
         });
     }
+
+    // displayImagePreview(files) {
+    //     const container = document.getElementById('image-preview-container');
+    //     const list = document.getElementById('image-preview-list');
+    //
+    //     if (files.length === 0) {
+    //         container.style.display = 'none';
+    //         return;
+    //     }
+    //
+    //     container.style.display = 'block';
+    //     list.innerHTML = '';
+    //
+    //     files.forEach((file, index) => {
+    //         const reader = new FileReader();
+    //         reader.onload = (e) => {
+    //             const item = document.createElement('div');
+    //             item.className = 'image-preview-item';
+    //             item.innerHTML = `
+    //                 <img src="${e.target.result}" alt="Preview">
+    //                 <button type="button" class="image-preview-remove" onclick="postManager.removeSelectedImage(${index})">
+    //                     <i class="fas fa-times"></i>
+    //                 </button>
+    //             `;
+    //             list.appendChild(item);
+    //         };
+    //         reader.readAsDataURL(file);
+    //     });
+    // }
 
     removeSelectedImage(index) {
         this.selectedImages.splice(index, 1);
@@ -223,12 +293,6 @@ class PostManager {
         });
     }
 
-    prependPost(post) {
-        const postsContainer = document.getElementById('posts-container');
-        const postElement = this.createPostElement(post);
-        postsContainer.insertAdjacentHTML('afterbegin', postElement);
-    }
-
     appendPost(post) {
         const postsContainer = document.getElementById('posts-container');
         const postElement = this.createPostElement(post);
@@ -272,19 +336,23 @@ class PostManager {
                         </div>
                     </div>
                     ${post.canEdit || post.canDelete ? `
-                        <div class="post-actions-menu">
-                            <button class="post-menu-btn" onclick="postManager.togglePostMenu(${post.id})">
-                                <i class="fas fa-ellipsis-h"></i>
-                            </button>
-                            <div class="dropdown-menu" id="post-menu-${post.id}" style="display: none;">
-                                ${post.canEdit ? `<a class="dropdown-item" href="#" onclick="postManager.editPost(${post.id})">
+                       <!-- Dropdown -->
+                        <button class="btn btn-light btn-sm" type="button" id="dropdownMenuButton" 
+                                  data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-ellipsis-h"></i>
+                          </button>
+                          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton">
+                            <li>
+                             ${post.canEdit ? `<button class="dropdown-item" onclick="postManager.editPost(${post.id})">
                                     <i class="fas fa-edit"></i> Chỉnh sửa
-                                </a>` : ''}
-                                ${post.canDelete ? `<a class="dropdown-item text-danger" href="#" onclick="postManager.deletePost(${post.id})">
+                                </button>` : ''}
+                            </li>
+                            <li>
+                                ${post.canDelete ? `<button  class="dropdown-item text-danger" onclick="postManager.deletePost(${post.id})">
                                     <i class="fas fa-trash"></i> Xóa
-                                </a>` : ''}
-                            </div>
-                        </div>
+                                </button >` : ''}
+                            </li>
+                          </ul>
                     ` : ''}
                 </div>
                 
@@ -440,44 +508,6 @@ class PostManager {
         alert(msg); // hoặc custom UI notification
     }
 
-
-    // async toggleLike(postId) {
-    //     try {
-    //         const response = await fetch(`/posts/api/like/${postId}`, {
-    //             method: 'POST',
-    //             headers: {
-    //                 'X-Requested-With': 'XMLHttpRequest'
-    //             }
-    //         });
-    //
-    //         const result = await response.json();
-    //
-    //         if (result.success) {
-    //             this.updateLikeButton(postId, result.isLiked);
-    //         } else {
-    //             this.showNotification(result.message || 'Có lỗi xảy ra', 'error');
-    //         }
-    //     } catch (error) {
-    //         console.error('Error toggling like:', error);
-    //         this.showNotification('Có lỗi xảy ra', 'error');
-    //     }
-    // }
-
-    // updateLikeButton(postId, isLiked) {
-    //     const postElement = document.querySelector(`[data-post-id="${postId}"]`);
-    //     const likeButton = postElement.querySelector('.post-action');
-    //
-    //     if (isLiked) {
-    //         likeButton.classList.add('liked');
-    //     } else {
-    //         likeButton.classList.remove('liked');
-    //     }
-    //
-    //     // Update like count (you might want to fetch fresh data or increment/decrement)
-    //     // For now, we'll reload the post stats
-    //     // this.refreshPostStats(postId);
-    // }
-
     async refreshPostStats(postId) {
         try {
             const response = await fetch(`/posts/api/${postId}`);
@@ -508,26 +538,6 @@ class PostManager {
             }
         } catch (error) {
             console.error('Error refreshing post stats:', error);
-        }
-    }
-
-    togglePostMenu(postId) {
-        const menu = document.getElementById(`post-menu-${postId}`);
-        const isVisible = menu.style.display !== 'none';
-
-        // Hide all other menus
-        document.querySelectorAll('.dropdown-menu').forEach(m => m.style.display = 'none');
-
-        menu.style.display = isVisible ? 'none' : 'block';
-
-        // Close menu when clicking outside
-        if (!isVisible) {
-            document.addEventListener('click', function closeMenu(e) {
-                if (!menu.contains(e.target)) {
-                    menu.style.display = 'none';
-                    document.removeEventListener('click', closeMenu);
-                }
-            });
         }
     }
 
@@ -617,6 +627,7 @@ class PostManager {
 
         // Add new images
         const newImagesInput = document.getElementById('edit-new-images');
+
         Array.from(newImagesInput.files).forEach(file => {
             formData.append('newImages', file);
         });
@@ -924,6 +935,3 @@ document.addEventListener('DOMContentLoaded', function () {
     window.postManager = new PostManager();
 
 });
-
-
-

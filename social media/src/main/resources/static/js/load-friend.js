@@ -9,8 +9,6 @@ const currentPage = window.location.pathname;
 const isAddBtnActionFriend = currentPage.includes('friends') ? true : false
 $(document).ready(function () {
 
-    console.log('Initial filter from server:', currentFilter);
-
     // Đảm bảo nav-link tương ứng có lớp active
     $('.sidebar .nav-link').removeClass('active');
     $(`.sidebar .nav-link[data-filter="${currentFilter}"]`).addClass('active');

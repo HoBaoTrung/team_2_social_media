@@ -81,48 +81,7 @@
 </div>
 
 <!-- Edit Post Modal -->
-<div class="modal fade" id="editPostModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Chỉnh sửa bài viết</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form id="edit-post-form">
-                <div class="modal-body">
-                    <input type="hidden" id="edit-post-id">
-
-                    <div class="mb-3">
-                        <label>Quyền riêng tư:</label>
-                        <select id="edit-privacy-level" class="form-select">
-                            <option value="PUBLIC">🌍 Công khai</option>
-                            <option value="FRIENDS">👥 Bạn bè</option>
-                            <option value="PRIVATE">🔒 Chỉ mình tôi</option>
-                        </select>
-                    </div>
-
-                    <div class="mb-3">
-                        <textarea id="edit-content" class="form-control" rows="4" required></textarea>
-                    </div>
-
-                    <div class="mb-3">
-                        <label>Ảnh hiện tại:</label>
-                        <div id="edit-existing-images" class="existing-images-container"></div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="edit-new-images" class="form-label">Thêm ảnh mới:</label>
-                        <input type="file" id="edit-new-images" class="form-control" accept="image/*" multiple>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                    <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+<div th:replace="fragments/post/post-form :: edit-post-form"></div>
 
 <script th:src="@{/js/post.js}"></script>
 <script th:src="@{/js/news-feed.js}"></script>
