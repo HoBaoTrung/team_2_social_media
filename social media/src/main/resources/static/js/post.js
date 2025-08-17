@@ -569,7 +569,7 @@ class PostManager {
 
     async handleEditPost(event) {
         event.preventDefault();
-
+        console.log("112f3sf2")
         const form = event.target;
         const formData = new FormData();
 
@@ -588,16 +588,19 @@ class PostManager {
 
         // Add new images
         const newImagesInput = document.getElementById('edit-new-images');
-        displayImagePreview(newImagesInput.files, 'image-preview-container', 'edit-existing-images');
+
         Array.from(newImagesInput.files).forEach(file => {
             formData.append('newImages', file);
         });
 
         const submitBtn = form.querySelector('button[type="submit"]');
         const originalText = submitBtn.innerHTML;
-
+        const elements = form.querySelectorAll('input, select, textarea, button');
         try {
-            submitBtn.disabled = true;
+            elements.forEach(element => {
+                element.disabled = true;
+            });
+            // submitBtn.disabled = true;
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang lưu...';
 
             const response = await fetch(`/posts/api/update/${this.editingPostId}`, {
