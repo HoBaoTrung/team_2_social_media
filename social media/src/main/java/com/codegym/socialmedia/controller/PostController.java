@@ -60,7 +60,7 @@ public class PostController {
         if (currentUser != null) {
             posts = postService.getPostsByUser(targetUser, currentUser, pageable);
         } else {
-            posts = postService.getPublicPostsByUser(targetUser, pageable);
+            posts = postService.getPublicPostsByUser(targetUser, currentUser, pageable);
         }
 
         model.addAttribute("posts", posts);
@@ -237,7 +237,7 @@ public class PostController {
         if (currentUser != null) {
             posts = postService.getPostsByUser(targetUser, currentUser, pageable);
         } else {
-            posts = postService.getPublicPostsByUser(targetUser, pageable);
+            posts = postService.getPublicPostsByUser(targetUser, currentUser, pageable);
         }
 
         return ResponseEntity.ok(posts);
@@ -259,7 +259,7 @@ public class PostController {
             if (currentUser != null) {
                 posts = postService.getPostsByUser(targetUser, currentUser, PageRequest.of(0, 100));
             } else {
-                posts = postService.getPublicPostsByUser(targetUser, PageRequest.of(0, 100));
+                posts = postService.getPublicPostsByUser(targetUser, currentUser, PageRequest.of(0, 100));
             }
 
             // Extract all images from posts

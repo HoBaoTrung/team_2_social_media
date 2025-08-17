@@ -505,6 +505,7 @@ class PostManager {
     async editPost(postId) {
         try {
             const response = await fetch(`/posts/api/${postId}`);
+
             const post = await response.json();
 
             this.editingPostId = postId;
@@ -569,7 +570,7 @@ class PostManager {
 
     async handleEditPost(event) {
         event.preventDefault();
-        console.log("112f3sf2")
+
         const form = event.target;
         const formData = new FormData();
 
@@ -615,7 +616,7 @@ class PostManager {
                 bootstrap.Modal.getInstance(document.getElementById('editPostModal')).hide();
 
                 // Refresh the post
-                this.refreshPost(this.editingPostId);
+                await this.refreshPost(this.editingPostId);
 
                 this.showNotification('Cập nhật bài viết thành công!', 'success');
             } else {

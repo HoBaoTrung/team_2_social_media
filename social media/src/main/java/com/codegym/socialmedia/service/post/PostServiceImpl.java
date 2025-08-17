@@ -149,19 +149,21 @@ public class PostServiceImpl implements PostService {
         if (currentUser != null && currentUser.getId().equals(targetUser.getId())) {
             // Own posts - show all
             posts = postRepository.findByUserAndIsDeletedFalseOrderByCreatedAtDesc(targetUser, pageable);
+
         } else {
-            // Others' posts - show only public
-            posts = postRepository.findPublicPostsByUser(targetUser, pageable);
+            // Others' posts (or friend) - show only public
+            posts = postRepository.findVisiblePostsByUser(targetUser, currentUser, pageable);
         }
 
         return posts.map(post -> convertToDisplayDto(post, currentUser));
     }
 
     @Override
-    public Page<PostDisplayDto> getPublicPostsByUser(User targetUser, Pageable pageable) {
-        Page<Post> posts = postRepository.findPublicPostsByUser(targetUser, pageable);
+    public Page<PostDisplayDto> getPublicPostsByUser(User targetUser,User currentUser ,Pageable pageable) {
+        Page<Post> posts = postRepository.findVisiblePostsByUser(targetUser, currentUser,pageable);
         return posts.map(post -> convertToDisplayDto(post, null));
     }
+
 
     @Override
     public Page<PostDisplayDto> searchUserPosts(User user, String keyword, Pageable pageable) {

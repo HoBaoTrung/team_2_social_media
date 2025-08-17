@@ -22,7 +22,7 @@ public interface PostService {
     // Get posts for different contexts
     Page<PostDisplayDto> getPostsForNewsFeed(User currentUser, Pageable pageable);
     Page<PostDisplayDto> getPostsByUser(User targetUser, User currentUser, Pageable pageable);
-    Page<PostDisplayDto> getPublicPostsByUser(User targetUser, Pageable pageable);
+    Page<PostDisplayDto> getPublicPostsByUser(User targetUser, User currentUser ,Pageable pageable);
     Page<PostDisplayDto> searchUserPosts(User user, String keyword, Pageable pageable);
 
     // Like functionality
