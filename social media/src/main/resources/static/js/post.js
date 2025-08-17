@@ -1,5 +1,5 @@
 // Posts JavaScript
-class PostManager {
+ class PostManager {
     constructor() {
         this.currentPage = 0;
         this.isLoading = false;
@@ -126,35 +126,6 @@ class PostManager {
             reader.readAsDataURL(file);
         });
     }
-
-    // displayImagePreview(files) {
-    //     const container = document.getElementById('image-preview-container');
-    //     const list = document.getElementById('image-preview-list');
-    //
-    //     if (files.length === 0) {
-    //         container.style.display = 'none';
-    //         return;
-    //     }
-    //
-    //     container.style.display = 'block';
-    //     list.innerHTML = '';
-    //
-    //     files.forEach((file, index) => {
-    //         const reader = new FileReader();
-    //         reader.onload = (e) => {
-    //             const item = document.createElement('div');
-    //             item.className = 'image-preview-item';
-    //             item.innerHTML = `
-    //                 <img src="${e.target.result}" alt="Preview">
-    //                 <button type="button" class="image-preview-remove" onclick="postManager.removeSelectedImage(${index})">
-    //                     <i class="fas fa-times"></i>
-    //                 </button>
-    //             `;
-    //             list.appendChild(item);
-    //         };
-    //         reader.readAsDataURL(file);
-    //     });
-    // }
 
     removeSelectedImage(index) {
         this.selectedImages.splice(index, 1);
@@ -464,10 +435,6 @@ class PostManager {
         });
     }
 
-    // hiện thông báo lỗi/thành công
-    showNotification(msg, type = 'info') {
-        alert(msg); // hoặc custom UI notification
-    }
 
     async refreshPostStats(postId) {
         try {
@@ -504,6 +471,7 @@ class PostManager {
 
     async editPost(postId) {
         try {
+
             const response = await fetch(`/posts/api/${postId}`);
 
             const post = await response.json();
@@ -801,7 +769,7 @@ class PostManager {
         this.viewImage(imageUrls[startIndex]);
     }
 
-    formatTimeAgo(dateString) {
+      formatTimeAgo(dateString) {
         // Tách ngày, tháng, năm và giờ, phút
         const [datePart, timePart] = dateString.split(" ");
         const [day, month, year] = datePart.split("/").map(Number);

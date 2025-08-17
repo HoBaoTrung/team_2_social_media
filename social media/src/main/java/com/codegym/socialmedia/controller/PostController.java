@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -75,25 +76,6 @@ public class PostController {
         return "posts/user-posts";
     }
 
-    @GetMapping("/search")
-    public String searchPosts(@RequestParam String keyword,
-                              Model model,
-                              @RequestParam(value = "page", defaultValue = "0") int page,
-                              @RequestParam(value = "size", defaultValue = "10") int size) {
-        User currentUser = userService.getCurrentUser();
-        if (currentUser == null) {
-            return "redirect:/login";
-        }
-
-        Pageable pageable = PageRequest.of(page, size);
-        Page<PostDisplayDto> posts = postService.searchUserPosts(currentUser, keyword, pageable);
-
-        model.addAttribute("posts", posts);
-        model.addAttribute("keyword", keyword);
-
-        return "posts/search-results";
-    }
-
     // ================== CRUD OPERATIONS ==================
 
     @PostMapping("/create")
@@ -119,6 +101,7 @@ public class PostController {
 
         return "redirect:" + (redirectUrl != null ? redirectUrl : "/news-feed");
     }
+
 
     @PostMapping("/update/{id}")
     public String updatePost(@PathVariable Long id,
@@ -165,6 +148,25 @@ public class PostController {
     }
 
     // ================== AJAX API ENDPOINTS ==================
+    @GetMapping("/api/search")
+    @ResponseBody
+    public ResponseEntity<?> searchPosts(
+            @RequestParam String keyword,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size,
+            @RequestParam(value = "username") String username ) {
+
+        User user = userService.getUserByUsername(username);
+        User currentUser = userService.getCurrentUser();
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Bạn cần đăng nhập");
+        }
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<PostDisplayDto> posts = postService.searchUserPosts(user,currentUser, keyword, pageable);
+
+        return ResponseEntity.ok(posts);
+    }
 
     @PostMapping("/api/create")
     @ResponseBody

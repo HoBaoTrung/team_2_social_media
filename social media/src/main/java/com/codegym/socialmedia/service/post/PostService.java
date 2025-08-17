@@ -23,7 +23,7 @@ public interface PostService {
     Page<PostDisplayDto> getPostsForNewsFeed(User currentUser, Pageable pageable);
     Page<PostDisplayDto> getPostsByUser(User targetUser, User currentUser, Pageable pageable);
     Page<PostDisplayDto> getPublicPostsByUser(User targetUser, User currentUser ,Pageable pageable);
-    Page<PostDisplayDto> searchUserPosts(User user, String keyword, Pageable pageable);
+    Page<PostDisplayDto> searchUserPosts(User user,User currentUser, String keyword, Pageable pageable);
 
     // Like functionality
     boolean toggleLike(Long postId, User user);

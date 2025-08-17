@@ -166,8 +166,8 @@ public class PostServiceImpl implements PostService {
 
 
     @Override
-    public Page<PostDisplayDto> searchUserPosts(User user, String keyword, Pageable pageable) {
-        Page<Post> posts = postRepository.searchPostsByUserAndContent(user, keyword, pageable);
+    public Page<PostDisplayDto> searchUserPosts(User user,User currentUser, String keyword, Pageable pageable) {
+        Page<Post> posts = postRepository.searchPostsOnProfile(user,currentUser, keyword, pageable);
         return posts.map(post -> convertToDisplayDto(post, user));
     }
 

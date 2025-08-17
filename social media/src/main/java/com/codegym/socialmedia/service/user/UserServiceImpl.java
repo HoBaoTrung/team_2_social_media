@@ -61,6 +61,7 @@ public class UserServiceImpl implements UserService {
         user.setAccountStatus(User.AccountStatus.ACTIVE);
         user.setActive(true);
         user.setVerified(false);
+        user.setProfilePicture("https://res.cloudinary.com/dryyvmkwo/image/upload/v1748588721/samples/landscapes/nature-mountains.jpg");
 
         UserPrivacySettings privacySettings = new UserPrivacySettings();
         privacySettings.setUser(user);

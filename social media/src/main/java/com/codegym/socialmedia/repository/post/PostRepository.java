@@ -17,34 +17,31 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
     // BASIC methods - không có complex queries
 
-    // 1. Find posts by user
-    List<Post> findByUserAndIsDeletedFalseOrderByCreatedAtDesc(User user);
-
-    // 2. Find posts by user with pagination
+    //  Find posts by user with pagination
     Page<Post> findByUserAndIsDeletedFalseOrderByCreatedAtDesc(User user, Pageable pageable);
 
-    // 3. Find public posts by user (Nếu là người lạ), thêm post cho bạn bè - THÊM METHOD NÀY
+    //  Find public posts by user (Nếu là người lạ), thêm post cho bạn bè - THÊM METHOD NÀY
     @Query("""
-SELECT p FROM Post p
-WHERE p.isDeleted = false
-  AND p.user = :owner
-  AND (
-        p.privacyLevel = com.codegym.socialmedia.model.PrivacyLevel.PUBLIC
-     OR :viewer = :owner
-     OR (
-          p.privacyLevel =  com.codegym.socialmedia.model.PrivacyLevel.FRIENDS
-          AND EXISTS (
-                SELECT 1 FROM Friendship f
-                WHERE f.status = com.codegym.socialmedia.model.social_action.Friendship.FriendshipStatus.ACCEPTED
-                  AND (
-                        (f.requester = :viewer AND f.addressee = :owner)
-                     OR (f.requester = :owner  AND f.addressee = :viewer)
-                  )
-          )
-        )
-  )
-ORDER BY p.createdAt DESC
-""")
+            SELECT p FROM Post p
+            WHERE p.isDeleted = false
+              AND p.user = :owner
+              AND (
+                    p.privacyLevel = com.codegym.socialmedia.model.PrivacyLevel.PUBLIC
+                 OR :viewer = :owner
+                 OR (
+                      p.privacyLevel =  com.codegym.socialmedia.model.PrivacyLevel.FRIENDS
+                      AND EXISTS (
+                            SELECT 1 FROM Friendship f
+                            WHERE f.status = com.codegym.socialmedia.model.social_action.Friendship.FriendshipStatus.ACCEPTED
+                              AND (
+                                    (f.requester = :viewer AND f.addressee = :owner)
+                                 OR (f.requester = :owner  AND f.addressee = :viewer)
+                              )
+                      )
+                    )
+              )
+            ORDER BY p.createdAt DESC
+            """)
     Page<Post> findVisiblePostsByUser(@Param("owner") User owner,
                                       @Param("viewer") User viewer,
                                       Pageable pageable);
@@ -56,17 +53,35 @@ ORDER BY p.createdAt DESC
     Optional<Post> findByIdAndUser(Long id, User user);
 
     // 6. Search posts by user and content - THÊM METHOD NÀY
-    @Query("SELECT p FROM Post p WHERE p.user = :user AND p.isDeleted = false " +
-            "AND LOWER(p.content) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
-            "ORDER BY p.createdAt DESC")
-    Page<Post> searchPostsByUserAndContent(@Param("user") User user,
-                                           @Param("keyword") String keyword,
-                                           Pageable pageable);
+    @Query("""
+                SELECT p FROM Post p
+                WHERE p.isDeleted = false
+                  AND p.user = :owner
+                  AND LOWER(p.content) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                  AND (
+                        :viewer = :owner
+                        OR p.privacyLevel = 'PUBLIC'
+                        OR (
+                            p.privacyLevel = 'FRIENDS'
+                            AND EXISTS (
+                                SELECT f FROM Friendship f
+                                WHERE f.status = 'ACCEPTED'
+                                  AND (
+                                      (f.requester = :viewer AND f.addressee = :owner)
+                                      OR
+                                      (f.addressee = :viewer AND f.requester = :owner)
+                                  )
+                            )
+                        )
+                      )
+                ORDER BY p.createdAt DESC
+            """)
+    Page<Post> searchPostsOnProfile(@Param("owner") User owner,
+                                    @Param("viewer") User viewer,
+                                    @Param("keyword") String keyword,
+                                    Pageable pageable);
 
-    // 7. Find posts for news feed - THÊM METHOD NÀY
-    @Query("SELECT p FROM Post p WHERE p.user = :user AND p.isDeleted = false " +
-            "ORDER BY p.createdAt DESC")
-    Page<Post> findPostsForNewsFeed(@Param("user") User user, Pageable pageable);
+
 
     @Query("""
             SELECT p FROM Post p
