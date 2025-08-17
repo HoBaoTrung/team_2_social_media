@@ -67,46 +67,7 @@ class PostManager {
             editModal.addEventListener('hidden.bs.modal', () => this.resetEditForm());
         }
 
-        document.getElementById('edit-new-images').addEventListener('change', function (e) {
-            postManager.displayNewImages(e.target.files);
-        });
-
     }
-
-    displayNewImages(files) {
-        const container = document.getElementById('edit-existing-images');
-
-        Array.from(files).forEach((file, index) => {
-            if (!file.type.startsWith('image/')) return;
-
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const item = document.createElement('div');
-                item.className = 'new-image-item';
-                item.innerHTML = `
-                <img src="${e.target.result}" alt="New image">
-                <button type="button" class="new-image-remove" onclick="postManager.removeNewImage(this, ${index})">
-                    <i class="fas fa-times"></i>
-                </button>
-            `;
-                container.appendChild(item);
-            };
-            reader.readAsDataURL(file);
-        });
-    }
-    removeNewImage(button, index) {
-        // Xóa preview khỏi DOM
-        button.parentElement.remove();
-
-        // Xóa file trong input
-        const input = document.getElementById('edit-new-images');
-        const dt = new DataTransfer();
-        Array.from(input.files)
-            .filter((_, i) => i !== index)
-            .forEach(file => dt.items.add(file));
-        input.files = dt.files;
-    }
-
 
     validatePostForm() {
         const content = document.querySelector('.post-content-input').value.trim();
@@ -146,8 +107,7 @@ class PostManager {
             return;
         }
 
-        if (container != null)  container.style.display = 'block';
-
+        container.style.display = 'block';
         list.innerHTML = '';
 
         files.forEach((file, index) => {
@@ -226,6 +186,7 @@ class PostManager {
     }
 
     async loadPosts() {
+
         if (this.isLoading || !this.hasMorePosts || this.hasError) return;
 
         this.isLoading = true;
@@ -627,7 +588,7 @@ class PostManager {
 
         // Add new images
         const newImagesInput = document.getElementById('edit-new-images');
-
+        displayImagePreview(newImagesInput.files, 'image-preview-container', 'edit-existing-images');
         Array.from(newImagesInput.files).forEach(file => {
             formData.append('newImages', file);
         });
