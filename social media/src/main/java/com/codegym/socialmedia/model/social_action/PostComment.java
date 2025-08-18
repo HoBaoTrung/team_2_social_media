@@ -44,5 +44,10 @@ public class PostComment {
 
     @OneToMany(mappedBy = "comment")
     private List<LikeComment> likedByUsers;
+
+    @Override
+    public String toString() {
+        return "[id: " + id + ", content: " + content + "]";
+    }
 }
 

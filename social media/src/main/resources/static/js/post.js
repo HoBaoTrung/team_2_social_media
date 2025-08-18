@@ -247,7 +247,7 @@
         };
 
         const imagesHtml = this.createImagesHtml(post.imageUrls);
-        const timeAgo = this.formatTimeAgo(post.createdAt);
+        const timeAgo = formatTimeAgo(post.createdAt);
 
         return `
             <div class="post-item" data-post-id="${post.id}">
@@ -308,7 +308,7 @@
                 
                 <div class="post-actions">
                     <button class="post-action ${post.likedByCurrentUser ? 'liked' : ''}" 
-                            onclick="postManager.toggleLike(${post.id})">
+                            onclick="postManager.toggleLike(${post.id},'post')">
                         <i class="fas fa-heart"></i>
                         <span>Thích</span>
                     </button>
@@ -333,7 +333,7 @@
                             </button>
                         </div>
                     </div>
-                    <div class="comments-list" id="comments-list-${post.id}">
+                    <div class="comments-list" id="comments-list-${post.id}" style="max-height:300px; overflow-y:auto;">
                         <!-- Comments will be loaded here -->
                     </div>
                 </div>
@@ -378,9 +378,12 @@
     }
 
     // toggle like (gửi API)
-    async toggleLike(postId) {
+    async toggleLike(id, like_type) {
+        let url;
+        if(like_type == 'post') url=`/posts/api/like/${id}`;
+        else if (like_type == 'comment') url = `/comment/api/like/${id}`;
         try {
-            const response = await fetch(`/posts/api/like/${postId}`, {
+            const response = await fetch(url, {
                 method: 'POST',
                 headers: {'X-Requested-With': 'XMLHttpRequest'}
             });
@@ -389,10 +392,8 @@
 
             if (result.success) {
                 // cập nhật nút like ngay lập tức cho user hiện tại
-                this.updateLikeButton(postId, result.isLiked);
+                this.updateLikeButton(id, result.isLiked, like_type);
 
-                // số lượng like sẽ được cập nhật realtime qua websocket (subscribeToPostLikes)
-                // không cần subscribe ở đây nữa
             } else {
                 this.showNotification(result.message || 'Có lỗi xảy ra', 'error');
             }
@@ -403,10 +404,12 @@
     }
 
     // cập nhật class liked của nút like
-    updateLikeButton(postId, isLiked) {
-        const likeBtn = document.querySelector(
-            `.post-item[data-post-id="${postId}"] .post-action`
+    updateLikeButton(id, isLiked, like_type) {
+        let likeBtn;
+        if(like_type == 'post') likeBtn = document.querySelector(
+            `.post-item[data-post-id="${id}"] .post-action`
         );
+
         if (likeBtn) {
             if (isLiked) {
                 likeBtn.classList.add("liked");
@@ -657,24 +660,124 @@
             }
         }
     }
+// Thuộc tính của class
+     commentState = {}; // { [postId]: { page, hasMore, loading, size } }
 
-    toggleComments(postId) {
-        const commentsSection = document.getElementById(`comments-${postId}`);
-        const isVisible = commentsSection.style.display !== 'none';
+// ===== Toggle + bind scroll =====
+     toggleComments(postId) {
+         const section = document.getElementById(`comments-${postId}`);
+         // Đừng dùng element.style.display; dùng computedStyle để bắt đúng lần đầu
+         const isVisible = window.getComputedStyle(section).display !== 'none';
 
-        if (isVisible) {
-            commentsSection.style.display = 'none';
-        } else {
-            commentsSection.style.display = 'block';
-            this.loadComments(postId);
-        }
-    }
+         if (isVisible) {
+             section.style.display = 'none';
+             return;
+         }
 
-    async loadComments(postId) {
-        // This would load comments from server
-        // For now, we'll just show the comment form
-        console.log('Loading comments for post', postId);
-    }
+         section.style.display = 'block';
+
+         // Khởi tạo state 1 lần cho post
+         if (!this.commentState[postId]) {
+             this.commentState[postId] = { page: 0, hasMore: true, loading: false, size: 2};
+         } else {
+             // Mỗi lần mở lại muốn load từ đầu: reset nếu cần
+             this.commentState[postId].page = 0;
+             this.commentState[postId].hasMore = true;
+         }
+
+         const $container = $(`#comments-list-${postId}`);
+
+         // Load trang đầu
+         this.loadComments(postId, /*append*/ false).then(() => {
+             // Nếu nội dung chưa đủ tạo thanh cuộn, tự fill thêm đến khi đủ (hoặc hết dữ liệu)
+             this._prefillViewport(postId);
+         });
+
+         // Gắn scroll 1 lần
+         if (!$container.data('scrollBound')) {
+             $container.on('scroll', () => {
+                 const el = $container[0];
+                 // gần chạm đáy
+                 if (el.scrollTop + el.clientHeight >= el.scrollHeight - 10) {
+                     const st = this.commentState[postId];
+                     if (!st.loading && st.hasMore) {
+                         this.loadComments(postId, /*append*/ true);
+                     }
+                 }
+             });
+             $container.data('scrollBound', true);
+         }
+     }
+
+// ===== Load comments theo trang =====
+     loadComments(postId, append = true) {
+         const st = this.commentState[postId];
+         if (!st || st.loading || (!append && st.page !== 0)) return Promise.resolve();
+
+         st.loading = true;
+
+         const page = st.page;
+         const size = st.size;
+
+         return $.ajax({
+             url: `/api/${postId}/comments`,
+             type: 'GET',
+             data: { page, size }
+         }).done((data) => {
+             const $container = $(`#comments-list-${postId}`);
+             if (!append) $container.empty();
+
+             (data.comments || []).forEach(c => {
+                 const timeAgo = formatTimeAgo(c.createdAt); // xem hàm bên dưới
+                 const $card = $(`
+                <div class="comment-card d-flex">
+                    <img src="${c.userAvatarUrl || ''}" alt="avatar" class="comment-avatar">
+                    <div>
+                        <strong>${c.userFullName || c.username || ''}</strong>
+                        <span class="comment-time">${timeAgo}</span>
+                        <p>${c.comment || ''}</p>
+                        <div class="comment-actions">
+                           
+                           <span class="${c.likedByCurrentUser ? 'liked' : ''}" onclick="postManager.toggleLike(${c.commentId},'comment')"
+                           style="cursor: pointer">
+                                <i class="fas fa-heart"></i>
+                                <span>${c.likeCount}</span>
+                          </span>
+                            
+                            <span></span>
+                            <button class="btn btn-link btn-sm">Phản hồi</button>
+                        </div>
+                    </div>
+                </div>
+            `);
+                 $container.append($card);
+             });
+
+             // cập nhật phân trang
+             st.page = page + 1;
+             st.hasMore = (data.comments || []).length === size;
+         }).fail((xhr) => {
+             console.error('Lỗi load comments:', xhr?.responseText || xhr?.statusText);
+         }).always(() => {
+             st.loading = false;
+         });
+     }
+
+// ===== Tự lấp đầy cho đến khi có thanh cuộn (đề phòng size quá nhỏ) =====
+     _prefillViewport(postId) {
+         const $container = $(`#comments-list-${postId}`);
+         const el = $container[0];
+         const st = this.commentState[postId];
+         let guard = 0;
+
+         const fill = () => {
+             if (!st || guard++ > 5) return; // tối đa 5 lần để tránh vòng lặp vô hạn
+             if (el.scrollHeight <= el.clientHeight && st.hasMore && !st.loading) {
+                 this.loadComments(postId, true).then(fill);
+             }
+         };
+         fill();
+     }
 
     handleCommentKeyPress(event, postId) {
         if (event.key === 'Enter' && !event.shiftKey) {
@@ -769,39 +872,6 @@
         this.viewImage(imageUrls[startIndex]);
     }
 
-      formatTimeAgo(dateString) {
-        // Tách ngày, tháng, năm và giờ, phút
-        const [datePart, timePart] = dateString.split(" ");
-        const [day, month, year] = datePart.split("/").map(Number);
-        const [hour, minute] = timePart.split(":").map(Number);
-
-        // Tạo đối tượng Date (lưu ý month phải -1 vì JS tính từ 0-11)
-        const date = new Date(year, month - 1, day, hour, minute);
-
-        const now = new Date();
-        const diffInMs = now - date;
-        const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
-        const diffInHours = Math.floor(diffInMinutes / 60);
-        const diffInDays = Math.floor(diffInHours / 24);
-
-        if (diffInMinutes < 1) {
-            return 'Vừa xong';
-        } else if (diffInMinutes < 60) {
-            return `${diffInMinutes} phút trước`;
-        } else if (diffInHours < 24) {
-            return `${diffInHours} giờ trước`;
-        } else if (diffInDays < 7) {
-            return `${diffInDays} ngày trước`;
-        } else {
-            return date.toLocaleDateString('vi-VN', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric'
-            });
-        }
-    }
-
-
     getCurrentUserAvatar() {
         // Get current user avatar from page context
         const userAvatar = document.querySelector('.navbar .dropdown img');
@@ -868,3 +938,35 @@ document.addEventListener('DOMContentLoaded', function () {
     window.postManager = new PostManager();
 
 });
+
+function  formatTimeAgo(dateString) {
+    // Tách ngày, tháng, năm và giờ, phút
+    const [datePart, timePart] = dateString.split(" ");
+    const [day, month, year] = datePart.split("/").map(Number);
+    const [hour, minute] = timePart.split(":").map(Number);
+
+    // Tạo đối tượng Date (lưu ý month phải -1 vì JS tính từ 0-11)
+    const date = new Date(year, month - 1, day, hour, minute);
+
+    const now = new Date();
+    const diffInMs = now - date;
+    const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    const diffInDays = Math.floor(diffInHours / 24);
+
+    if (diffInMinutes < 1) {
+        return 'Vừa xong';
+    } else if (diffInMinutes < 60) {
+        return `${diffInMinutes} phút trước`;
+    } else if (diffInHours < 24) {
+        return `${diffInHours} giờ trước`;
+    } else if (diffInDays < 7) {
+        return `${diffInDays} ngày trước`;
+    } else {
+        return date.toLocaleDateString('vi-VN', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+    }
+}

@@ -377,13 +377,11 @@
     background-color: #f0f2f5;
 }
 
-.post-action.liked {
-    color: #1877f2;
+.liked {
+    color: #ff0007;
 }
 
-.post-action.liked i {
-    color: #1877f2;
-}
+
 
 /* Comments Section */
 .post-comments {
@@ -583,3 +581,25 @@
 .privacy-public { color: #42b883; }
 .privacy-friends { color: #1877f2; }
 .privacy-private { color: #f39c12; }
+
+.comment-card {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 10px;
+    background: #fff;
+}
+.comment-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 10px;
+}
+.comment-actions button {
+    margin-right: 10px;
+}
+.comment-time {
+    font-size: 0.85em;
+    color: gray;
+}

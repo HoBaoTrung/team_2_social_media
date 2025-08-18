@@ -52,23 +52,4 @@ public class LikeController {
     }
 
 
-    @Autowired
-    private LikeNotificationService likeNotificationService;
-
-    @PostMapping("/api/likes/status/{statusId}")
-    @ResponseBody
-    public ResponseEntity<Map<String, Object>> toggleLikeStatus(@PathVariable Long statusId) {
-        User user = userService.getCurrentUser();
-        Post post = postService.getPostById(statusId);
-        boolean isLiked = postService.toggleLike(statusId, user);
-        int likeCount = postService.getLikeCount(post);
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("statusId", statusId);
-        response.put("isLiked", isLiked);
-        response.put("likeCount", likeCount);
-
-        return ResponseEntity.ok(response);
-    }
-
 }
