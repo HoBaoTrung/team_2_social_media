@@ -30,8 +30,6 @@ public interface PostService {
     List<User> getUsersWhoLiked(Long postId);
     int getLikeCount(Post id);
     int countCommentsByPost(Post post);
-    // Privacy check
-    boolean canUserViewPost(Post post, User viewer);
 
     // Utility
     long countUserPosts(User user);
