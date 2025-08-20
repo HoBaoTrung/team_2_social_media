@@ -38,7 +38,7 @@ public class FriendController {
         model.addAttribute("isReceiver", isReceiver);
         model.addAttribute("allowFriendRequests", allowFriendRequests);
         model.addAttribute("isVisible", isVisible);
-        return "fragments/friend-button-group :: buttonGroup";
+        return "fragments/friend/friend-button-group :: buttonGroup";
     }
 
 

@@ -1,7 +1,10 @@
+<!-- Updated header.html fragment for message dropdown -->
 <header th:fragment="header"
         xmlns:th="http://www.thymeleaf.org"
         xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
     <link rel="stylesheet" th:href="@{/css/header.css}">
+    <link rel="stylesheet" th:href="@{/css/chat.css}">
+
     <nav class="navbar navbar-expand-lg shadow-sm">
         <div class="container-fluid d-flex justify-content-between align-items-center px-3">
 
@@ -139,6 +142,8 @@
             const messageIcon = document.getElementById('messageIcon');
             const messageDropdown = document.getElementById('messageDropdown');
 
+            if (!messageIcon || !messageDropdown) return;
+
             // Toggle dropdown
             messageIcon.addEventListener('click', function(e) {
                 e.stopPropagation();
@@ -146,7 +151,7 @@
 
                 // Load conversations when opening
                 if (messageDropdown.classList.contains('show')) {
-                    loadConversations();
+                    loadConversationsForDropdown();
                 }
             });
 
@@ -158,43 +163,69 @@
             });
         }
 
-        function loadConversations() {
+        function loadConversationsForDropdown() {
+            const conversationList = document.getElementById('conversationList');
+
+            // Mock data - replace with actual API call
+            const mockConversations = [
+                {
+                    id: '1',
+                    name: 'Ngô Duy',
+                    avatar: '/images/default-avatar.jpg',
+                    lastMessage: 'Chào bạn!',
+                    timeAgo: '2 phút',
+                    isOnline: true
+                },
+                {
+                    id: '2',
+                    name: 'Ngô Duy',
+                    avatar: '/images/default-avatar.jpg',
+                    lastMessage: 'Hẹn gặp lại!',
+                    timeAgo: '1 giờ',
+                    isOnline: false
+                }
+            ];
+
+            if (mockConversations.length === 0) {
+                conversationList.innerHTML = `
+                    <div class="text-center p-3 text-muted">
+                        <i class="fas fa-comments"></i><br>
+                        Chưa có cuộc trò chuyện nào
+                    </div>
+                `;
+                return;
+            }
+
+            conversationList.innerHTML = mockConversations.map(conv => `
+                <div class="conversation-item" onclick="openChatFromDropdown('${conv.id}', '${conv.name}', '${conv.avatar}')">
+                    <div style="position: relative;">
+                        <img src="${conv.avatar || '/images/default-avatar.jpg'}" alt="Avatar" class="conversation-avatar">
+                        ${conv.isOnline ? '<div class="online-dot"></div>' : ''}
+                    </div>
+                    <div class="conversation-info">
+                        <div style="font-weight: 600; font-size: 14px;">${conv.name}</div>
+                        <div class="conversation-preview">${conv.lastMessage || 'Chưa có tin nhắn'} • ${conv.timeAgo}</div>
+                    </div>
+                </div>
+            `).join('');
+
+            // Use real API when available
+            /*
             fetch('/api/conversations')
                 .then(response => response.json())
                 .then(conversations => {
-                    const conversationList = document.getElementById('conversationList');
-
-                    if (conversations.length === 0) {
-                        conversationList.innerHTML = `
-                            <div class="text-center p-3 text-muted">
-                                <i class="fas fa-comments"></i><br>
-                                Chưa có cuộc trò chuyện nào
-                            </div>
-                        `;
-                        return;
-                    }
-
-                    conversationList.innerHTML = conversations.map(conv => `
-                        <div class="conversation-item" onclick="openChatFromDropdown('${conv.id}', '${conv.name}', '${conv.avatar}')">
-                            <div style="position: relative;">
-                                <img src="${conv.avatar || '/images/default-avatar.jpg'}" alt="Avatar" class="conversation-avatar">
-                                ${conv.isOnline ? '<div class="online-dot"></div>' : ''}
-                            </div>
-                            <div class="conversation-info">
-                                <div class="conversation-preview">${conv.lastMessage || 'Chưa có tin nhắn'} • ${conv.timeAgo}</div>
-                            </div>
-                        </div>
-                    `).join('');
+                    // Handle real data here
                 })
                 .catch(error => {
                     console.error('Error loading conversations:', error);
-                    document.getElementById('conversationList').innerHTML = `
+                    conversationList.innerHTML = `
                         <div class="text-center p-3 text-danger">
                             <i class="fas fa-exclamation-triangle"></i><br>
                             Lỗi tải danh sách
                         </div>
                     `;
                 });
+            */
         }
 
         function openChatFromDropdown(userId, userName, avatar) {
@@ -207,4 +238,91 @@
             }
         }
     </script>
+
+    <style>
+        /* Message dropdown styles */
+        .message-dropdown {
+            position: absolute;
+            top: 50px;
+            right: 0;
+            width: 360px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+            display: none;
+            z-index: 1001;
+            max-height: 500px;
+        }
+
+        .message-dropdown.show {
+            display: block;
+        }
+
+        .dropdown-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #e4e6ea;
+        }
+
+        .dropdown-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #050505;
+        }
+
+        .conversation-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .conversation-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .conversation-item:hover {
+            background-color: #f2f2f2;
+        }
+
+        .conversation-item:last-child {
+            border-bottom: none;
+        }
+
+        .conversation-avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            margin-right: 12px;
+            object-fit: cover;
+            position: relative;
+        }
+
+        .conversation-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .conversation-preview {
+            font-size: 13px;
+            color: #65676b;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-top: 2px;
+        }
+
+        .online-dot {
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            width: 14px;
+            height: 14px;
+            background: #42b883;
+            border: 2px solid white;
+            border-radius: 50%;
+        }
+    </style>
 </header>

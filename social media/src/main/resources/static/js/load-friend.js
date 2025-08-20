@@ -2,13 +2,13 @@ let friendshipStatus = 'ACCEPTED'
 let page = 1;
 const size = 10;
 let isLoading = false;
-let hasMoreData = true; // Biến theo dõi xem còn dữ liệu để tải hay không
+let hasMoreData = true;
 const targetUserId = document.getElementById('targetUserId').value;
-const currentFilter = document.getElementById('filterValue').value;// Lấy giá trị filter từ Thymeleaf
+const currentFilter = document.getElementById('filterValue').value;
 const currentPage = window.location.pathname;
 const isAddBtnActionFriend = currentPage.includes('friends') ? true : false
-$(document).ready(function () {
 
+$(document).ready(function () {
     console.log('Initial filter from server:', currentFilter);
 
     // Đảm bảo nav-link tương ứng có lớp active
@@ -22,7 +22,6 @@ $(document).ready(function () {
 
         page = 0;
         hasMoreData = true;
-        // $('#friends-list').empty();
         console.log('Filter changed to:', currentFilter);
         loadMoreFriends();
     });
@@ -39,12 +38,12 @@ $(document).ready(function () {
     if ($(document).height() <= $(window).height()) {
         loadMoreFriends();
     }
-
 });
+
 let isSender = isReceiver = false
 
 function loadMoreFriends() {
-    if (!hasMoreData) return; // Không tải nếu đã hết dữ liệu
+    if (!hasMoreData) return;
 
     isLoading = true;
     $('#loading').show();
@@ -57,6 +56,7 @@ function loadMoreFriends() {
             break;
         case 'mutual':
             url = `/api/friends/mutual?targetUserId=${targetUserId}&page=${page}&size=${size}`;
+            friendshipStatus = 'ACCEPTED'
             break;
         case 'non-friends':
             url = `/api/friends/non-friends?page=${page}&size=${size}`;
@@ -82,7 +82,7 @@ function loadMoreFriends() {
         method: 'GET',
         success: function (data) {
             if (!data.content || data.content.length === 0 || page >= data.totalPages) {
-                hasMoreData = false; // Đánh dấu không còn dữ liệu
+                hasMoreData = false;
                 $('#loading').hide();
                 isLoading = false;
                 return;
@@ -100,14 +100,15 @@ function loadMoreFriends() {
                                     <h7>${friend.mutualFriends} bạn chung</h7>
                                 </div>
                             </a>
-                            <div class="friend-button-group"  id="btn-group-${friend.username}"></div>
+                            <div class="friend-button-group" id="btn-group-${friend.username}"></div>
+                            <div class="chat-button-group" id="chat-btn-${friend.username}"></div>
                         </div>
                     </div>
                 `;
                 $('#friends-list').append(friendCardHtml);
 
                 if (isAddBtnActionFriend) {
-                    // gắn nút vào friendCard
+                    // Gắn nút friend action vào friendCard
                     $.ajax({
                         url: '/friend/button',
                         method: 'GET',
@@ -126,8 +127,18 @@ function loadMoreFriends() {
                             console.error(`Lỗi khi tải nút cho ${friend.username}:`, xhr.status, xhr.statusText);
                         }
                     });
-                }
 
+                    // Thêm nút chat cho bạn bè
+                    if (friendshipStatus === 'ACCEPTED') {
+                        const chatButtonHtml = `
+                            <button class="btn btn-info btn-sm mt-2" 
+                                    onclick="openChatFromProfile('${friend.id}', '${friend.fullName}', '${friend.avatarUrl || '/images/default-avatar.jpg'}')">
+                                <i class="fa-solid fa-message"></i> Nhắn tin
+                            </button>
+                        `;
+                        $(`#chat-btn-${friend.username}`).html(chatButtonHtml);
+                    }
+                }
             });
 
             page++;
@@ -137,7 +148,7 @@ function loadMoreFriends() {
         error: function (xhr) {
             isLoading = false;
             $('#loading').hide();
-            hasMoreData = false; // Dừng tải nếu có lỗi
+            hasMoreData = false;
             console.error('Lỗi khi tải danh sách:', xhr.status, xhr.statusText);
             alert(`Lỗi khi tải danh sách: ${xhr.status} - ${xhr.statusText}`);
         }

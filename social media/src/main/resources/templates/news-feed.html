@@ -9,31 +9,24 @@
     <link rel="stylesheet" th:href="@{/css/news-feed.css}">
     <link rel="stylesheet" th:href="@{/css/chat.css}">
     <style>
-        .like-btn.liked {
-            color: #3b7cfd;
+        /* Ensure chat works properly on news feed */
+        body {
+            position: relative;
+            min-height: 100vh;
         }
 
-        .friend-item {
+        .friend-item-enhanced {
             display: flex;
             align-items: center;
-            background-color: rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
             padding: 8px 12px;
-            margin-bottom: 6px;
-            color: #333;
-            font-family: sans-serif;
-            transition: background-color 0.2s ease, transform 0.2s ease;
+            border-radius: 8px;
             cursor: pointer;
+            transition: background-color 0.2s;
+            margin-bottom: 4px;
         }
 
-        .friend-item:hover {
-            background-color: rgba(255, 255, 255, 0.2);
-            transform: translateY(-2px);
-        }
-
-        .friend-name {
-            font-size: 14px;
-            font-weight: 500;
+        .friend-item-enhanced:hover {
+            background-color: #f2f2f2;
         }
 
         .friend-avatar {
@@ -56,11 +49,9 @@
             border-radius: 50%;
         }
 
-        /* Sidebar styling improvements */
-        .sidebar {
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        .friend-name {
+            font-size: 14px;
+            font-weight: 500;
         }
 
         .sidebar h5 {
@@ -73,19 +64,15 @@
             gap: 8px;
         }
 
-        /* Enhanced friend item with online status */
-        .friend-item-enhanced {
-            display: flex;
-            align-items: center;
-            padding: 8px 12px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background-color 0.2s;
-            margin-bottom: 4px;
+        .like-btn.liked {
+            color: #3b7cfd;
         }
 
-        .friend-item-enhanced:hover {
-            background-color: #f2f2f2;
+        .action-btn {
+            background: none;
+            border: none;
+            font-size: 0.95rem;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -190,41 +177,72 @@
     const currentUserId = /*[[${#authentication.principal.user.id}]]*/ '1';
 
     // Set current user ID in meta tag for chat.js
-    document.querySelector('meta[name="user-id"]').content = currentUserId;
+    if (document.querySelector('meta[name="user-id"]')) {
+        document.querySelector('meta[name="user-id"]').content = currentUserId;
+    }
 
-    // Kết nối WebSocket cho like/unlike
-    const socket = new SockJS('/ws');
-    const stompClient = Stomp.over(socket);
+    // WebSocket connection and like functionality
+    let stompClient = null;
 
-    stompClient.connect({}, function (frame) {
-        console.log('Connected: ' + frame);
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize WebSocket
+        const socket = new SockJS('/ws');
+        stompClient = Stomp.over(socket);
 
-        // Subscribe vào các topic cần thiết cho posts
-        document.querySelectorAll('.post').forEach(post => {
-            const statusId = post.querySelector('.like-btn').getAttribute('data-status-id');
-            stompClient.subscribe('/topic/status/' + statusId + '/likes', function (message) {
-                const data = JSON.parse(message.body);
-                if (data.userName === currentUser) {
-                    updateLikeUI(data.statusId, data.likeCount, data.isLiked);
-                } else {
-                    const btn = document.querySelector(`.like-btn[data-status-id="${data.statusId}"]`);
-                    if (btn) {
-                        btn.querySelector('.like-count').textContent = data.likeCount;
+        stompClient.connect({}, function (frame) {
+            console.log('Connected: ' + frame);
+
+            // Subscribe vào các topic cần thiết cho posts
+            document.querySelectorAll('.post').forEach(post => {
+                const statusId = post.querySelector('.like-btn').getAttribute('data-status-id');
+                stompClient.subscribe('/topic/status/' + statusId + '/likes', function (message) {
+                    const data = JSON.parse(message.body);
+                    if (data.userName === currentUser) {
+                        updateLikeUI(data.statusId, data.likeCount, data.isLiked);
+                    } else {
+                        const btn = document.querySelector(`.like-btn[data-status-id="${data.statusId}"]`);
+                        if (btn) {
+                            btn.querySelector('.like-count').textContent = data.likeCount;
+                        }
                     }
+                });
+            });
+
+            // Subscribe to personal message queue for chat
+            stompClient.subscribe(`/user/${currentUserId}/queue/messages`, function (message) {
+                const messageData = JSON.parse(message.body);
+                handleIncomingMessage(messageData);
+            });
+
+            // Load online friends after WebSocket connection
+            loadOnlineFriends();
+        }, function (error) {
+            console.log('WebSocket connection error: ' + error);
+        });
+
+        // Setup like button handlers
+        document.querySelectorAll('.like-btn').forEach(btn => {
+            btn.addEventListener('click', async function () {
+                const statusId = this.getAttribute('data-status-id');
+
+                try {
+                    const response = await fetch(`/api/likes/status/${statusId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        updateLikeUI(data.statusId, data.likeCount, data.isLiked);
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
                 }
             });
         });
-
-        // Subscribe to personal message queue for chat
-        stompClient.subscribe(`/user/${currentUserId}/queue/messages`, function (message) {
-            const messageData = JSON.parse(message.body);
-            handleIncomingMessage(messageData);
-        });
-
-        // Load online friends after WebSocket connection
-        loadOnlineFriends();
-    }, function (error) {
-        console.log('WebSocket connection error: ' + error);
     });
 
     function updateLikeUI(statusId, likeCount, isLiked) {
@@ -240,66 +258,63 @@
         }
     }
 
-    // Xử lý sự kiện like
-    document.querySelectorAll('.like-btn').forEach(btn => {
-        btn.addEventListener('click', async function () {
-            const statusId = this.getAttribute('data-status-id');
-
-            try {
-                const response = await fetch(`/api/likes/status/${statusId}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    updateLikeUI(data.statusId, data.likeCount, data.isLiked);
-                }
-            } catch (error) {
-                console.error('Error:', error);
-            }
-        });
-    });
-
     // Load online friends for sidebar
     function loadOnlineFriends() {
+        // Mock data for testing - replace with real API call
+        const mockFriends = [
+            {
+                id: '1',
+                name: 'Ngô Duy',
+                avatar: '/images/default-avatar.jpg',
+                isOnline: true
+            },
+            {
+                id: '2',
+                name: 'Ngô Duy',
+                avatar: '/images/default-avatar.jpg',
+                isOnline: true
+            }
+        ];
+
+        const friendsList = document.getElementById('onlineFriendsList');
+
+        if (mockFriends.length === 0) {
+            friendsList.innerHTML = `
+                <div class="text-center p-3 text-muted">
+                    <i class="fas fa-user-friends"></i><br>
+                    Không có bạn bè online
+                </div>
+            `;
+            return;
+        }
+
+        friendsList.innerHTML = mockFriends.map(friend => `
+            <div class="friend-item-enhanced" onclick="openChatFromSidebar('${friend.id}', '${friend.name}', '${friend.avatar || '/images/default-avatar.jpg'}')">
+                <div style="position: relative;">
+                    <img src="${friend.avatar || '/images/default-avatar.jpg'}" alt="${friend.name}" class="friend-avatar">
+                    ${friend.isOnline ? '<div class="online-indicator"></div>' : ''}
+                </div>
+                <span class="friend-name">${friend.name}</span>
+            </div>
+        `).join('');
+
+        // Use real API when available
+        /*
         fetch('/api/chat/online-friends')
             .then(response => response.json())
             .then(friends => {
-                const friendsList = document.getElementById('onlineFriendsList');
-
-                if (friends.length === 0) {
-                    friendsList.innerHTML = `
-                        <div class="text-center p-3 text-muted">
-                            <i class="fas fa-user-friends"></i><br>
-                            Không có bạn bè online
-                        </div>
-                    `;
-                    return;
-                }
-
-                friendsList.innerHTML = friends.map(friend => `
-                    <div class="friend-item-enhanced" onclick="openChatFromSidebar('${friend.id}', '${friend.name}', '${friend.avatar || '/images/default-avatar.jpg'}')">
-                        <div style="position: relative;">
-                            <img src="${friend.avatar || '/images/default-avatar.jpg'}" alt="${friend.name}" class="friend-avatar">
-                            ${friend.isOnline ? '<div class="online-indicator"></div>' : ''}
-                        </div>
-                        <span class="friend-name">${friend.name}</span>
-                    </div>
-                `).join('');
+                // Handle real data here
             })
             .catch(error => {
                 console.error('Error loading online friends:', error);
-                document.getElementById('onlineFriendsList').innerHTML = `
+                friendsList.innerHTML = `
                     <div class="text-center p-3 text-danger">
                         <i class="fas fa-exclamation-triangle"></i><br>
                         Lỗi tải danh sách
                     </div>
                 `;
             });
+        */
     }
 
     // Function to open chat from sidebar (called from inline onclick)
