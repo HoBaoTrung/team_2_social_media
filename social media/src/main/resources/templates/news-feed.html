@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="user-id" th:content="${#authentication.principal.user.id}">
     <title>Facebook</title>
     <th:block th:replace="~{fragments/commonHead :: commonHead}"></th:block>
     <link rel="stylesheet" th:href="@{/css/news-feed.css}">
@@ -15,19 +16,19 @@
         .friend-item {
             display: flex;
             align-items: center;
-            background-color: #b1a0a0; /* màu nền tối */
+            background-color: rgba(255, 255, 255, 0.1);
             border-radius: 8px;
             padding: 8px 12px;
             margin-bottom: 6px;
-            color: white;
+            color: #333;
             font-family: sans-serif;
             transition: background-color 0.2s ease, transform 0.2s ease;
             cursor: pointer;
         }
 
         .friend-item:hover {
-            background-color: #3a3a3a;
-            transform: translateY(-3px);
+            background-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
         }
 
         .friend-name {
@@ -35,43 +36,56 @@
             font-weight: 500;
         }
 
-        .chat-box {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            width: 300px;
-            height: 400px;
+        .friend-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            margin-right: 12px;
+            object-fit: cover;
+            position: relative;
+        }
+
+        .online-indicator {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 12px;
+            height: 12px;
+            background: #42b883;
+            border: 2px solid white;
+            border-radius: 50%;
+        }
+
+        /* Sidebar styling improvements */
+        .sidebar {
             background: white;
-            border: 1px solid #ccc;
             border-radius: 8px;
-            display: none; /* Ẩn mặc định */
-            flex-direction: column;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
-        .chat-box-header {
-            padding: 10px;
-            background: #007bff;
-            color: white;
-            border-top-left-radius: 8px;
-            border-top-right-radius: 8px;
-        }
-
-        .chat-box-messages {
-            flex: 1;
-            padding: 10px;
-            overflow-y: auto;
-        }
-
-        .chat-box-input {
+        .sidebar h5 {
+            color: #65676b;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
             display: flex;
-            padding: 10px;
-            border-top: 1px solid #ccc;
+            align-items: center;
+            gap: 8px;
         }
 
-        .chat-box-input input {
-            flex: 1;
-            padding: 5px;
+        /* Enhanced friend item with online status */
+        .friend-item-enhanced {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-bottom: 4px;
+        }
+
+        .friend-item-enhanced:hover {
+            background-color: #f2f2f2;
         }
     </style>
 </head>
@@ -131,7 +145,7 @@
                 <p th:text="${status.content}">Chào mừng bạn đến với mạng xã hội của chúng tôi</p>
             </div>
             <div class="post-actions">
-                <button class="action-btn  like-btn"
+                <button class="action-btn like-btn"
                         th:data-status-id="${status.id}"
                         th:classappend="${status.currentUserIsLiked} ? 'liked' : ''">
                     <i class="fas fa-heart"></i> Thích (<span class="like-count" th:text="${status.likeCount}"></span>)
@@ -144,58 +158,55 @@
                 </button>
             </div>
         </div>
-
-
     </div>
 
     <!-- Right Sidebar -->
     <div class="sidebar">
         <h5><i class="fas fa-users"></i> Người liên hệ</h5>
-        <div class="friend-item" th:each="friend : ${friends}"
-             th:attr="data-id=${friend.id},data-name=${friend.firstName + ' ' + friend.lastName},data-type='friend'
-                ,data-avatar=${friend.profilePicture}">
-            <img th:if="${friend.profilePicture != null and !#strings.isEmpty(friend.profilePicture)}"
-                 th:src="${friend.profilePicture}" alt="Avatar"
-                 class="rounded-circle nav-icon-wrapper me-3"/>
-
-            <img th:unless="${friend.profilePicture != null and !#strings.isEmpty(friend.profilePicture)}"
-                 th:src="@{/images/default-avatar.jpg}" alt="Avatar"
-                 class="rounded-circle nav-icon-wrapper me-3"/>
-
-            <span th:text="${friend.firstName + ' ' + friend.lastName}"></span>
+        <div id="onlineFriendsList">
+            <!-- Hiển thị loading ban đầu -->
+            <div class="text-center p-3">
+                <i class="fas fa-spinner fa-spin"></i> Đang tải...
+            </div>
         </div>
 
         <hr class="divider">
 
         <h5><i class="fas fa-fire"></i> Nhóm</h5>
         <div class="group-item">
+            <!-- Groups sẽ thêm sau -->
         </div>
     </div>
 </div>
 
+<!-- Chat Container -->
 <div class="chat-container" id="chatContainer"></div>
+
+<!-- Load JavaScript files -->
 <script th:src="@{/js/chat.js}"></script>
 <script th:inline="javascript">
+    /*<![CDATA[*/
+    const currentUser = /*[[${#authentication.principal.username}]]*/ 'defaultUser';
+    const currentUserId = /*[[${#authentication.principal.user.id}]]*/ '1';
 
-    const currentUser = [[${#authentication.principal.username}]];
+    // Set current user ID in meta tag for chat.js
+    document.querySelector('meta[name="user-id"]').content = currentUserId;
 
-    // Kết nối WebSocket
+    // Kết nối WebSocket cho like/unlike
     const socket = new SockJS('/ws');
     const stompClient = Stomp.over(socket);
 
     stompClient.connect({}, function (frame) {
         console.log('Connected: ' + frame);
 
-        // Subscribe vào các topic cần thiết
+        // Subscribe vào các topic cần thiết cho posts
         document.querySelectorAll('.post').forEach(post => {
             const statusId = post.querySelector('.like-btn').getAttribute('data-status-id');
             stompClient.subscribe('/topic/status/' + statusId + '/likes', function (message) {
                 const data = JSON.parse(message.body);
                 if (data.userName === currentUser) {
-                    // Chính mình click => update cả likeCount và class .liked
                     updateLikeUI(data.statusId, data.likeCount, data.isLiked);
                 } else {
-                    // Người khác click => chỉ update số lượng like
                     const btn = document.querySelector(`.like-btn[data-status-id="${data.statusId}"]`);
                     if (btn) {
                         btn.querySelector('.like-count').textContent = data.likeCount;
@@ -203,8 +214,18 @@
                 }
             });
         });
-    });
 
+        // Subscribe to personal message queue for chat
+        stompClient.subscribe(`/user/${currentUserId}/queue/messages`, function (message) {
+            const messageData = JSON.parse(message.body);
+            handleIncomingMessage(messageData);
+        });
+
+        // Load online friends after WebSocket connection
+        loadOnlineFriends();
+    }, function (error) {
+        console.log('WebSocket connection error: ' + error);
+    });
 
     function updateLikeUI(statusId, likeCount, isLiked) {
         const likeBtn = document.querySelector(`.like-btn[data-status-id="${statusId}"]`);
@@ -235,7 +256,6 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    // Không toggle ở đây nữa, chỉ cập nhật bằng server response
                     updateLikeUI(data.statusId, data.likeCount, data.isLiked);
                 }
             } catch (error) {
@@ -244,6 +264,172 @@
         });
     });
 
+    // Load online friends for sidebar
+    function loadOnlineFriends() {
+        fetch('/api/chat/online-friends')
+            .then(response => response.json())
+            .then(friends => {
+                const friendsList = document.getElementById('onlineFriendsList');
+
+                if (friends.length === 0) {
+                    friendsList.innerHTML = `
+                        <div class="text-center p-3 text-muted">
+                            <i class="fas fa-user-friends"></i><br>
+                            Không có bạn bè online
+                        </div>
+                    `;
+                    return;
+                }
+
+                friendsList.innerHTML = friends.map(friend => `
+                    <div class="friend-item-enhanced" onclick="openChatFromSidebar('${friend.id}', '${friend.name}', '${friend.avatar || '/images/default-avatar.jpg'}')">
+                        <div style="position: relative;">
+                            <img src="${friend.avatar || '/images/default-avatar.jpg'}" alt="${friend.name}" class="friend-avatar">
+                            ${friend.isOnline ? '<div class="online-indicator"></div>' : ''}
+                        </div>
+                        <span class="friend-name">${friend.name}</span>
+                    </div>
+                `).join('');
+            })
+            .catch(error => {
+                console.error('Error loading online friends:', error);
+                document.getElementById('onlineFriendsList').innerHTML = `
+                    <div class="text-center p-3 text-danger">
+                        <i class="fas fa-exclamation-triangle"></i><br>
+                        Lỗi tải danh sách
+                    </div>
+                `;
+            });
+    }
+
+    // Function to open chat from sidebar (called from inline onclick)
+    function openChatFromSidebar(userId, userName, avatar) {
+        if (typeof openChat === 'function') {
+            openChat(userId, userName, avatar);
+        }
+    }
+
+    // Handle incoming chat messages
+    function handleIncomingMessage(messageData) {
+        const senderId = messageData.senderId;
+        const content = messageData.content;
+        const senderName = messageData.senderName;
+        const senderAvatar = messageData.senderAvatar;
+
+        // Check if chat window is open
+        if (typeof openChats !== 'undefined' && openChats.has(senderId.toString())) {
+            // Add message to existing chat
+            const messagesContainer = document.getElementById(`messages-${senderId}`);
+            if (messagesContainer) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message received';
+                messageDiv.innerHTML = `
+                    <img src="${senderAvatar || '/images/default-avatar.jpg'}" alt="${senderName}" class="message-avatar">
+                    <div class="message-content">${content}</div>
+                `;
+                messagesContainer.appendChild(messageDiv);
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+        } else {
+            // Show notification
+            showMessageNotification(senderId, senderName, content, senderAvatar);
+        }
+    }
+
+    function showMessageNotification(senderId, senderName, content, senderAvatar) {
+        // Create notification popup
+        const notification = document.createElement('div');
+        notification.className = 'message-notification';
+        notification.innerHTML = `
+            <div class="notification-content">
+                <img src="${senderAvatar || '/images/default-avatar.jpg'}" alt="${senderName}" class="notification-avatar">
+                <div class="notification-text">
+                    <div class="notification-name">${senderName}</div>
+                    <div class="notification-message">${content}</div>
+                </div>
+            </div>
+        `;
+
+        notification.style.cssText = `
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            padding: 12px;
+            max-width: 300px;
+            cursor: pointer;
+            z-index: 10000;
+            animation: slideInRight 0.3s ease;
+        `;
+
+        notification.onclick = () => {
+            if (typeof openChat === 'function') {
+                openChat(senderId.toString(), senderName, senderAvatar);
+            }
+            notification.remove();
+        };
+
+        document.body.appendChild(notification);
+
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 5000);
+    }
+
+    // Refresh online friends every 30 seconds
+    setInterval(loadOnlineFriends, 30000);
+
+    /*]]>*/
 </script>
+
+<!-- Add notification styles -->
+<style>
+    @keyframes slideInRight {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    .message-notification .notification-content {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .message-notification .notification-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+
+    .message-notification .notification-name {
+        font-weight: 600;
+        font-size: 14px;
+        color: #050505;
+    }
+
+    .message-notification .notification-message {
+        font-size: 13px;
+        color: #65676b;
+        margin-top: 2px;
+    }
+
+    .message-notification:hover {
+        transform: scale(1.02);
+        transition: transform 0.2s ease;
+    }
+</style>
+
 </body>
 </html>

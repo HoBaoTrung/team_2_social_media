@@ -2,12 +2,11 @@
         xmlns:th="http://www.thymeleaf.org"
         xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
     <link rel="stylesheet" th:href="@{/css/header.css}">
-    <nav class="navbar navbar-expand-lg  shadow-sm">
+    <nav class="navbar navbar-expand-lg shadow-sm">
         <div class="container-fluid d-flex justify-content-between align-items-center px-3">
 
             <!-- LEFT: Logo + Search -->
             <div class="d-flex align-items-center" style="gap: 10px;">
-
                 <a class="navbar-brand me-2 logo" th:href="@{/news-feed}">
                     <img th:src="@{/images/2023_Facebook_icon.svg.webp}" alt="Facebook" height="42">
                 </a>
@@ -19,7 +18,7 @@
             </div>
 
             <!-- CENTER: Navigation icons -->
-            <div class="d-none d-lg-flex justify-content-center align-items-center flex-grow-1 navigation-center ">
+            <div class="d-none d-lg-flex justify-content-center align-items-center flex-grow-1 navigation-center">
                 <a class="nav-link nav-icon nav-icon-wrapper" th:href="@{/news-feed}" title="Trang chủ" data-bs-toggle="tooltip"
                    data-bs-placement="bottom">
                     <i class="fas fa-home"></i>
@@ -38,14 +37,24 @@
                 </a>
             </div>
 
-
             <!-- RIGHT: Messages, Notifications, User -->
             <div class="d-flex align-items-center gap-3">
-                <!-- Icon Tin nhắn -->
-                <div class="nav-icon-wrapper" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Tin nhắn">
-                    <a class="nav-icon" th:href="@{/messages}">
-                        <i class="fas fa-comment-dots fa-lg"></i>
-                    </a>
+                <!-- Icon Tin nhắn với dropdown -->
+                <div class="nav-icon-wrapper position-relative" id="messageIcon" data-bs-toggle="tooltip"
+                     data-bs-placement="bottom" title="Tin nhắn">
+                    <i class="fas fa-comment-dots fa-lg" style="color: white;"></i>
+                    <!-- Message Dropdown -->
+                    <div class="message-dropdown" id="messageDropdown">
+                        <div class="dropdown-header">
+                            <div class="dropdown-title">Tin nhắn</div>
+                        </div>
+                        <div class="conversation-list" id="conversationList">
+                            <!-- Conversations sẽ được load bằng AJAX -->
+                            <div class="text-center p-3">
+                                <i class="fas fa-spinner fa-spin"></i> Đang tải...
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Icon Thông báo -->
@@ -58,7 +67,7 @@
                 <!-- Nếu đã đăng nhập -->
                 <div class="nav-item dropdown" sec:authorize="isAuthenticated()">
                     <a class="nav-link dropdown-toggle dropdown-toggle p-0 d-flex align-items-center" href="#" role="button"
-                        data-bs-toggle="dropdown" aria-expanded="false">
+                       data-bs-toggle="dropdown" aria-expanded="false">
                         <img th:if="${#authentication.principal.avatarUrl != null and !#strings.isEmpty(#authentication.principal.avatarUrl)}"
                              th:src="${#authentication.principal.avatarUrl}" alt="Avatar"
                              class="rounded-circle nav-icon-wrapper"/>
@@ -67,7 +76,7 @@
                              th:src="@{/images/default-avatar.jpg}" alt="Avatar"
                              class="rounded-circle nav-icon-wrapper"/>
                     </a>
-                    <ul class="dropdown-menu dropdown-menu-end" >
+                    <ul class="dropdown-menu dropdown-menu-end">
                         <li>
                             <a class="dropdown-item d-flex align-items-center"
                                th:href="@{|/profile/${#authentication.principal.username}|}">
@@ -83,7 +92,7 @@
                         <li>
                             <form th:action="@{/logout}" method="post" style="margin: 0;">
                                 <button type="submit" class="dropdown-item text-danger">
-                                    <i class="fas fa-sign-out-alt icon" ></i>
+                                    <i class="fas fa-sign-out-alt icon"></i>
                                     Đăng xuất</button>
                             </form>
                         </li>
@@ -98,7 +107,6 @@
                     </a>
                 </div>
             </div>
-
         </div>
     </nav>
 
@@ -122,6 +130,81 @@
                     link.classList.remove("active");
                 }
             });
+
+            // Message dropdown functionality
+            setupMessageDropdown();
         });
+
+        function setupMessageDropdown() {
+            const messageIcon = document.getElementById('messageIcon');
+            const messageDropdown = document.getElementById('messageDropdown');
+
+            // Toggle dropdown
+            messageIcon.addEventListener('click', function(e) {
+                e.stopPropagation();
+                messageDropdown.classList.toggle('show');
+
+                // Load conversations when opening
+                if (messageDropdown.classList.contains('show')) {
+                    loadConversations();
+                }
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('#messageIcon')) {
+                    messageDropdown.classList.remove('show');
+                }
+            });
+        }
+
+        function loadConversations() {
+            fetch('/api/conversations')
+                .then(response => response.json())
+                .then(conversations => {
+                    const conversationList = document.getElementById('conversationList');
+
+                    if (conversations.length === 0) {
+                        conversationList.innerHTML = `
+                            <div class="text-center p-3 text-muted">
+                                <i class="fas fa-comments"></i><br>
+                                Chưa có cuộc trò chuyện nào
+                            </div>
+                        `;
+                        return;
+                    }
+
+                    conversationList.innerHTML = conversations.map(conv => `
+                        <div class="conversation-item" onclick="openChatFromDropdown('${conv.id}', '${conv.name}', '${conv.avatar}')">
+                            <div style="position: relative;">
+                                <img src="${conv.avatar || '/images/default-avatar.jpg'}" alt="Avatar" class="conversation-avatar">
+                                ${conv.isOnline ? '<div class="online-dot"></div>' : ''}
+                            </div>
+                            <div class="conversation-info">
+                                <div class="conversation-preview">${conv.lastMessage || 'Chưa có tin nhắn'} • ${conv.timeAgo}</div>
+                            </div>
+                        </div>
+                    `).join('');
+                })
+                .catch(error => {
+                    console.error('Error loading conversations:', error);
+                    document.getElementById('conversationList').innerHTML = `
+                        <div class="text-center p-3 text-danger">
+                            <i class="fas fa-exclamation-triangle"></i><br>
+                            Lỗi tải danh sách
+                        </div>
+                    `;
+                });
+        }
+
+        function openChatFromDropdown(userId, userName, avatar) {
+            // Close dropdown
+            document.getElementById('messageDropdown').classList.remove('show');
+
+            // Call the global openChat function
+            if (typeof openChat === 'function') {
+                openChat(userId, userName, avatar);
+            }
+        }
     </script>
 </header>

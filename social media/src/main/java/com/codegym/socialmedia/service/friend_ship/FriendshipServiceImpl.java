@@ -234,4 +234,6 @@ public class FriendshipServiceImpl implements FriendshipService {
 
         return new PageImpl<>(friendDtos, pageable, receivedRequestsPage.getTotalElements());
     }
+
+
 }

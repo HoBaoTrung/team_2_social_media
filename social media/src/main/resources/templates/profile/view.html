@@ -21,10 +21,14 @@
         <img class="avatar"
              th:unless="${user.profilePicture != null and !#strings.isEmpty(user.profilePicture)}"
              th:src="@{/images/default-avatar.jpg}" alt="Avatar">
-        <div class="user-name" th:text="${user.firstName + ' ' + user.lastName}">Tên người dùng</div>
+        <div class="user-name" th:text="${user.firstName + ' ' + user.lastName}">Tên người dùng</div><!-- Trong file templates/profile/view.html -->
         <div class="button-group" th:if="${!isOwner}">
             <div th:insert="fragments/friend-button-group :: buttonGroup(${user.username}, ${friendshipStatus}, ${isSender}, ${isReceiver}, ${allowFriendRequests},false)"></div>
-            <button th:if="${canSendMessage}" class="btn btn-primary">
+
+            <!-- Thêm nút Nhắn tin -->
+            <button th:if="${canSendMessage}"
+                    class="btn btn-primary"
+                    th:onclick="|openChatFromProfile('${user.id}', '${user.firstName} ${user.lastName}', '${user.profilePicture}')|">
                 <i class="fa-solid fa-message"></i> Nhắn tin
             </button>
         </div>
