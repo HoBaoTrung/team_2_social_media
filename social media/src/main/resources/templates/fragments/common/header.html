@@ -98,7 +98,7 @@
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li>
-                            <a class="dropdown-item d-flex align-items-center"
+                            <a class="dropdown-item d-flex align-items-center"  id="profileLink"
                                th:href="@{|/profile/${#authentication.principal.username}|}">
                                 <img th:src="${#authentication.principal.avatarUrl}" alt="Avatar"
                                      class="rounded-circle nav-icon-wrapper"/>
@@ -205,7 +205,6 @@
 
             const el = document.getElementById(BADGE_ID);
 
-            console.log(el)
             if (!el) return;
             if (!n || n <= 0) {
                 el.style.display = 'none';
@@ -228,10 +227,12 @@
         }
 
         function buildLink(n) {
+            console.log(n)
             if (!n) return '#';
             switch ((n.referenceType || '').toUpperCase()) {
                 case 'POST':
-                    return `/posts/${n.referenceId}`;
+                    let profileUrl = document.getElementById("profileLink").getAttribute("href") + '?postID=' + n.referenceId;
+                    return profileUrl;
                 case 'COMMENT':
                     // If you want to scroll to comment in post, include postId in payload; fallback:
                     return `/posts/${n.referenceId}`;

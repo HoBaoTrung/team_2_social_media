@@ -222,8 +222,9 @@ public class PostController {
 
     @GetMapping("/api/user/{username}")
     @ResponseBody
-    public ResponseEntity<Page<PostDisplayDto>> getUserPosts(
+    public ResponseEntity<?> getUserPosts(
             @PathVariable String username,
+            @RequestParam(value = "postID", defaultValue = "-1") long postID,
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "10") int size) {
 
@@ -233,18 +234,22 @@ public class PostController {
         }
 
         User currentUser = userService.getCurrentUser();
-        Pageable pageable = PageRequest.of(page, size);
 
-        Page<PostDisplayDto> posts;
-        if (currentUser != null) {
-            posts = postService.getPostsByUser(targetUser, currentUser, pageable);
-        } else {
-            posts = postService.getPublicPostsByUser(targetUser, currentUser, pageable);
+        if (postID == -1) {
+            Pageable pageable = PageRequest.of(page, size);
+
+            Page<PostDisplayDto> posts;
+            if (currentUser != null) {
+                posts = postService.getPostsByUser(targetUser, currentUser, pageable);
+            } else {
+                posts = postService.getPublicPostsByUser(targetUser, currentUser, pageable);
+            }
+
+            return ResponseEntity.ok(posts);
         }
-
-        return ResponseEntity.ok(posts);
+        PostDisplayDto postDto = postService.getPostById(postID, currentUser);
+        return ResponseEntity.ok(postDto);
     }
-
     @GetMapping("/api/user/{username}/photos")
     @ResponseBody
     public ResponseEntity<List<Map<String, String>>> getUserPhotos(@PathVariable String username) {
@@ -383,35 +388,4 @@ public class PostController {
         }
     }
 
-    // ================== COMMENT API ENDPOINTS (TẠM THỜI COMMENT OUT) ==================
-
-    /*
-    // Sẽ implement sau khi có PostCommentService
-    @PostMapping("/api/{postId}/comments")
-    @ResponseBody
-    public ResponseEntity<Map<String, Object>> createComment(
-            @PathVariable Long postId,
-            @RequestParam String content) {
-
-        Map<String, Object> response = new HashMap<>();
-        User currentUser = userService.getCurrentUser();
-
-        if (currentUser == null) {
-            response.put("success", false);
-            response.put("message", "Vui lòng đăng nhập");
-            return ResponseEntity.status(401).body(response);
-        }
-
-        try {
-            // TODO: Implement when PostCommentService is ready
-            response.put("success", true);
-            response.put("message", "Bình luận thành công");
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            response.put("success", false);
-            response.put("message", "Có lỗi xảy ra: " + e.getMessage());
-            return ResponseEntity.status(500).body(response);
-        }
-    }
-    */
 }

@@ -1,6 +1,7 @@
-import { formatTimeAgo } from './timeUtils.js';
+import {formatTimeAgo} from './timeUtils.js';
+
 // Posts JavaScript
- class PostManager {
+class PostManager {
     constructor() {
         this.currentPage = 0;
         this.isLoading = false;
@@ -168,6 +169,8 @@ import { formatTimeAgo } from './timeUtils.js';
 
         if (this.username != null && this.username != undefined && this.username.trim() != '') {
             controllerURL = `/posts/api/user/${this.username}?page=${this.currentPage}&size=10`;
+            const urlParams = new URLSearchParams(window.location.search);
+            controllerURL += '&postID=' + (urlParams.get('postID') ? parseInt(urlParams.get('postID')) : -1);
         }
 
         try {
@@ -180,23 +183,30 @@ import { formatTimeAgo } from './timeUtils.js';
                 }
             });
 
-            if (data.content && data.content.length > 0) {
-                data.content.forEach(post => {
-                    this.appendPost(post);
-                });
+            if ('pageable' in data && Array.isArray(data.content)) {
+                if (data.content && data.content.length > 0) {
+                    data.content.forEach(post => {
+                        this.appendPost(post);
+                    });
 
-                this.currentPage++;
-                this.hasMorePosts = !data.last;
-            } else {
-                this.hasMorePosts = false;
-                if (this.currentPage === 0) {
-                    const noPostsEl = document.getElementById('profile-no-posts');
-                    if (noPostsEl) {
-                        noPostsEl.style.display = 'block';
+                    this.currentPage++;
+                    this.hasMorePosts = !data.last;
+                } else {
+                    this.hasMorePosts = false;
+                    if (this.currentPage === 0) {
+                        const noPostsEl = document.getElementById('profile-no-posts');
+                        if (noPostsEl) {
+                            noPostsEl.style.display = 'block';
+                        }
                     }
+                    this.showNoMorePosts();
                 }
-                this.showNoMorePosts();
+            } else {
+                this.appendPost(data);
+                this.hasMorePosts = false;
             }
+
+
         } catch (error) {
             console.error('Error loading posts:', error);
 
@@ -381,7 +391,7 @@ import { formatTimeAgo } from './timeUtils.js';
     // toggle like (gửi API)
     async toggleLike(id, like_type) {
         let url;
-        if(like_type == 'post') url=`/posts/api/like/${id}`;
+        if (like_type == 'post') url = `/posts/api/like/${id}`;
         else if (like_type == 'comment') url = `/comment/api/like/${id}`;
         try {
             const response = await fetch(url, {
@@ -407,7 +417,7 @@ import { formatTimeAgo } from './timeUtils.js';
     // cập nhật class liked của nút like
     updateLikeButton(id, isLiked, like_type) {
         let likeBtn;
-        if(like_type == 'post') likeBtn = document.querySelector(
+        if (like_type == 'post') likeBtn = document.querySelector(
             `.post-item[data-post-id="${id}"] .post-action`
         );
 
@@ -661,76 +671,77 @@ import { formatTimeAgo } from './timeUtils.js';
             }
         }
     }
+
 // Thuộc tính của class
-     commentState = {}; // { [postId]: { page, hasMore, loading, size } }
+    commentState = {}; // { [postId]: { page, hasMore, loading, size } }
 
 // ===== Toggle + bind scroll =====
-     toggleComments(postId) {
-         const section = document.getElementById(`comments-${postId}`);
-         // Đừng dùng element.style.display; dùng computedStyle để bắt đúng lần đầu
-         const isVisible = window.getComputedStyle(section).display !== 'none';
+    toggleComments(postId) {
+        const section = document.getElementById(`comments-${postId}`);
+        // Đừng dùng element.style.display; dùng computedStyle để bắt đúng lần đầu
+        const isVisible = window.getComputedStyle(section).display !== 'none';
 
-         if (isVisible) {
-             section.style.display = 'none';
-             return;
-         }
+        if (isVisible) {
+            section.style.display = 'none';
+            return;
+        }
 
-         section.style.display = 'block';
+        section.style.display = 'block';
 
-         // Khởi tạo state 1 lần cho post
-         if (!this.commentState[postId]) {
-             this.commentState[postId] = { page: 0, hasMore: true, loading: false, size: 2};
-         } else {
-             // Mỗi lần mở lại muốn load từ đầu: reset nếu cần
-             this.commentState[postId].page = 0;
-             this.commentState[postId].hasMore = true;
-         }
+        // Khởi tạo state 1 lần cho post
+        if (!this.commentState[postId]) {
+            this.commentState[postId] = {page: 0, hasMore: true, loading: false, size: 2};
+        } else {
+            // Mỗi lần mở lại muốn load từ đầu: reset nếu cần
+            this.commentState[postId].page = 0;
+            this.commentState[postId].hasMore = true;
+        }
 
-         const $container = $(`#comments-list-${postId}`);
+        const $container = $(`#comments-list-${postId}`);
 
-         // Load trang đầu
-         this.loadComments(postId, /*append*/ false).then(() => {
-             // Nếu nội dung chưa đủ tạo thanh cuộn, tự fill thêm đến khi đủ (hoặc hết dữ liệu)
-             this._prefillViewport(postId);
-         });
+        // Load trang đầu
+        this.loadComments(postId, /*append*/ false).then(() => {
+            // Nếu nội dung chưa đủ tạo thanh cuộn, tự fill thêm đến khi đủ (hoặc hết dữ liệu)
+            this._prefillViewport(postId);
+        });
 
-         // Gắn scroll 1 lần
-         if (!$container.data('scrollBound')) {
-             $container.on('scroll', () => {
-                 const el = $container[0];
-                 // gần chạm đáy
-                 if (el.scrollTop + el.clientHeight >= el.scrollHeight - 10) {
-                     const st = this.commentState[postId];
-                     if (!st.loading && st.hasMore) {
-                         this.loadComments(postId, /*append*/ true);
-                     }
-                 }
-             });
-             $container.data('scrollBound', true);
-         }
-     }
+        // Gắn scroll 1 lần
+        if (!$container.data('scrollBound')) {
+            $container.on('scroll', () => {
+                const el = $container[0];
+                // gần chạm đáy
+                if (el.scrollTop + el.clientHeight >= el.scrollHeight - 10) {
+                    const st = this.commentState[postId];
+                    if (!st.loading && st.hasMore) {
+                        this.loadComments(postId, /*append*/ true);
+                    }
+                }
+            });
+            $container.data('scrollBound', true);
+        }
+    }
 
 // ===== Load comments theo trang =====
-     loadComments(postId, append = true) {
-         const st = this.commentState[postId];
-         if (!st || st.loading || (!append && st.page !== 0)) return Promise.resolve();
+    loadComments(postId, append = true) {
+        const st = this.commentState[postId];
+        if (!st || st.loading || (!append && st.page !== 0)) return Promise.resolve();
 
-         st.loading = true;
+        st.loading = true;
 
-         const page = st.page;
-         const size = st.size;
+        const page = st.page;
+        const size = st.size;
 
-         return $.ajax({
-             url: `/api/${postId}/comments`,
-             type: 'GET',
-             data: { page, size }
-         }).done((data) => {
-             const $container = $(`#comments-list-${postId}`);
-             if (!append) $container.empty();
+        return $.ajax({
+            url: `/api/${postId}/comments`,
+            type: 'GET',
+            data: {page, size}
+        }).done((data) => {
+            const $container = $(`#comments-list-${postId}`);
+            if (!append) $container.empty();
 
-             (data.comments || []).forEach(c => {
-                 const timeAgo = formatTimeAgo(c.createdAt); // xem hàm bên dưới
-                 const $card = $(`
+            (data.comments || []).forEach(c => {
+                const timeAgo = formatTimeAgo(c.createdAt); // xem hàm bên dưới
+                const $card = $(`
                 <div class="comment-card d-flex">
                     <img src="${c.userAvatarUrl || ''}" alt="avatar" class="comment-avatar">
                     <div>
@@ -751,34 +762,34 @@ import { formatTimeAgo } from './timeUtils.js';
                     </div>
                 </div>
             `);
-                 $container.append($card);
-             });
+                $container.append($card);
+            });
 
-             // cập nhật phân trang
-             st.page = page + 1;
-             st.hasMore = (data.comments || []).length === size;
-         }).fail((xhr) => {
-             console.error('Lỗi load comments:', xhr?.responseText || xhr?.statusText);
-         }).always(() => {
-             st.loading = false;
-         });
-     }
+            // cập nhật phân trang
+            st.page = page + 1;
+            st.hasMore = (data.comments || []).length === size;
+        }).fail((xhr) => {
+            console.error('Lỗi load comments:', xhr?.responseText || xhr?.statusText);
+        }).always(() => {
+            st.loading = false;
+        });
+    }
 
 // ===== Tự lấp đầy cho đến khi có thanh cuộn (đề phòng size quá nhỏ) =====
-     _prefillViewport(postId) {
-         const $container = $(`#comments-list-${postId}`);
-         const el = $container[0];
-         const st = this.commentState[postId];
-         let guard = 0;
+    _prefillViewport(postId) {
+        const $container = $(`#comments-list-${postId}`);
+        const el = $container[0];
+        const st = this.commentState[postId];
+        let guard = 0;
 
-         const fill = () => {
-             if (!st || guard++ > 5) return; // tối đa 5 lần để tránh vòng lặp vô hạn
-             if (el.scrollHeight <= el.clientHeight && st.hasMore && !st.loading) {
-                 this.loadComments(postId, true).then(fill);
-             }
-         };
-         fill();
-     }
+        const fill = () => {
+            if (!st || guard++ > 5) return; // tối đa 5 lần để tránh vòng lặp vô hạn
+            if (el.scrollHeight <= el.clientHeight && st.hasMore && !st.loading) {
+                this.loadComments(postId, true).then(fill);
+            }
+        };
+        fill();
+    }
 
     handleCommentKeyPress(event, postId) {
         if (event.key === 'Enter' && !event.shiftKey) {
@@ -922,6 +933,7 @@ import { formatTimeAgo } from './timeUtils.js';
         }
     }
 }
+
 let stompClient = null;
 // Initialize PostManager when DOM is loaded
 document.addEventListener('DOMContentLoaded', function () {
