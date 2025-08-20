@@ -166,11 +166,13 @@ class PostManager {
         this.showLoading(true);
 
         let controllerURL = `/posts/api/feed?page=${this.currentPage}&size=10`;
+        const urlParams = new URLSearchParams(window.location.search);
+        controllerURL += '&postID=' + (urlParams.get('postID') ? parseInt(urlParams.get('postID')) : -1);
+
+        controllerURL += '&commentID=' + (urlParams.get('commentID') ? parseInt(urlParams.get('commentID')) : -1);
 
         if (this.username != null && this.username != undefined && this.username.trim() != '') {
             controllerURL = `/posts/api/user/${this.username}?page=${this.currentPage}&size=10`;
-            const urlParams = new URLSearchParams(window.location.search);
-            controllerURL += '&postID=' + (urlParams.get('postID') ? parseInt(urlParams.get('postID')) : -1);
         }
 
         try {
@@ -204,6 +206,7 @@ class PostManager {
             } else {
                 this.appendPost(data);
                 this.hasMorePosts = false;
+                this.goToComment(urlParams.get('commentID'),data.id)
             }
 
 
@@ -220,6 +223,53 @@ class PostManager {
             this.showLoading(false);
         }
     }
+    async goToComment(commentId, postId) {
+        const section = document.getElementById(`comments-${postId}`);
+        if (!section) {
+            console.error(`Comments section for post ${postId} not found`);
+            return;
+        }
+
+        // Hiển thị danh sách bình luận nếu chưa hiển thị
+        if (window.getComputedStyle(section).display === 'none') {
+            this.toggleComments(postId);
+        }
+
+        const HIGHLIGHT_DURATION = 2000;
+
+        // Hàm phụ để tìm và cuộn đến comment
+        const tryScrollToComment = async () => {
+            let commentElement = document.getElementById(`comment-id-${commentId}`);
+            const state = this.commentState[postId] = {page: 0, hasMore: true, loading: false, size: 2};
+
+            console.log(state)
+            // Nếu comment chưa tồn tại và vẫn còn bình luận để tải
+            while (!commentElement && state && state.hasMore && !state.loading) {
+                console.log("123131sa31d3a21sd")
+                await this.loadComments(postId, true); // Tải thêm bình luận
+                commentElement = document.getElementById(`comment-id-${commentId}`); // Kiểm tra lại
+            }
+
+            // Nếu tìm thấy commentElement
+            if (commentElement) {
+                commentElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                commentElement.style.backgroundColor = '#e3f2fd';
+                setTimeout(() => {
+                    commentElement.style.backgroundColor = '';
+                }, HIGHLIGHT_DURATION);
+            } else {
+                console.error(`Comment ${commentId} not found after loading all available comments`);
+            }
+        };
+
+        // Thực thi tìm kiếm và cuộn
+        try {
+            await tryScrollToComment();
+        } catch (error) {
+            console.error(`Error while trying to scroll to comment ${commentId}:`, error);
+        }
+    }
+   
 
     showNoMorePosts() {
         const noMorePosts = document.getElementById('no-more-posts');
@@ -742,7 +792,7 @@ class PostManager {
             (data.comments || []).forEach(c => {
                 const timeAgo = formatTimeAgo(c.createdAt); // xem hàm bên dưới
                 const $card = $(`
-                <div class="comment-card d-flex">
+                <div id="comment-id-${c.id}" class="comment-card d-flex">
                     <img src="${c.userAvatarUrl || ''}" alt="avatar" class="comment-avatar">
                     <div>
                         <strong>${c.userFullName || c.username || ''}</strong>

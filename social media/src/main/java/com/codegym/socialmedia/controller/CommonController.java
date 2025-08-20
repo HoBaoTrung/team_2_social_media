@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.annotation.SendToUser;
@@ -31,24 +32,18 @@ import java.util.Map;
 public class CommonController {
 
     @Autowired
-   private UserService userService;
+    private UserService userService;
 
     @Autowired
     private PostService postService;
 
     @GetMapping("/news-feed")
-    public String postsPage(Model model,
-                            @RequestParam(value = "page", defaultValue = "0") int page,
-                            @RequestParam(value = "size", defaultValue = "10") int size) {
+    public String postsPage(Model model) {
         User currentUser = userService.getCurrentUser();
         if (currentUser == null) {
             return "redirect:/login";
         }
 
-        Pageable pageable = PageRequest.of(page, size);
-        Page<PostDisplayDto> posts = postService.getPostsForNewsFeed(currentUser, pageable);
-
-        model.addAttribute("posts", posts);
         model.addAttribute("postCreateDto", new PostCreateDto());
         model.addAttribute("privacyLevels", PrivacyLevel.values());
 

@@ -12,6 +12,8 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class DisplayCommentDTO {
+    private String id;
+
     // User info
     private Long userId;
     private String username;
@@ -39,7 +41,7 @@ public class DisplayCommentDTO {
         this.updatedAt = comment.getUpdatedAt();
         this.comment = comment.getContent();
         this.commentId = comment.getId();
-
+        this.id=comment.getId().toString();
         this.isLikedByCurrentUser = isLikedByCurrentUser;
     }
 }

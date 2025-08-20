@@ -227,15 +227,14 @@
         }
 
         function buildLink(n) {
-            console.log(n)
+
             if (!n) return '#';
             switch ((n.referenceType || '').toUpperCase()) {
                 case 'POST':
-                    let profileUrl = document.getElementById("profileLink").getAttribute("href") + '?postID=' + n.referenceId;
+                    let profileUrl = '/news-feed' + '?postID=' + n.referenceId;
                     return profileUrl;
                 case 'COMMENT':
-                    // If you want to scroll to comment in post, include postId in payload; fallback:
-                    return `/posts/${n.referenceId}`;
+                    return `/news-feed?commentID=${n.referenceId}`;
                 case 'FRIENDSHIP':
                     return `/friends?filter=received-requests`;
                 default:

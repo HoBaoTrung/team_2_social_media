@@ -38,8 +38,10 @@ public class PostController {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private PostCommentService commentService;
     // LOẠI BỎ: @Autowired private PostRepository postRepository;
-    // LOẠI BỎ: @Autowired private PostCommentService commentService; (tạm thời vì chưa implement)
+    // LOẠI BỎ: (tạm thời vì chưa implement)
 
     // ================== WEB PAGES ==================
 
@@ -154,7 +156,7 @@ public class PostController {
             @RequestParam String keyword,
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "10") int size,
-            @RequestParam(value = "username") String username ) {
+            @RequestParam(value = "username") String username) {
 
         User user = userService.getUserByUsername(username);
         User currentUser = userService.getCurrentUser();
@@ -163,7 +165,7 @@ public class PostController {
         }
 
         Pageable pageable = PageRequest.of(page, size);
-        Page<PostDisplayDto> posts = postService.searchUserPosts(user,currentUser, keyword, pageable);
+        Page<PostDisplayDto> posts = postService.searchUserPosts(user, currentUser, keyword, pageable);
 
         return ResponseEntity.ok(posts);
     }
@@ -205,26 +207,36 @@ public class PostController {
 
     @GetMapping("/api/feed")
     @ResponseBody
-    public ResponseEntity<Page<PostDisplayDto>> getNewsFeed(
+    public ResponseEntity<?> getNewsFeed(
+            @RequestParam(value = "postID", defaultValue = "-1") long postID,
+            @RequestParam(value = "commentID", defaultValue = "-1") long commentID,
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "10") int size) {
+
+        if (commentID != -1) {
+            PostComment comment = commentService.getCommentById(commentID);
+            postID = comment.getPost().getId();
+        }
 
         User currentUser = userService.getCurrentUser();
         if (currentUser == null) {
             return ResponseEntity.status(401).build();
         }
+        if (postID == -1 && commentID == -1) {
+            Pageable pageable = PageRequest.of(page, size);
+            Page<PostDisplayDto> posts = postService.getPostsForNewsFeed(currentUser, pageable);
 
-        Pageable pageable = PageRequest.of(page, size);
-        Page<PostDisplayDto> posts = postService.getPostsForNewsFeed(currentUser, pageable);
+            return ResponseEntity.ok(posts);
+        }
 
-        return ResponseEntity.ok(posts);
+        PostDisplayDto postDto = postService.getPostById(postID, currentUser);
+        return ResponseEntity.ok(postDto);
     }
 
     @GetMapping("/api/user/{username}")
     @ResponseBody
     public ResponseEntity<?> getUserPosts(
             @PathVariable String username,
-            @RequestParam(value = "postID", defaultValue = "-1") long postID,
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "10") int size) {
 
@@ -235,21 +247,20 @@ public class PostController {
 
         User currentUser = userService.getCurrentUser();
 
-        if (postID == -1) {
-            Pageable pageable = PageRequest.of(page, size);
 
-            Page<PostDisplayDto> posts;
-            if (currentUser != null) {
-                posts = postService.getPostsByUser(targetUser, currentUser, pageable);
-            } else {
-                posts = postService.getPublicPostsByUser(targetUser, currentUser, pageable);
-            }
+        Pageable pageable = PageRequest.of(page, size);
 
-            return ResponseEntity.ok(posts);
+        Page<PostDisplayDto> posts;
+        if (currentUser != null) {
+            posts = postService.getPostsByUser(targetUser, currentUser, pageable);
+        } else {
+            posts = postService.getPublicPostsByUser(targetUser, currentUser, pageable);
         }
-        PostDisplayDto postDto = postService.getPostById(postID, currentUser);
-        return ResponseEntity.ok(postDto);
+
+        return ResponseEntity.ok(posts);
+
     }
+
     @GetMapping("/api/user/{username}/photos")
     @ResponseBody
     public ResponseEntity<List<Map<String, String>>> getUserPhotos(@PathVariable String username) {

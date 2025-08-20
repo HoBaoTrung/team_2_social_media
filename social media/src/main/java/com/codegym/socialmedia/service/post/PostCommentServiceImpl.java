@@ -67,6 +67,11 @@ public class PostCommentServiceImpl implements PostCommentService {
 
     }
 
+    @Override
+    public PostComment getCommentById(Long commentId) {
+        return this.commentRepository.getReferenceById(commentId);
+    }
+
     // Helper methods
     private DisplayCommentDTO convertToDisplayDto(PostComment comment, User currentUser) {
         LikeCommentId likeCommentId = new LikeCommentId();
