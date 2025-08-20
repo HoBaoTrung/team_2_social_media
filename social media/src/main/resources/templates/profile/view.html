@@ -1,15 +1,17 @@
+<!-- Cập nhật file profile/view.html để tích hợp posts -->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <title th:text="${user.firstName + ' ' + user.lastName + ' | Hồ sơ cá nhân'}">Trang cá nhân</title>
     <link rel="stylesheet" th:href="@{/css/view_profile.css}">
     <link rel="stylesheet" th:href="@{/css/friend_card.css}">
-    <th:block th:replace="~{fragments/commonHead :: commonHead}"></th:block>
+    <link rel="stylesheet" th:href="@{/css/post.css}">
+    <th:block th:replace="~{fragments/common/commonHead :: commonHead}"></th:block>
 </head>
 <body>
 
 <!-- HEADER -->
-<div th:replace="~{fragments/header :: header}"></div>
+<div th:replace="~{fragments/common/header :: header}"></div>
 
 <!-- COVER IMAGE + AVATAR -->
 <div class="cover-container">
@@ -23,7 +25,7 @@
              th:src="@{/images/default-avatar.jpg}" alt="Avatar">
         <div class="user-name" th:text="${user.firstName + ' ' + user.lastName}">Tên người dùng</div>
         <div class="button-group" th:if="${!isOwner}">
-            <div th:insert="fragments/friend-button-group :: buttonGroup(${user.username}, ${friendshipStatus}, ${isSender}, ${isReceiver}, ${allowFriendRequests},false)"></div>
+            <div th:insert="fragments/friend/friend-button-group :: buttonGroup(${user.username}, ${friendshipStatus}, ${isSender}, ${isReceiver}, ${allowFriendRequests},false)"></div>
             <button th:if="${canSendMessage}" class="btn btn-primary">
                 <i class="fa-solid fa-message"></i> Nhắn tin
             </button>
@@ -84,7 +86,7 @@
             <div class="row">
                 <div class="col-md-4" th:each="friend, iterStat : ${friends}" th:if="${iterStat.index} < 9">
                     <th:block
-                            th:insert="~{fragments/friendCard :: friendCard(friend=${friend}, nameClass='name-profile')}">
+                            th:insert="~{fragments/friend/friendCard :: friendCard(friend=${friend}, nameClass='name-profile')}">
                     </th:block>
                 </div>
             </div>
@@ -92,43 +94,60 @@
     </div>
 
     <!-- CỘT PHẢI: Nội dung dựa trên filter -->
-    <div class="card-box posts-container" th:if="${filter == 'posts' or filter == 'photos' }" >
-        <!-- Bài viết -->
-        <div th:if="${filter == 'posts'}">
-            <div th:if="${posts.isEmpty()}">
-                <p>Chưa có bài viết nào.</p>
-            </div>
-            <div th:each="post : ${posts}" class="post-card">
-                <div class="post-header">
-                    <img class="post-avatar"
-                         th:src="@{${user.profilePicture != null && !#strings.isEmpty(user.profilePicture) ? user.profilePicture : '/images/default-avatar.jpg'}}"
-                         alt="Avatar">
-                    <div class="post-user-info">
-                        <div class="post-username" th:text="${user.firstName + ' ' + user.lastName}">Tên người dùng
-                        </div>
-                        <div class="post-time" th:text="${#temporals.format(post.createdAt, 'dd/MM/yyyy HH:mm')}">Ngày
-                            đăng
-                        </div>
-                    </div>
-                </div>
-                <div class="post-content" th:text="${post.content}">Nội dung bài viết...</div>
-            </div>
+    <div class="card-box posts-container" th:if="${filter == 'posts'}">
+        <span th:if="${isOwner}">
+            <div th:replace="fragments/post/post-form :: create-post-form"></div>
+        </span>
+        <!-- Posts Feed -->
+        <div id="posts-container" th:data-username="${user.username}">
+            <!-- Posts will be loaded here dynamically -->
         </div>
 
-        <!-- Ảnh -->
-        <div th:if="${filter == 'photos'}">
-            Hình ảnh
+        <!-- Loading indicator -->
+        <div id="profile-loading-indicator" class="text-center py-3" style="display: none;">
+            <i class="fas fa-spinner fa-spin"></i> Đang tải...
+        </div>
+
+        <!-- No posts message -->
+        <div id="profile-no-posts" class="text-center py-5 text-muted" style="display: none;">
+            <div class="mb-3">
+                <i class="fas fa-edit fa-3x"></i>
+            </div>
+            <h5>Chưa có bài viết nào</h5>
+            <p th:if="${isOwner}">Hãy chia sẻ suy nghĩ đầu tiên của bạn!</p>
+            <p th:unless="${isOwner}" th:text="${user.firstName + ' chưa đăng bài viết nào.'}"></p>
+        </div>
+    </div>
+
+    <!-- Photos tab -->
+    <div class="card-box posts-container" th:if="${filter == 'photos'}">
+        <h2>Ảnh</h2>
+        <div id="profile-photos-container" th:data-username="${user.username}">
+            <!-- Photos will be loaded here -->
+        </div>
+
+        <div id="photos-loading" class="text-center py-3" style="display: none;">
+            <i class="fas fa-spinner fa-spin"></i> Đang tải...
+        </div>
+
+        <div id="no-photos" class="text-center py-5 text-muted" style="display: none;">
+            <div class="mb-3">
+                <i class="fas fa-camera fa-3x"></i>
+            </div>
+            <h5>Chưa có ảnh nào</h5>
+            <p th:if="${isOwner}">Hãy thêm ảnh vào bài viết để hiển thị tại đây!</p>
+            <p th:unless="${isOwner}" th:text="${user.firstName + ' chưa có ảnh nào.'}"></p>
         </div>
     </div>
 
     <!-- Bạn bè -->
-    <div  class="card-box profile-content"  th:if="${filter == 'all' or filter == 'mutual' }">
+    <div class="card-box profile-content" th:if="${filter == 'all' or filter == 'mutual' }">
         <input type="hidden" id="targetUserId" th:value="${targetUserId}"/>
         <input type="hidden" id="filterValue" th:value="${filter}"/>
         <div class="row" id="friends-list">
             <div class="col-md-3" th:each="friend : ${friends}">
                 <th:block
-                        th:insert="~{fragments/friendCard :: friendCard(friend=${friend}, nameClass='name-list-friend')}">
+                        th:insert="~{fragments/friend/friendCard :: friendCard(friend=${friend}, nameClass='name-list-friend')}">
                 </th:block>
             </div>
         </div>
@@ -138,7 +157,101 @@
     </div>
 </div>
 
+<!-- Post Search Modal (for posts tab) -->
+<div class="modal fade" id="searchPostsModal" tabindex="-1" th:if="${filter == 'posts'}">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-search"></i> Tìm kiếm bài viết
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <input type="text" id="post-search-input" class="form-control"
+                           placeholder="Nhập từ khóa tìm kiếm...">
+                </div>
+                <div id="search-results-container">
+                    <!-- Search results will appear here -->
+                </div>
+                <div id="search-loading" class="text-center py-3" style="display: none;">
+                    <i class="fas fa-spinner fa-spin"></i> Đang tìm kiếm...
+                </div>
+                <div id="no-search-results" class="text-center py-3 text-muted" style="display: none;">
+                    <i class="fas fa-search"></i> Không tìm thấy bài viết nào
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<span th:if="${isOwner}">
+    <div th:replace="fragments/post/post-form :: edit-post-form"></div>
+</span>
+
+<!-- Add search button for posts tab -->
+<div th:if="${filter == 'posts'}" class="floating-search-btn">
+    <button class="btn btn-primary rounded-circle" data-bs-toggle="modal" data-bs-target="#searchPostsModal">
+        <i class="fas fa-search"></i>
+    </button>
+</div>
+
+<script th:src="@{/js/post.js}"></script>
+<script th:src="@{/js/profile-posts.js}"></script>
 <script th:src="@{/js/load-friend.js}"></script>
 <script th:src="@{/js/friend-button.js}"></script>
+
+<style>
+    .floating-search-btn {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 1000;
+    }
+
+    .floating-search-btn button {
+        width: 56px;
+        height: 56px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    #profile-photos-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 12px;
+        margin-top: 20px;
+    }
+
+    .photo-item {
+        position: relative;
+        aspect-ratio: 1;
+        border-radius: 8px;
+        overflow: hidden;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+
+    .photo-item:hover {
+        transform: scale(1.02);
+    }
+
+    .photo-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    @media (max-width: 768px) {
+        .floating-search-btn {
+            bottom: 80px; /* Account for mobile navigation */
+        }
+
+        #profile-photos-container {
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        }
+    }
+</style>
+
 </body>
 </html>

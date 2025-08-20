@@ -1,24 +1,24 @@
 package com.codegym.socialmedia.controller;
 
 import com.codegym.socialmedia.component.PrivacyUtils;
-import com.codegym.socialmedia.dto.UserDTO;
 import com.codegym.socialmedia.dto.UserRegistrationDto;
 import com.codegym.socialmedia.dto.UserPasswordDto;
 import com.codegym.socialmedia.dto.UserUpdateDto;
 import com.codegym.socialmedia.dto.friend.FriendDto;
 import com.codegym.socialmedia.general_interface.NormalRegister;
+import com.codegym.socialmedia.model.PrivacyLevel;
 import com.codegym.socialmedia.model.account.User;
 import com.codegym.socialmedia.model.account.UserPrivacySettings;
 import com.codegym.socialmedia.model.social_action.Friendship;
-import com.codegym.socialmedia.model.social_action.Status;
 import com.codegym.socialmedia.repository.UserPrivacySettingsRepository;
 import com.codegym.socialmedia.service.friend_ship.FriendshipService;
 import com.codegym.socialmedia.service.user.UserService;
+import com.codegym.socialmedia.service.user.UserStatsService;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -28,10 +28,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.security.Principal;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Map;
 
 @Controller
 public class UserController {
@@ -48,6 +46,10 @@ public class UserController {
     @Autowired
     private FriendshipService friendshipService;
 
+    @Autowired
+    private UserStatsService userStatsService;
+    // =============== PROFILE ===============
+
     @GetMapping("/profile/{username}")
     public String viewProfile(
             @RequestParam(value = "filter", defaultValue = "posts") String filter,
@@ -57,19 +59,27 @@ public class UserController {
         User viewedUser = userService.getUserByUsername(username);
         User currentUser = userService.getCurrentUser();
 
-        boolean isOwner = currentUser.getId().equals(viewedUser.getId());
+        boolean isOwner = currentUser != null
+                && viewedUser != null
+                && currentUser.getId() != null
+                && currentUser.getId().equals(viewedUser.getId());
 
         // Friendship check
         Friendship friendship = null;
-        if (!isOwner) {
+        if (!isOwner && currentUser != null) {
             friendship = friendshipService.findByUsers(currentUser.getId(), viewedUser.getId());
             if (friendship != null) {
-                model.addAttribute("isSender", currentUser.getId() == friendship.getId().getRequesterId());
-                model.addAttribute("isReceiver", currentUser.getId() == friendship.getId().getAddresseeId());
+                boolean isSender = friendship.getRequester() != null
+                        && currentUser.getId().equals(friendship.getRequester().getId());
+                boolean isReceiver = friendship.getAddressee() != null
+                        && currentUser.getId().equals(friendship.getAddressee().getId());
+                model.addAttribute("isSender", isSender);
+                model.addAttribute("isReceiver", isReceiver);
             }
         }
 
-        Friendship.FriendshipStatus friendshipStatus = friendshipService.getFriendshipStatus(viewedUser, currentUser);
+        Friendship.FriendshipStatus friendshipStatus =
+                friendshipService.getFriendshipStatus(viewedUser, currentUser);
         boolean isFriend = (friendshipStatus == Friendship.FriendshipStatus.ACCEPTED);
 
         UserPrivacySettings privacy = viewedUser.getPrivacySettings();
@@ -83,11 +93,12 @@ public class UserController {
         model.addAttribute("canViewFriendList", PrivacyUtils.canView(currentUser, viewedUser, privacy.getShowFriendList(), isFriend));
         model.addAttribute("allowFriendRequests", privacy.isAllowFriendRequests());
 
-        // Lấy danh sách bạn
-        Page<FriendDto> friends;
-        if (filter.equals("mutual") || (!isFriend && !privacy.getShowFriendList().equals(UserPrivacySettings.PrivacyLevel.PUBLIC))) {
+        // Danh sách bạn cho tab Friends/Mutual
+        Page<FriendDto> friends = Page.empty();
+        if ("mutual".equalsIgnoreCase(filter)
+                || (!isFriend && !privacy.getShowFriendList().equals(PrivacyLevel.PUBLIC))) {
             friends = friendshipService.findMutualFriends(viewedUser.getId(), currentUser.getId(), 0, 10);
-        } else if (isOwner || isFriend || !privacy.getShowFriendList().equals(UserPrivacySettings.PrivacyLevel.PRIVATE)) {
+        } else if (isOwner || isFriend || !privacy.getShowFriendList().equals(PrivacyLevel.PRIVATE)) {
             friends = friendshipService.getVisibleFriendList(viewedUser, 0, 10);
         } else {
             friends = Page.empty(); // Tránh NullPointer
@@ -95,17 +106,23 @@ public class UserController {
 
         model.addAttribute("friends", friends.getContent());
         model.addAttribute("friendCount", friendshipService.countFriends(viewedUser.getId()));
-        model.addAttribute("mutualFriendsCount", friendshipService.countMutualFriends(currentUser.getId(), viewedUser.getId()));
+        model.addAttribute("mutualFriendsCount", friendshipService.countMutualFriends(
+                currentUser != null ? currentUser.getId() : null,
+                viewedUser.getId()
+        ));
         model.addAttribute("user", viewedUser);
         model.addAttribute("isOwner", isOwner);
         model.addAttribute("friendshipStatus", friendshipStatus.name());
         model.addAttribute("targetUserId", viewedUser.getId());
         model.addAttribute("filter", filter);
-        model.addAttribute("posts", new ArrayList<>()); // Sau này xử lý sau
+
+        // Placeholder cho posts (sau bạn bind từ PostService)
+        model.addAttribute("posts", new ArrayList<>());
 
         return "profile/view";
     }
 
+    // =============== AUTH / NAV ===============
 
     @GetMapping("/")
     public String home() {
@@ -131,7 +148,6 @@ public class UserController {
         return "login";
     }
 
-
     @GetMapping("/register")
     public String registrationForm(Model model) {
         model.addAttribute("user", new UserRegistrationDto());
@@ -139,7 +155,8 @@ public class UserController {
     }
 
     @PostMapping("/register")
-    public String registerUser(@Validated(NormalRegister.class) @ModelAttribute("user") UserRegistrationDto registrationDto,
+    public String registerUser(@Validated(NormalRegister.class)
+                               @ModelAttribute("user") UserRegistrationDto registrationDto,
                                BindingResult result,
                                Model model,
                                RedirectAttributes redirectAttributes) {
@@ -159,17 +176,10 @@ public class UserController {
 
 
         try {
-            // Đăng ký người dùng
-
-            User newUser = new User();
-
             userService.save(registrationDto);
-
             redirectAttributes.addFlashAttribute("success", "Đăng ký thành công! Vui lòng đăng nhập.");
             redirectAttributes.addFlashAttribute("username", registrationDto.getUsername());
-
             return "redirect:/login";
-
         } catch (Exception e) {
             e.printStackTrace();
             model.addAttribute("error", "Có lỗi xảy ra trong quá trình đăng ký. Vui lòng thử lại.");
@@ -184,6 +194,8 @@ public class UserController {
     public String oauth2LoginSuccess() {
         return "redirect:/news-feed";
     }
+
+    // =============== SETTINGS ===============
 
     @GetMapping("/setting")
     public String showProfile(Model model) {
@@ -212,7 +224,7 @@ public class UserController {
         if (!model.containsAttribute("privacySettings")) {
             model.addAttribute("privacySettings", settings);
         }
-        model.addAttribute("privacyLevels", UserPrivacySettings.PrivacyLevel.values());
+        model.addAttribute("privacyLevels", PrivacyLevel.values());
         model.addAttribute("title", "User Profile");
         return "profile/index";
     }
@@ -280,10 +292,19 @@ public class UserController {
     @PostMapping("/setting/privacy")
     public String updatePrivacySettings(@ModelAttribute UserPrivacySettings dto, RedirectAttributes redirect) {
         privacySettingsRepository.save(dto);
-
         redirect.addFlashAttribute("success", "Cập nhật quyền riêng tư thành công.");
         return "redirect:/setting";
     }
 
+    @GetMapping("/api/user/stats")
+    @ResponseBody
+    public ResponseEntity<Map<String, Long>> getCurrentUserStats() {
+        User currentUser = userService.getCurrentUser();
+        if (currentUser == null) {
+            return ResponseEntity.status(401).build();
+        }
 
+        Map<String, Long> stats = userStatsService.getUserStats(currentUser);
+        return ResponseEntity.ok(stats);
+    }
 }

@@ -1,6 +1,7 @@
 package com.codegym.socialmedia.service.friend_ship;
 
 import com.codegym.socialmedia.dto.friend.FriendDto;
+import com.codegym.socialmedia.model.PrivacyLevel;
 import com.codegym.socialmedia.model.account.User;
 import com.codegym.socialmedia.model.account.UserPrivacySettings;
 import com.codegym.socialmedia.model.social_action.Friendship;
@@ -24,9 +25,6 @@ public class FriendshipServiceImpl implements FriendshipService {
 
     @Autowired
     private FriendshipRepository friendshipRepository;
-
-    @Autowired
-    private IUserRepository userRepository;
 
     @Autowired
     private UserService userService;
@@ -56,6 +54,8 @@ public class FriendshipServiceImpl implements FriendshipService {
             return false;
         }
     }
+
+
 
     @Override
     public boolean acceptFriendship(User user) {
@@ -114,11 +114,11 @@ public class FriendshipServiceImpl implements FriendshipService {
         }
 
         boolean isOwner = viewer.getId().equals(targetUser.getId());
-        UserPrivacySettings.PrivacyLevel level = targetUser.getPrivacySettings().getShowFriendList();
+        PrivacyLevel level = targetUser.getPrivacySettings().getShowFriendList();
         boolean isFriend = getFriendshipStatus(targetUser, viewer) == Friendship.FriendshipStatus.ACCEPTED;
 
         // PRIVATE: chỉ chính chủ được xem hoặc bạn bè xem bạn chung
-        if (level == UserPrivacySettings.PrivacyLevel.PRIVATE) {
+        if (level == PrivacyLevel.PRIVATE) {
             if (isOwner) {
                 return getFriendsPage(targetUser.getId(), viewer.getId(), pageable);
             } else if (isFriend) {
@@ -128,7 +128,7 @@ public class FriendshipServiceImpl implements FriendshipService {
         }
 
         // FRIENDS: chỉ bạn bè hoặc chính chủ được xem
-        if (level == UserPrivacySettings.PrivacyLevel.FRIENDS && !(isFriend || isOwner)) {
+        if (level == PrivacyLevel.FRIENDS && !(isFriend || isOwner)) {
             return new PageImpl<>(Collections.emptyList(), pageable, 0);
         }
 
@@ -234,4 +234,13 @@ public class FriendshipServiceImpl implements FriendshipService {
 
         return new PageImpl<>(friendDtos, pageable, receivedRequestsPage.getTotalElements());
     }
+
+    @Override
+    public List<Friendship> findAllFriendshipsOfUser(Long userId) {
+        return friendshipRepository.findAllFriendshipsOfUser(userId);
+    }
+
+
+
+
 }

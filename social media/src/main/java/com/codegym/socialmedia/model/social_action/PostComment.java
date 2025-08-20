@@ -1,7 +1,8 @@
+// PostComment.java
 package com.codegym.socialmedia.model.social_action;
+
 import com.codegym.socialmedia.model.account.User;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -10,35 +11,30 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
-@Table(name = "comments")
+@Table(name = "post_comments")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Comment {
+public class PostComment {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "status_id")
-    private Status status;
+    @JoinColumn(name = "post_id", nullable = false)
+    private Post post;
 
     @ManyToOne
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @ManyToOne
-    @JoinColumn(name = "parent_comment_id")
-    private Comment parentComment;
-
     @Lob
-    @NotBlank
+    @Column(nullable = false)
     private String content;
 
-    private String imageUrl;
-
+    @Column(nullable = false)
     private boolean isDeleted = false;
-    private boolean isApproved = true;
 
     @CreationTimestamp
     private LocalDateTime createdAt;
@@ -49,5 +45,9 @@ public class Comment {
     @OneToMany(mappedBy = "comment")
     private List<LikeComment> likedByUsers;
 
-
+    @Override
+    public String toString() {
+        return "[id: " + id + ", content: " + content + "]";
+    }
 }
+

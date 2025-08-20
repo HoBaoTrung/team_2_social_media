@@ -100,7 +100,7 @@ public class User {
     private List<Friendship> receivedFriendRequests;
 
     @OneToMany(mappedBy = "user")
-    private List<LikeStatus> likedStatuses;
+    private List<LikePost> likedStatuses;
 
     @OneToMany(mappedBy = "user")
     private List<LikeComment> likedComments;
@@ -138,5 +138,7 @@ public class User {
                 ", email='" + email + '\'' +
                 '}';
     }
+
+
 
 }
