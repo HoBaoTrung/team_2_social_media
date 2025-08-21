@@ -1,4 +1,4 @@
-<!-- Updated header.html fragment for message dropdown -->
+<!-- Updated header.html fragment for improved avatar display -->
 <header th:fragment="header"
         xmlns:th="http://www.thymeleaf.org"
         xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
@@ -69,22 +69,27 @@
 
                 <!-- Nếu đã đăng nhập -->
                 <div class="nav-item dropdown" sec:authorize="isAuthenticated()">
-                    <a class="nav-link dropdown-toggle dropdown-toggle p-0 d-flex align-items-center" href="#" role="button"
+                    <a class="nav-link dropdown-toggle p-0 d-flex align-items-center" href="#" role="button"
                        data-bs-toggle="dropdown" aria-expanded="false">
+                        <!-- User Avatar with proper styling -->
                         <img th:if="${#authentication.principal.avatarUrl != null and !#strings.isEmpty(#authentication.principal.avatarUrl)}"
                              th:src="${#authentication.principal.avatarUrl}" alt="Avatar"
-                             class="rounded-circle nav-icon-wrapper"/>
+                             class="user-avatar"/>
 
                         <img th:unless="${#authentication.principal.avatarUrl != null and !#strings.isEmpty(#authentication.principal.avatarUrl)}"
                              th:src="@{/images/default-avatar.jpg}" alt="Avatar"
-                             class="rounded-circle nav-icon-wrapper"/>
+                             class="user-avatar"/>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li>
                             <a class="dropdown-item d-flex align-items-center"
                                th:href="@{|/profile/${#authentication.principal.username}|}">
-                                <img th:src="${#authentication.principal.avatarUrl}" alt="Avatar"
-                                     class="rounded-circle nav-icon-wrapper"/>
+                                <img th:if="${#authentication.principal.avatarUrl != null and !#strings.isEmpty(#authentication.principal.avatarUrl)}"
+                                     th:src="${#authentication.principal.avatarUrl}" alt="Avatar"
+                                     class="dropdown-avatar"/>
+                                <img th:unless="${#authentication.principal.avatarUrl != null and !#strings.isEmpty(#authentication.principal.avatarUrl)}"
+                                     th:src="@{/images/default-avatar.jpg}" alt="Avatar"
+                                     class="dropdown-avatar"/>
                                 <span class="ms-2" th:text="${#authentication.principal.getFullName()}"></span>
                             </a>
                         </li>
@@ -166,55 +171,32 @@
         function loadConversationsForDropdown() {
             const conversationList = document.getElementById('conversationList');
 
-            // Mock data - replace with actual API call
-            const mockConversations = [
-                {
-                    id: '1',
-                    name: 'Ngô Duy',
-                    avatar: '/images/default-avatar.jpg',
-                    lastMessage: 'Chào bạn!',
-                    timeAgo: '2 phút',
-                    isOnline: true
-                },
-                {
-                    id: '2',
-                    name: 'Ngô Duy',
-                    avatar: '/images/default-avatar.jpg',
-                    lastMessage: 'Hẹn gặp lại!',
-                    timeAgo: '1 giờ',
-                    isOnline: false
-                }
-            ];
-
-            if (mockConversations.length === 0) {
-                conversationList.innerHTML = `
-                    <div class="text-center p-3 text-muted">
-                        <i class="fas fa-comments"></i><br>
-                        Chưa có cuộc trò chuyện nào
-                    </div>
-                `;
-                return;
-            }
-
-            conversationList.innerHTML = mockConversations.map(conv => `
-                <div class="conversation-item" onclick="openChatFromDropdown('${conv.id}', '${conv.name}', '${conv.avatar}')">
-                    <div style="position: relative;">
-                        <img src="${conv.avatar || '/images/default-avatar.jpg'}" alt="Avatar" class="conversation-avatar">
-                        ${conv.isOnline ? '<div class="online-dot"></div>' : ''}
-                    </div>
-                    <div class="conversation-info">
-                        <div style="font-weight: 600; font-size: 14px;">${conv.name}</div>
-                        <div class="conversation-preview">${conv.lastMessage || 'Chưa có tin nhắn'} • ${conv.timeAgo}</div>
-                    </div>
-                </div>
-            `).join('');
-
-            // Use real API when available
-            /*
+            // Use real API to load conversations
             fetch('/api/conversations')
                 .then(response => response.json())
                 .then(conversations => {
-                    // Handle real data here
+                    if (conversations.length === 0) {
+                        conversationList.innerHTML = `
+                            <div class="text-center p-3 text-muted">
+                                <i class="fas fa-comments"></i><br>
+                                Chưa có cuộc trò chuyện nào
+                            </div>
+                        `;
+                        return;
+                    }
+
+                    conversationList.innerHTML = conversations.map(conv => `
+                        <div class="conversation-item" onclick="openChatFromDropdown('${conv.id}', '${conv.name}', '${conv.avatar}')">
+                            <div style="position: relative;">
+                                <img src="${conv.avatar || '/images/default-avatar.jpg'}" alt="Avatar" class="conversation-avatar">
+                                ${conv.isOnline ? '<div class="online-dot"></div>' : ''}
+                            </div>
+                            <div class="conversation-info">
+                                <div style="font-weight: 600; font-size: 14px;">${conv.name}</div>
+                                <div class="conversation-preview">${conv.lastMessage || 'Chưa có tin nhắn'} • ${conv.timeAgo}</div>
+                            </div>
+                        </div>
+                    `).join('');
                 })
                 .catch(error => {
                     console.error('Error loading conversations:', error);
@@ -225,7 +207,6 @@
                         </div>
                     `;
                 });
-            */
         }
 
         function openChatFromDropdown(userId, userName, avatar) {
@@ -235,12 +216,14 @@
             // Call the global openChat function
             if (typeof openChat === 'function') {
                 openChat(userId, userName, avatar);
+            } else if (typeof chatManager !== 'undefined') {
+                chatManager.openChat(userId, userName, avatar);
             }
         }
     </script>
 
     <style>
-        /* Message dropdown styles */
+        /* Updated Message dropdown styles with better avatar support */
         .message-dropdown {
             position: absolute;
             top: 50px;
@@ -323,6 +306,41 @@
             background: #42b883;
             border: 2px solid white;
             border-radius: 50%;
+        }
+
+        /* User avatar in header - improved styling */
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #fff;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .user-avatar:hover {
+            transform: scale(1.05);
+        }
+
+        /* Dropdown avatar styling */
+        .dropdown-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 1px solid #ddd;
+        }
+
+        /* Remove the old nav-icon-wrapper style for user avatar */
+        .nav-item .dropdown-toggle {
+            border: none !important;
+            background: none !important;
+            padding: 0 !important;
+        }
+
+        .nav-item .dropdown-toggle:focus {
+            box-shadow: none !important;
         }
     </style>
 </header>

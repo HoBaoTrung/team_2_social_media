@@ -1,15 +1,44 @@
-/* ========== CHAT CONTAINER - HORIZONTAL LAYOUT ========== */
+/* ========== CHAT SYSTEM - IMPROVED LAYOUT ========== */
+
+/* Chat Bubbles Container - VERTICAL ARRANGEMENT */
 .chat-container {
     position: fixed;
     bottom: 0;
-    right: 20px;
+    right: 100px; /* ← Di chuyển sang trái */
     display: flex;
-    flex-direction: row; /* Horizontal layout */
+    flex-direction: row;
     gap: 10px;
     z-index: 9999;
     align-items: flex-end;
-    max-width: calc(100vw - 40px); /* Limit width */
-    overflow-x: auto; /* Allow horizontal scroll if needed */
+    max-width: calc(100vw - 140px); /* Điều chỉnh theo right position */
+    overflow-x: auto;
+}
+
+.chat-bubbles-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px; /* Giữ bubbles ở góc phải */
+    display: flex;
+    flex-direction: column; /* Vertical layout for bubbles */
+    gap: 10px;
+    z-index: 9998;
+    align-items: flex-end;
+    max-height: calc(100vh - 100px);
+    overflow-y: auto;
+}
+
+/* Chat Windows Container - HORIZONTAL ARRANGEMENT */
+.chat-windows-container {
+    position: fixed;
+    bottom: 0;
+    right: 100px; /* Di chuyển chat windows sang trái để tránh che bubbles */
+    display: flex;
+    flex-direction: row; /* Horizontal layout for chat windows */
+    gap: 10px;
+    z-index: 9999;
+    align-items: flex-end;
+    max-width: calc(100vw - 120px); /* Điều chỉnh width tương ứng */
+    overflow-x: auto;
 }
 
 /* ========== CHAT BUBBLE (MINIMIZED STATE) ========== */
@@ -22,8 +51,8 @@
     transition: all 0.3s ease;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     overflow: hidden;
-    margin-bottom: 20px;
-    flex-shrink: 0; /* Prevent shrinking */
+    flex-shrink: 0;
+    border: 3px solid #fff;
 }
 
 .chat-bubble:hover {
@@ -58,13 +87,8 @@
     flex-direction: column;
     margin-bottom: 0;
     animation: slideUp 0.3s ease;
-    flex-shrink: 0; /* Prevent shrinking */
+    flex-shrink: 0;
     position: relative;
-}
-
-/* Arrange chat windows horizontally */
-.chat-window + .chat-window {
-    margin-left: 10px;
 }
 
 @keyframes slideUp {
@@ -102,6 +126,7 @@
     border-radius: 50%;
     margin-right: 10px;
     object-fit: cover;
+    border: 2px solid rgba(255, 255, 255, 0.3);
 }
 
 .chat-name {
@@ -254,27 +279,37 @@
 
 /* Scrollbar Styling */
 .chat-messages::-webkit-scrollbar,
-.chat-container::-webkit-scrollbar {
+.chat-bubbles-container::-webkit-scrollbar,
+.chat-windows-container::-webkit-scrollbar {
     width: 4px;
     height: 4px;
 }
 
 .chat-messages::-webkit-scrollbar-track,
-.chat-container::-webkit-scrollbar-track {
+.chat-bubbles-container::-webkit-scrollbar-track,
+.chat-windows-container::-webkit-scrollbar-track {
     background: transparent;
 }
 
 .chat-messages::-webkit-scrollbar-thumb,
-.chat-container::-webkit-scrollbar-thumb {
+.chat-bubbles-container::-webkit-scrollbar-thumb,
+.chat-windows-container::-webkit-scrollbar-thumb {
     background: #bdbdbd;
     border-radius: 2px;
 }
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
-    .chat-container {
+    .chat-bubbles-container {
         right: 10px;
         max-width: calc(100vw - 20px);
+    }
+
+    .chat-windows-container {
+        right: 10px;
+        max-width: calc(100vw - 20px);
+        flex-direction: column;
+        max-height: calc(100vh - 100px);
     }
 
     .chat-window {
@@ -288,11 +323,41 @@
     }
 }
 
-/* Chat window ordering */
-.chat-window {
-    order: 0; /* Chat windows come first */
+/* Animation for bubbles appearing */
+.chat-bubble {
+    animation: bubbleSlideIn 0.3s ease;
 }
 
-.chat-bubble {
-    order: 1; /* Bubbles come after chat windows */
+@keyframes bubbleSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(20px) scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+}
+
+/* Special styling for message button in profile */
+.message-btn {
+    background: #1877f2;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 500;
+    transition: background-color 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.message-btn:hover {
+    background: #166fe5;
+    color: white;
+}
+
+.message-btn i {
+    font-size: 14px;
 }

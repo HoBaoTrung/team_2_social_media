@@ -76,27 +76,25 @@ public interface FriendshipRepository extends JpaRepository<Friendship, Friendsh
                                                 @Param("viewerId") Long viewerId, Pageable pageable);
 
     @Query("""
-                SELECT u FROM User u
-                JOIN u.privacySettings ps
-                WHERE u.id IN (
-                    SELECT f.requester.id FROM Friendship f
-                    WHERE f.status = 'ACCEPTED'
-                      AND f.addressee.id = :viewerId
-                    UNION
-                    SELECT f.addressee.id FROM Friendship f
-                    WHERE f.status = 'ACCEPTED'
-                      AND f.requester.id = :viewerId
-                )
-                AND (
-                    ps.allowSendMessage = com.codegym.socialmedia.model.account.UserPrivacySettings.PrivacyLevel.PUBLIC
-                    OR ps.allowSendMessage = com.codegym.socialmedia.model.account.UserPrivacySettings.PrivacyLevel.FRIENDS
-                    OR (ps.allowSendMessage = com.codegym.socialmedia.model.account.UserPrivacySettings.PrivacyLevel.PRIVATE
-                        AND u.id = :viewerId)
-                )
-            """)
-    Page<User> findFriendsWithAllowSendMessage(
-            @Param("viewerId") Long viewerId, Pageable pageable
-    );
+    SELECT u FROM User u
+    JOIN u.privacySettings ps
+    WHERE u.id IN (
+        SELECT f.requester.id FROM Friendship f
+        WHERE f.status = 'ACCEPTED'
+          AND f.addressee.id = :viewerId
+        UNION
+        SELECT f.addressee.id FROM Friendship f
+        WHERE f.status = 'ACCEPTED'
+          AND f.requester.id = :viewerId
+    )
+    AND (
+        ps.allowSendMessage = 'PUBLIC'
+        OR ps.allowSendMessage = 'FRIENDS'
+        OR (ps.allowSendMessage = 'PRIVATE' AND u.id = :viewerId)
+    )
+""")
+    Page<User> findFriendsWithAllowSendMessage(@Param("viewerId") Long viewerId, Pageable pageable);
+
 
 
     @Query("""

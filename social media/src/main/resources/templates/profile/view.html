@@ -1,4 +1,3 @@
-<!-- Cập nhật file profile/view.html để tích hợp posts -->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -6,7 +5,565 @@
     <link rel="stylesheet" th:href="@{/css/view_profile.css}">
     <link rel="stylesheet" th:href="@{/css/friend_card.css}">
     <link rel="stylesheet" th:href="@{/css/post.css}">
+    <link rel="stylesheet" th:href="@{/css/chat.css}">
     <th:block th:replace="~{fragments/common/commonHead :: commonHead}"></th:block>
+
+    <!-- Enhanced Chat Bubble Styles -->
+    <style>
+        /* Chat Bubble Enhancements - DISABLED PROFILE CHAT */
+        .profile-chat-bubble {
+            display: none !important; /* Ẩn hoàn toàn profile chat bubble */
+            position: fixed;
+            bottom: 120px;
+            right: 30px;
+            width: 360px;
+            height: 520px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            transform: translateY(100vh);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            overflow: hidden;
+            z-index: -1; /* Z-index âm để đảm bảo không hiện */
+            border: 1px solid #e4e6ea;
+        }
+
+        /* Vô hiệu hóa tất cả states của profile chat */
+        .profile-chat-bubble.active {
+            display: none !important;
+            transform: translateY(100vh);
+            opacity: 0;
+        }
+
+        /* Đảm bảo chat system chính luôn hoạt động */
+        .chat-container,
+        #chatContainer {
+            visibility: visible !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+            z-index: 1001 !important;
+        }
+
+        .profile-chat-bubble.active {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .profile-chat-header {
+            background: linear-gradient(135deg, #1877f2, #42a5f5);
+            color: white;
+            padding: 16px 20px; /* Giảm padding từ 20px xuống 16px */
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .profile-chat-user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .profile-chat-avatar {
+            width: 40px; /* Giảm từ 44px xuống 40px */
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            object-fit: cover;
+        }
+
+        .profile-chat-user-details h4 {
+            margin: 0;
+            font-size: 16px; /* Giảm từ 18px xuống 16px */
+            font-weight: 600;
+        }
+
+        .profile-chat-user-details span {
+            font-size: 12px; /* Giảm từ 13px xuống 12px */
+            opacity: 0.9;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .profile-online-indicator {
+            width: 8px;
+            height: 8px;
+            background: #42b883;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .profile-chat-controls {
+            display: flex;
+            gap: 6px; /* Giảm từ 8px xuống 6px */
+        }
+
+        .profile-chat-btn {
+            width: 32px; /* Giảm từ 36px xuống 32px */
+            height: 32px;
+            background: rgba(255, 255, 255, 0.15);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            font-size: 14px; /* Giảm từ 16px xuống 14px */
+        }
+
+        .profile-chat-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: scale(1.1);
+        }
+
+        .profile-chat-messages {
+            height: 350px; /* Giảm từ 380px xuống 350px */
+            padding: 16px; /* Giảm từ 20px xuống 16px */
+            overflow-y: auto;
+            background: #f8f9fa;
+            scroll-behavior: smooth;
+        }
+
+        .profile-message {
+            margin-bottom: 14px; /* Giảm từ 16px xuống 14px */
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            animation: messageSlideIn 0.3s ease;
+        }
+
+        @keyframes messageSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .profile-message.sent {
+            justify-content: flex-end;
+        }
+
+        .profile-message.received {
+            justify-content: flex-start;
+        }
+
+        .profile-message-content {
+            max-width: 75%;
+            padding: 10px 14px; /* Giảm padding */
+            border-radius: 18px; /* Giảm từ 20px xuống 18px */
+            font-size: 13px; /* Giảm từ 14px xuống 13px */
+            line-height: 1.4;
+            position: relative;
+        }
+
+        .profile-message.sent .profile-message-content {
+            background: linear-gradient(135deg, #1877f2, #42a5f5);
+            color: white;
+            border-bottom-right-radius: 6px;
+        }
+
+        .profile-message.received .profile-message-content {
+            background: white;
+            color: #050505;
+            border-bottom-left-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .profile-message-avatar {
+            width: 26px; /* Giảm từ 28px xuống 26px */
+            height: 26px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #fff;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+
+        .profile-message-time {
+            font-size: 11px;
+            color: #65676b;
+            text-align: center;
+            margin: 12px 0 6px; /* Giảm margin */
+        }
+
+        .profile-chat-input {
+            padding: 16px; /* Giảm từ 20px xuống 16px */
+            background: white;
+            border-top: 1px solid #e4e6ea;
+        }
+
+        .profile-input-container {
+            display: flex;
+            align-items: center;
+            background: #f0f2f5;
+            border-radius: 20px; /* Giảm từ 24px xuống 20px */
+            padding: 6px 14px; /* Giảm padding */
+            gap: 10px; /* Giảm từ 12px xuống 10px */
+            transition: all 0.3s ease;
+        }
+
+        .profile-input-container:focus-within {
+            background: white;
+            box-shadow: 0 0 0 2px rgba(24, 119, 242, 0.2);
+        }
+
+        .profile-chat-text-input {
+            flex: 1;
+            border: none;
+            background: none;
+            outline: none;
+            font-size: 13px; /* Giảm từ 14px xuống 13px */
+            padding: 6px 0; /* Giảm từ 8px xuống 6px */
+            resize: none;
+            max-height: 80px; /* Giảm từ 100px xuống 80px */
+        }
+
+        .profile-input-icon {
+            color: #1877f2;
+            cursor: pointer;
+            padding: 4px; /* Giảm từ 6px xuống 4px */
+            border-radius: 50%;
+            transition: all 0.2s;
+            font-size: 16px; /* Giảm từ 18px xuống 16px */
+        }
+
+        .profile-input-icon:hover {
+            background: rgba(24, 119, 242, 0.1);
+            transform: scale(1.1);
+        }
+
+        .profile-typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 14px; /* Giảm padding */
+            background: white;
+            border-radius: 18px; /* Giảm từ 20px xuống 18px */
+            margin-bottom: 14px; /* Giảm từ 16px xuống 14px */
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            animation: messageSlideIn 0.3s ease;
+        }
+
+        .profile-typing-dot {
+            width: 7px; /* Giảm từ 8px xuống 7px */
+            height: 7px;
+            background: #65676b;
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+
+        .profile-typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .profile-typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                opacity: 0.3;
+                transform: scale(0.8);
+            }
+            30% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* Chat Overlay - DISABLED */
+        .profile-chat-overlay {
+            display: none !important; /* Ẩn hoàn toàn overlay */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.4);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: -1;
+            backdrop-filter: blur(2px);
+        }
+
+        .profile-chat-overlay.active {
+            display: none !important;
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        /* Enhanced Message Button - REDIRECT TO MAIN CHAT */
+        .enhanced-message-btn {
+            background: linear-gradient(135deg, #1877f2, #42a5f5);
+            border: none;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .enhanced-message-btn:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .enhanced-message-btn:hover:before {
+            left: 100%;
+        }
+
+        .enhanced-message-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(24, 119, 242, 0.3);
+        }
+
+        .enhanced-message-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Notification Badge */
+        .message-notification-badge {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            background: #ff3040;
+            color: white;
+            border-radius: 12px;
+            padding: 2px 6px;
+            font-size: 11px;
+            font-weight: bold;
+            min-width: 18px;
+            text-align: center;
+            animation: bounce 0.6s ease-in-out;
+            border: 2px solid white;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+        }
+
+        /* Responsive Design - IMPORTANT FIXES */
+        @media (max-width: 992px) {
+            .profile-chat-bubble {
+                bottom: 100px;
+                right: 20px;
+                width: 340px;
+                height: 500px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .profile-chat-bubble {
+                width: calc(100vw - 40px); /* Để lại margin 20px mỗi bên */
+                height: 60vh; /* Chiếm 60% chiều cao màn hình */
+                bottom: 80px; /* Cách bottom 80px để tránh navigation */
+                right: 20px;
+                left: 20px; /* Thêm left để center */
+                border-radius: 12px; /* Giảm border-radius trên mobile */
+                transform: translateY(100vh);
+            }
+
+            .profile-chat-bubble.active {
+                transform: translateY(0);
+            }
+
+            .profile-chat-header {
+                padding: 14px 16px;
+            }
+
+            .profile-chat-messages {
+                height: calc(60vh - 130px); /* Tính toán chiều cao phù hợp */
+                padding: 12px;
+            }
+
+            .enhanced-button-group {
+                flex-direction: column;
+                gap: 12px;
+                width: 100%;
+            }
+
+            .enhanced-message-btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .profile-chat-bubble {
+                width: calc(100vw - 20px);
+                right: 10px;
+                left: 10px;
+                bottom: 70px;
+            }
+        }
+
+        /* Enhanced Profile Actions */
+        .enhanced-button-group {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-top: 100px; /* Tăng từ 16px lên 24px để di xuống nhiều hơn */
+            padding-top: 8px; /* Thêm padding-top để tạo khoảng cách */
+        }
+
+        .enhanced-button-group > * {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        /* Điều chỉnh vị trí của user info để tạo space cho buttons */
+        .user-info {
+            margin-bottom: 16px; /* Thêm margin-bottom để tạo khoảng cách */
+        }
+
+        /* Điều chỉnh avatar container để buttons có vị trí đẹp hơn */
+        .avatar-container {
+            animation: fadeInUp 0.6s ease;
+            padding-bottom: 20px; /* Thêm padding để buttons không bị sát đáy */
+        }
+
+        .enhanced-button-group {
+            animation: fadeInUp 0.8s ease;
+            position: relative;
+            top: 8px; /* Di chuyển xuống thêm 8px */
+        }
+
+        /* Profile enhancements */
+        .profile-status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(66, 184, 131, 0.1);
+            color: #42b883;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-top: 8px;
+        }
+
+        .profile-mutual-friends {
+            color: #65676b;
+            font-size: 14px;
+            margin-top: 4px;
+            margin-bottom: 8px; /* Thêm margin-bottom để tạo space */
+        }
+
+        /* Add subtle animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Better spacing for cover container */
+        .cover-container {
+            position: relative;
+            min-height: 320px; /* Tăng chiều cao tối thiểu để có đủ space */
+        }
+
+        /* Điều chỉnh vị trí avatar container */
+        .avatar-container {
+            position: absolute;
+            bottom: -100px;
+            left: 40px;
+            display: flex
+        ;
+            align-items: flex-start;
+            gap: 20px;
+            animation: fadeInUp 0.6s ease;
+            padding-bottom: 6px;
+        }
+
+        /* Custom scrollbar for chat */
+        .profile-chat-messages::-webkit-scrollbar {
+            width: 4px; /* Giảm từ 6px xuống 4px */
+        }
+
+        .profile-chat-messages::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .profile-chat-messages::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 2px;
+        }
+
+        .profile-chat-messages::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        /* Đảm bảo chat không bị che bởi floating buttons */
+        .floating-search-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000; /* Thấp hơn chat bubble */
+        }
+
+        /* Khi chat mở, di chuyển floating button */
+        .profile-chat-bubble.active ~ .floating-search-btn {
+            right: 410px; /* Di chuyển ra ngoài chat bubble */
+            transition: right 0.4s ease;
+        }
+
+        @media (max-width: 768px) {
+            .profile-chat-bubble.active ~ .floating-search-btn {
+                right: 20px;
+                bottom: 85vh; /* Di chuyển lên trên khi mobile */
+            }
+        }
+
+        /* Enhanced pulse animation for online indicator */
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(66, 184, 131, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(66, 184, 131, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(66, 184, 131, 0);
+            }
+        }
+
+        /* Smooth transitions for better UX */
+        * {
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Focus styles for accessibility */
+        .profile-chat-text-input:focus,
+        .profile-chat-btn:focus,
+        .enhanced-message-btn:focus {
+            outline: 2px solid #1877f2;
+            outline-offset: 2px;
+        }
+    </style>
 </head>
 <body>
 
@@ -23,11 +580,38 @@
         <img class="avatar"
              th:unless="${user.profilePicture != null and !#strings.isEmpty(user.profilePicture)}"
              th:src="@{/images/default-avatar.jpg}" alt="Avatar">
-        <div class="user-name" th:text="${user.firstName + ' ' + user.lastName}">Tên người dùng</div>
-        <div class="button-group" th:if="${!isOwner}">
+
+        <div class="user-info">
+            <div class="user-name" th:text="${user.firstName + ' ' + user.lastName}">Tên người dùng</div>
+
+            <!-- Online Status Indicator -->
+            <div class="profile-status-indicator">
+                <span class="profile-online-indicator"></span>
+                <span>Đang hoạt động</span>
+            </div>
+
+            <!-- Mutual Friends Count -->
+            <div th:if="${!isOwner and mutualFriendsCount > 0}" class="profile-mutual-friends">
+                <i class="fas fa-users"></i>
+                <span th:text="${mutualFriendsCount + ' bạn chung'}"></span>
+            </div>
+        </div>
+
+        <!-- Enhanced Button Group -->
+        <div class="enhanced-button-group" th:if="${!isOwner}">
             <div th:insert="fragments/friend/friend-button-group :: buttonGroup(${user.username}, ${friendshipStatus}, ${isSender}, ${isReceiver}, ${allowFriendRequests},false)"></div>
-            <button th:if="${canSendMessage}" class="btn btn-primary">
-                <i class="fa-solid fa-message"></i> Nhắn tin
+
+            <!-- Enhanced Message Button -->
+            <button th:if="${canSendMessage}"
+                    class="enhanced-message-btn"
+                    id="profileMessageBtn"
+                    th:data-user-id="${user.id}"
+                    th:data-user-name="${user.firstName + ' ' + user.lastName}"
+                    th:data-user-avatar="${user.profilePicture}">
+                <i class="fas fa-comment-dots"></i>
+                <span>Nhắn tin</span>
+                <!-- Notification badge (hidden by default) -->
+                <span class="message-notification-badge" id="messageBadge" style="display: none;">3</span>
             </button>
         </div>
     </div>
@@ -37,18 +621,26 @@
 <div class="profile-tabs">
     <a th:href="@{'/profile/' + ${user.username} + '?filter=posts'}"
        th:classappend="${filter == 'posts'} ? 'active' : ''"
-       class="tab">Bài viết</a>
+       class="tab">
+        <i class="fas fa-edit"></i> Bài viết
+    </a>
     <a th:href="@{'/profile/' + ${user.username} + '?filter=photos'}"
        th:classappend="${filter == 'photos'} ? 'active' : ''"
-       class="tab">Ảnh</a>
+       class="tab">
+        <i class="fas fa-images"></i> Ảnh
+    </a>
     <a th:href="@{'/profile/' + ${user.username} + '?filter=all'}"
        th:classappend="${filter == 'all'} ? 'active' : ''"
        class="tab"
-       th:if="${canViewFriendList}">Bạn bè</a>
+       th:if="${canViewFriendList}">
+        <i class="fas fa-users"></i> Bạn bè
+    </a>
     <a th:href="@{'/profile/' + ${user.username} + '?filter=mutual'}"
        th:classappend="${filter == 'mutual'} ? 'active' : ''"
        class="tab"
-       th:if="${!isOwner and mutualFriendsCount>0}">Bạn chung</a>
+       th:if="${!isOwner and mutualFriendsCount>0}">
+        <i class="fas fa-user-friends"></i> Bạn chung
+    </a>
 </div>
 
 <!-- MAIN CONTENT -->
@@ -56,32 +648,39 @@
     <!-- CỘT TRÁI: Thông tin người dùng -->
     <div th:if="${filter == 'posts' or filter == 'photos' }" class="profile-left-column">
         <div class="card-box profile-content">
-            <h2>Thông tin cá nhân</h2>
+            <h2><i class="fas fa-info-circle"></i> Thông tin cá nhân</h2>
             <div class="info-item" th:if="${canViewEmail}">
-                <strong>Email:</strong> <span th:text="${user.email}">email@example.com</span>
+                <strong><i class="fas fa-envelope"></i> Email:</strong>
+                <span th:text="${user.email}">email@example.com</span>
             </div>
             <div class="info-item" th:if="${canViewPhone}">
-                <strong>Số điện thoại:</strong> <span th:text="${user.phone}">0123456789</span>
+                <strong><i class="fas fa-phone"></i> Số điện thoại:</strong>
+                <span th:text="${user.phone}">0123456789</span>
             </div>
             <div class="info-item" th:if="${canViewDob}">
-                <strong>Sinh nhật:</strong> <span th:text="${user.dateOfBirth}">01/01/1990</span>
+                <strong><i class="fas fa-birthday-cake"></i> Sinh nhật:</strong>
+                <span th:text="${user.dateOfBirth}">01/01/1990</span>
             </div>
             <div class="info-item" th:if="${canViewBio}">
-                <strong>Giới thiệu:</strong><br>
-                <textarea readonly rows="5" style="width: 100%;" th:text="${user.bio}">...</textarea>
+                <strong><i class="fas fa-user-edit"></i> Giới thiệu:</strong><br>
+                <textarea readonly rows="5" style="width: 100%; border: none; background: #f8f9fa; padding: 8px; border-radius: 4px;" th:text="${user.bio}">...</textarea>
             </div>
             <div th:if="${isOwner}" class="profile-actions">
-                <a th:href="@{/setting}" class="btn">Chỉnh sửa hồ sơ</a>
+                <a th:href="@{/setting}" class="btn btn-outline-primary">
+                    <i class="fas fa-edit"></i> Chỉnh sửa hồ sơ
+                </a>
             </div>
         </div>
 
         <div class="card-box profile-content" th:if="${canViewFriendList or mutualFriendsCount>0}">
-            <h2>Thông tin bạn bè</h2>
-            <div th:if="${canViewFriendList}">
-                Bạn bè: <span th:text="${friendCount}"></span>
+            <h2><i class="fas fa-users"></i> Thông tin bạn bè</h2>
+            <div th:if="${canViewFriendList}" class="mb-2">
+                <i class="fas fa-user-friends"></i> Bạn bè:
+                <strong th:text="${friendCount}"></strong>
             </div>
-            <div th:if="${!isOwner and mutualFriendsCount>0}">
-                Bạn chung: <span th:text="${mutualFriendsCount}"></span>
+            <div th:if="${!isOwner and mutualFriendsCount>0}" class="mb-3">
+                <i class="fas fa-users"></i> Bạn chung:
+                <strong th:text="${mutualFriendsCount}"></strong>
             </div>
             <div class="row">
                 <div class="col-md-4" th:each="friend, iterStat : ${friends}" th:if="${iterStat.index} < 9">
@@ -121,7 +720,7 @@
 
     <!-- Photos tab -->
     <div class="card-box posts-container" th:if="${filter == 'photos'}">
-        <h2>Ảnh</h2>
+        <h2><i class="fas fa-images"></i> Ảnh</h2>
         <div id="profile-photos-container" th:data-username="${user.username}">
             <!-- Photos will be loaded here -->
         </div>
@@ -153,6 +752,82 @@
         </div>
         <div class="loading" id="loading">
             <i class="fas fa-spinner fa-spin"></i> Đang tải...
+        </div>
+    </div>
+</div>
+
+<!-- Enhanced Chat Bubble -->
+<div class="profile-chat-overlay" id="profileChatOverlay"></div>
+<div class="profile-chat-bubble" id="profileChatBubble">
+    <div class="profile-chat-header">
+        <div class="profile-chat-user-info">
+            <img class="profile-chat-avatar"
+                 th:src="${user.profilePicture ?: '/images/default-avatar.jpg'}"
+                 th:alt="${user.firstName + ' ' + user.lastName}">
+            <div class="profile-chat-user-details">
+                <h4 th:text="${user.firstName + ' ' + user.lastName}">Tên người dùng</h4>
+                <span>
+                    <span class="profile-online-indicator"></span>
+                    Đang hoạt động
+                </span>
+            </div>
+        </div>
+        <div class="profile-chat-controls">
+            <button class="profile-chat-btn" title="Video call">
+                <i class="fas fa-video"></i>
+            </button>
+            <button class="profile-chat-btn" title="Thu nhỏ">
+                <i class="fas fa-minus"></i>
+            </button>
+            <button class="profile-chat-btn" id="profileCloseChatBtn" title="Đóng">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+
+    <div class="profile-chat-messages" id="profileChatMessages">
+        <div class="profile-message-time">Hôm nay</div>
+        <div class="profile-message received">
+            <img class="profile-message-avatar"
+                 th:src="${user.profilePicture ?: '/images/default-avatar.jpg'}"
+                 alt="Avatar">
+            <div class="profile-message-content">
+                Chào bạn! Cảm ơn bạn đã ghé thăm trang của mình 😊
+            </div>
+        </div>
+        <div class="profile-message sent">
+            <div class="profile-message-content">
+                Chào! Trang của bạn thật tuyệt vời!
+            </div>
+        </div>
+        <div class="profile-message received">
+            <img class="profile-message-avatar"
+                 th:src="${user.profilePicture ?: '/images/default-avatar.jpg'}"
+                 alt="Avatar">
+            <div class="profile-message-content">
+                Cảm ơn bạn! Chúng ta có thể trò chuyện thêm không? 🎉
+            </div>
+        </div>
+
+        <!-- Typing indicator (hidden by default) -->
+        <div class="profile-typing-indicator" id="profileTypingIndicator" style="display: none;">
+            <div class="profile-typing-dot"></div>
+            <div class="profile-typing-dot"></div>
+            <div class="profile-typing-dot"></div>
+        </div>
+    </div>
+
+    <div class="profile-chat-input">
+        <div class="profile-input-container">
+            <textarea class="profile-chat-text-input"
+                      placeholder="Nhập tin nhắn..."
+                      id="profileMessageInput"
+                      rows="1"></textarea>
+            <span class="profile-input-icon" title="Emoji">😊</span>
+            <span class="profile-input-icon" title="Đính kèm">📎</span>
+            <span class="profile-input-icon" title="Gửi" id="profileSendBtn">
+                <i class="fas fa-paper-plane"></i>
+            </span>
         </div>
     </div>
 </div>
@@ -197,10 +872,590 @@
     </button>
 </div>
 
+<!-- Enhanced JavaScript -->
 <script th:src="@{/js/post.js}"></script>
 <script th:src="@{/js/profile-posts.js}"></script>
 <script th:src="@{/js/load-friend.js}"></script>
 <script th:src="@{/js/friend-button.js}"></script>
+<script th:src="@{/js/chat.js}"></script>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    class EnhancedProfileChat {
+        constructor() {
+            this.profileMessageBtn = document.getElementById('profileMessageBtn');
+            this.profileChatBubble = document.getElementById('profileChatBubble');
+            this.profileChatOverlay = document.getElementById('profileChatOverlay');
+            this.profileCloseChatBtn = document.getElementById('profileCloseChatBtn');
+            this.profileMessageInput = document.getElementById('profileMessageInput');
+            this.profileSendBtn = document.getElementById('profileSendBtn');
+            this.profileChatMessages = document.getElementById('profileChatMessages');
+            this.profileTypingIndicator = document.getElementById('profileTypingIndicator');
+            this.messageBadge = document.getElementById('messageBadge');
+
+            this.isOpen = false;
+            this.unreadCount = 0;
+            this.typingTimer = null;
+            this.isTyping = false;
+
+            // Get user data from Thymeleaf
+            this.userId = /*[[${user.id}]]*/ null;
+            this.userName = /*[[${user.firstName + ' ' + user.lastName}]]*/ 'User';
+            this.userAvatar = /*[[${user.profilePicture}]]*/ '/images/default-avatar.jpg';
+
+            this.init();
+        }
+
+        init() {
+            if (!this.profileMessageBtn) return;
+
+            // Thay vì mở profile chat, sử dụng chat system chính
+            this.profileMessageBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.openMainChat(); // Gọi chat system chính thay vì profile chat
+            });
+
+            // Vô hiệu hóa tất cả event handlers của profile chat
+            // Không cần setup các event cho profile chat nữa
+
+            // Initialize notification badge
+            this.updateNotificationBadge();
+        }
+
+        openMainChat() {
+            // Sử dụng chat system chính thay vì profile chat
+            if (typeof openChat === 'function' && this.userId) {
+                openChat(this.userId.toString(), this.userName, this.userAvatar);
+            } else if (typeof openChatFromProfile === 'function') {
+                openChatFromProfile(this.userId.toString(), this.userName, this.userAvatar);
+            } else {
+                // Fallback: scroll to existing chat or show notification
+                console.log('Opening chat with:', this.userName);
+                this.showChatNotification();
+            }
+        }
+
+        showChatNotification() {
+            // Hiển thị notification nếu không thể mở chat
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 80px;
+                right: 20px;
+                background: #1877f2;
+                color: white;
+                padding: 12px 20px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                z-index: 10000;
+                animation: slideInRight 0.3s ease;
+            `;
+            notification.textContent = `Đang mở chat với ${this.userName}...`;
+
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 3000);
+        }
+
+        // Vô hiệu hóa các method của profile chat
+        openChat() {
+            // Không làm gì - đã disable
+            return false;
+        }
+
+        closeChat() {
+            // Không làm gì - đã disable
+            return false;
+        }
+
+        openChat() {
+            // Đóng tất cả chat windows khác trước khi mở profile chat
+            this.closeAllOtherChats();
+
+            this.isOpen = true;
+
+            if (this.profileChatBubble) {
+                this.profileChatBubble.classList.add('active');
+            }
+
+            if (this.profileChatOverlay) {
+                this.profileChatOverlay.classList.add('active');
+            }
+
+            // Focus input
+            setTimeout(() => {
+                if (this.profileMessageInput) {
+                    this.profileMessageInput.focus();
+                }
+            }, 300);
+
+            // Clear notifications
+            this.clearNotifications();
+
+            // Scroll to bottom
+            setTimeout(() => this.scrollToBottom(), 100);
+
+            // DON'T integrate with existing chat system to avoid conflicts
+            // if (typeof openChat === 'function' && this.userId) {
+            //     openChat(this.userId.toString(), this.userName, this.userAvatar);
+            // }
+        }
+
+        closeAllOtherChats() {
+            // Đóng tất cả chat windows từ hệ thống chat chính
+            if (typeof openChats !== 'undefined' && openChats) {
+                openChats.forEach((chatWindow, userId) => {
+                    if (chatWindow && typeof closeChat === 'function') {
+                        closeChat(userId);
+                    }
+                });
+            }
+
+            // Ẩn tất cả chat bubbles và windows
+            document.querySelectorAll('.chat-window, .chat-bubble').forEach(element => {
+                element.style.display = 'none';
+            });
+
+            // Ẩn chat container chính
+            const mainChatContainer = document.getElementById('chatContainer');
+            if (mainChatContainer) {
+                mainChatContainer.style.visibility = 'hidden';
+                mainChatContainer.style.opacity = '0';
+                mainChatContainer.style.pointerEvents = 'none';
+            }
+        }
+
+        restoreOtherChats() {
+            // Khôi phục chat system chính khi đóng profile chat
+            const mainChatContainer = document.getElementById('chatContainer');
+            if (mainChatContainer) {
+                mainChatContainer.style.visibility = 'visible';
+                mainChatContainer.style.opacity = '1';
+                mainChatContainer.style.pointerEvents = 'auto';
+            }
+
+            // Hiện lại các chat elements
+            document.querySelectorAll('.chat-window, .chat-bubble').forEach(element => {
+                element.style.display = '';
+            });
+        }
+
+        closeChat() {
+            this.isOpen = false;
+
+            if (this.profileChatBubble) {
+                this.profileChatBubble.classList.remove('active');
+            }
+
+            if (this.profileChatOverlay) {
+                this.profileChatOverlay.classList.remove('active');
+            }
+
+            this.hideTyping();
+
+            // Clear input
+            if (this.profileMessageInput) {
+                this.profileMessageInput.value = '';
+                this.autoResizeTextarea(this.profileMessageInput);
+            }
+
+            // Khôi phục chat system chính
+            setTimeout(() => {
+                this.restoreOtherChats();
+            }, 400); // Đợi animation hoàn thành
+        }
+
+        sendMessage() {
+            if (!this.profileMessageInput) return;
+
+            const message = this.profileMessageInput.value.trim();
+            if (!message) return;
+
+            // Add sent message to UI
+            this.addMessage(message, 'sent');
+
+            // Clear input
+            this.profileMessageInput.value = '';
+            this.autoResizeTextarea(this.profileMessageInput);
+
+            // Send to server if integration exists
+            this.sendToServer(message);
+
+            // Simulate response
+            setTimeout(() => {
+                this.showTyping();
+                setTimeout(() => {
+                    this.hideTyping();
+                    this.addMessage(this.getRandomResponse(), 'received');
+                }, 2000);
+            }, 500);
+        }
+
+        addMessage(content, type, avatar = null) {
+            if (!this.profileChatMessages) return;
+
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `profile-message ${type}`;
+
+            if (type === 'received') {
+                messageDiv.innerHTML = `
+                <img class="profile-message-avatar"
+                     src="${avatar || this.userAvatar || '/images/default-avatar.jpg'}"
+                     alt="Avatar">
+                <div class="profile-message-content">${this.escapeHtml(content)}</div>
+            `;
+            } else {
+                messageDiv.innerHTML = `
+                <div class="profile-message-content">${this.escapeHtml(content)}</div>
+            `;
+            }
+
+            this.profileChatMessages.appendChild(messageDiv);
+            this.scrollToBottom();
+
+            // Add animation
+            setTimeout(() => {
+                messageDiv.style.opacity = '1';
+                messageDiv.style.transform = 'translateY(0)';
+            }, 10);
+        }
+
+        showTyping() {
+            if (this.profileTypingIndicator) {
+                this.profileTypingIndicator.style.display = 'flex';
+                this.scrollToBottom();
+            }
+        }
+
+        hideTyping() {
+            if (this.profileTypingIndicator) {
+                this.profileTypingIndicator.style.display = 'none';
+            }
+        }
+
+        handleTyping() {
+            if (!this.isTyping) {
+                this.isTyping = true;
+                // Could send typing indicator to server here
+            }
+
+            clearTimeout(this.typingTimer);
+            this.typingTimer = setTimeout(() => {
+                this.isTyping = false;
+                // Could send stop typing to server here
+            }, 1000);
+        }
+
+        scrollToBottom() {
+            if (this.profileChatMessages) {
+                this.profileChatMessages.scrollTop = this.profileChatMessages.scrollHeight;
+            }
+        }
+
+        autoResizeTextarea(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = Math.min(textarea.scrollHeight, 80) + 'px';
+        }
+
+        clearNotifications() {
+            this.unreadCount = 0;
+            this.updateNotificationBadge();
+        }
+
+        updateNotificationBadge() {
+            if (this.messageBadge) {
+                if (this.unreadCount > 0) {
+                    this.messageBadge.textContent = this.unreadCount;
+                    this.messageBadge.style.display = 'block';
+                } else {
+                    this.messageBadge.style.display = 'none';
+                }
+            }
+        }
+
+        addNotification() {
+            this.unreadCount++;
+            this.updateNotificationBadge();
+        }
+
+        sendToServer(message) {
+            // Integration with existing chat system
+            if (typeof sendMessageToServer === 'function' && this.userId) {
+                sendMessageToServer(this.userId.toString(), message);
+            }
+
+            // Or direct API call
+            fetch('/api/chat/send-message', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    receiverId: this.userId,
+                    content: message,
+                    type: 'TEXT'
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.success) {
+                        console.error('Failed to send message:', data.error);
+                        this.showError('Không thể gửi tin nhắn. Vui lòng thử lại.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error sending message:', error);
+                    this.showError('Lỗi kết nối. Vui lòng kiểm tra mạng.');
+                });
+        }
+
+        showError(message) {
+            // Show error notification
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'profile-message received';
+            errorDiv.innerHTML = `
+            <div class="profile-message-content" style="background: #ffebee; color: #c62828; border: 1px solid #ffcdd2;">
+                <i class="fas fa-exclamation-triangle"></i> ${message}
+            </div>
+        `;
+
+            if (this.profileChatMessages) {
+                this.profileChatMessages.appendChild(errorDiv);
+                this.scrollToBottom();
+            }
+        }
+
+        getRandomResponse() {
+            const responses = [
+                "Cảm ơn bạn đã nhắn tin! 😊",
+                "Thật tuyệt khi được trò chuyện với bạn!",
+                "Mình rất vui khi nghe từ bạn! 🎉",
+                "Sounds great! Hẹn gặp lại sau nhé!",
+                "Cảm ơn bạn! Chúc bạn một ngày tuyệt vời! ✨",
+                "Được rồi, mình sẽ liên hệ lại sau.",
+                "Haha, thú vị quá! 😄",
+                "OK nhé, thanks bạn!"
+            ];
+            return responses[Math.floor(Math.random() * responses.length)];
+        }
+
+        escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Public method to receive messages (for WebSocket integration)
+        receiveMessage(message, senderName, senderAvatar) {
+            if (!this.isOpen) {
+                this.addNotification();
+            }
+            this.addMessage(message, 'received', senderAvatar);
+        }
+    }
+
+    // Enhanced Profile Interactions
+    class ProfileEnhancements {
+        constructor() {
+            this.init();
+        }
+
+        init() {
+            this.enhanceButtons();
+            this.addHoverEffects();
+            this.addScrollEffects();
+            this.initLazyLoading();
+        }
+
+        enhanceButtons() {
+            // Add ripple effect to buttons
+            document.querySelectorAll('.enhanced-message-btn, .btn').forEach(button => {
+                button.addEventListener('click', this.createRipple);
+            });
+        }
+
+        createRipple(e) {
+            const button = e.currentTarget;
+            const ripple = document.createElement('span');
+            const rect = button.getBoundingClientRect();
+            const size = Math.max(rect.width, rect.height);
+            const x = e.clientX - rect.left - size / 2;
+            const y = e.clientY - rect.top - size / 2;
+
+            ripple.style.cssText = `
+            position: absolute;
+            width: ${size}px;
+            height: ${size}px;
+            left: ${x}px;
+            top: ${y}px;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 50%;
+            transform: scale(0);
+            animation: ripple 0.6s linear;
+            pointer-events: none;
+        `;
+
+            if (!document.querySelector('#ripple-style')) {
+                const style = document.createElement('style');
+                style.id = 'ripple-style';
+                style.textContent = `
+                @keyframes ripple {
+                    to {
+                        transform: scale(4);
+                        opacity: 0;
+                    }
+                }
+            `;
+                document.head.appendChild(style);
+            }
+
+            button.style.position = 'relative';
+            button.style.overflow = 'hidden';
+            button.appendChild(ripple);
+
+            setTimeout(() => ripple.remove(), 600);
+        }
+
+        addHoverEffects() {
+            // Enhanced hover effects for profile elements
+            document.querySelectorAll('.info-item').forEach(item => {
+                item.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateX(5px)';
+                    this.style.transition = 'transform 0.3s ease';
+                });
+
+                item.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateX(0)';
+                });
+            });
+        }
+
+        addScrollEffects() {
+            // Scroll reveal animation
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            }, observerOptions);
+
+            document.querySelectorAll('.card-box, .info-item').forEach(el => {
+                el.style.opacity = '0';
+                el.style.transform = 'translateY(20px)';
+                el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+                observer.observe(el);
+            });
+        }
+
+        initLazyLoading() {
+            // Lazy loading for images
+            const imageObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const img = entry.target;
+                        if (img.dataset.src) {
+                            img.src = img.dataset.src;
+                            img.classList.add('loaded');
+                            imageObserver.unobserve(img);
+                        }
+                    }
+                });
+            });
+
+            document.querySelectorAll('img[data-src]').forEach(img => {
+                imageObserver.observe(img);
+            });
+        }
+    }
+
+    // Initialize when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize enhanced profile chat
+        window.profileChat = new EnhancedProfileChat();
+
+        // Initialize profile enhancements
+        new ProfileEnhancements();
+
+        // Add loading animation
+        const profileContainer = document.querySelector('.profile-page-container');
+        if (profileContainer) {
+            profileContainer.style.opacity = '0';
+            setTimeout(() => {
+                profileContainer.style.transition = 'opacity 0.8s ease';
+                profileContainer.style.opacity = '1';
+            }, 100);
+        }
+
+        // Enhanced tab switching
+        document.querySelectorAll('.profile-tabs .tab').forEach(tab => {
+            tab.addEventListener('click', function(e) {
+                // Add loading effect
+                const loadingOverlay = document.createElement('div');
+                loadingOverlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(255, 255, 255, 0.8);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 9999;
+            `;
+                loadingOverlay.innerHTML = '<i class="fas fa-spinner fa-spin fa-2x text-primary"></i>';
+                document.body.appendChild(loadingOverlay);
+
+                // Remove after navigation starts
+                setTimeout(() => loadingOverlay.remove(), 100);
+            });
+        });
+
+        // WebSocket integration for real-time chat
+        if (typeof stompClient !== 'undefined' && stompClient && window.profileChat) {
+            const userId = window.profileChat.userId;
+            if (userId) {
+                // Subscribe to personal message queue
+                stompClient.subscribe(`/user/${userId}/queue/messages`, function(message) {
+                    const messageData = JSON.parse(message.body);
+                    if (window.profileChat) {
+                        window.profileChat.receiveMessage(
+                            messageData.content,
+                            messageData.senderName,
+                            messageData.senderAvatar
+                        );
+                    }
+                });
+            }
+        }
+    });
+
+    // Global function for external integration
+    window.openProfileChat = function() {
+        if (window.profileChat) {
+            window.profileChat.openChat();
+        }
+    };
+
+    // Error handling
+    window.addEventListener('error', function(e) {
+        console.error('Profile page error:', e.error);
+    });
+
+    /*]]>*/
+</script>
 
 <style>
     .floating-search-btn {
@@ -214,6 +1469,12 @@
         width: 56px;
         height: 56px;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        transition: all 0.3s ease;
+    }
+
+    .floating-search-btn button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
     }
 
     #profile-photos-container {
@@ -242,14 +1503,84 @@
         object-fit: cover;
     }
 
+    /* Enhanced loading states */
+    .loaded {
+        animation: fadeIn 0.5s ease;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    /* Better responsive design */
     @media (max-width: 768px) {
         .floating-search-btn {
-            bottom: 80px; /* Account for mobile navigation */
+            bottom: 80px;
         }
 
         #profile-photos-container {
             grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
         }
+
+        .enhanced-button-group {
+            flex-direction: column;
+            width: 100%;
+        }
+
+        .enhanced-button-group > * {
+            width: 100%;
+            min-width: unset;
+        }
+
+        .profile-page-container {
+            flex-direction: column;
+        }
+
+        .profile-left-column {
+            margin-bottom: 20px;
+        }
+    }
+
+    /* Enhanced info items */
+    .info-item {
+        padding: 12px;
+        margin: 8px 0;
+        border-radius: 8px;
+        background: #f8f9fa;
+        border-left: 4px solid #1877f2;
+        transition: all 0.3s ease;
+    }
+
+    .info-item:hover {
+        background: #e3f2fd;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Enhanced profile tabs */
+    .profile-tabs .tab {
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .profile-tabs .tab:before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(24, 119, 242, 0.1), transparent);
+        transition: left 0.5s;
+    }
+
+    .profile-tabs .tab:hover:before {
+        left: 100%;
+    }
+
+    .profile-tabs .tab.active {
+        background: rgba(24, 119, 242, 0.1);
     }
 </style>
 

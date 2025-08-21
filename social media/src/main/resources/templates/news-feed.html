@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="user-id" th:content="${#authentication.principal.user.id}">
     <title>Facebook</title>
-    <th:block th:replace="~{fragments/commonHead :: commonHead}"></th:block>
+    <th:block th:replace="~{fragments/common/commonHead :: commonHead}"></th:block>
     <link rel="stylesheet" th:href="@{/css/news-feed.css}">
     <link rel="stylesheet" th:href="@{/css/chat.css}">
     <style>
@@ -74,17 +74,74 @@
             font-size: 0.95rem;
             cursor: pointer;
         }
+
+        /* Profile avatar in sidebar */
+        .profile-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 10px;
+            border: 3px solid #1877f2;
+        }
+
+        .user-profile {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .user-profile h4 {
+            margin: 10px 0 5px 0;
+            font-weight: 600;
+            color: #050505;
+        }
+
+        .user-role {
+            color: #65676b;
+            font-size: 14px;
+            margin: 0;
+        }
+
+        .stats {
+            padding: 15px 0;
+        }
+
+        .stats p {
+            margin: 8px 0;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .stats i {
+            width: 16px;
+            color: #1877f2;
+        }
+
+        .divider {
+            border: none;
+            height: 1px;
+            background: #e4e6ea;
+            margin: 16px 0;
+        }
     </style>
 </head>
 <body>
-<div th:replace="~{fragments/header :: header}"></div>
+<div th:replace="~{fragments/common/header :: header}"></div>
 <div class="main-container">
     <div class="sidebar">
         <h3><i class="fas fa-user"></i> Hồ sơ của tôi</h3>
         <div class="user-profile">
-            <div class="avatar">
-                <span th:text="${#strings.substring(#authentication.name, 0, 1).toUpperCase()}">U</span>
-            </div>
+            <!-- User Avatar with dynamic source -->
+            <img th:if="${#authentication.principal.avatarUrl != null and !#strings.isEmpty(#authentication.principal.avatarUrl)}"
+                 th:src="${#authentication.principal.avatarUrl}" alt="Profile Avatar"
+                 class="profile-avatar">
+
+            <img th:unless="${#authentication.principal.avatarUrl != null and !#strings.isEmpty(#authentication.principal.avatarUrl)}"
+                 th:src="@{/images/default-avatar.jpg}" alt="Profile Avatar"
+                 class="profile-avatar">
+
             <h4 th:text="${#authentication.principal.fullName}">Tên người dùng</h4>
             <p class="user-role">Thành viên mới</p>
         </div>
@@ -93,10 +150,14 @@
 
         <h3><i class="fas fa-chart-line"></i> Thống kê</h3>
         <div class="stats">
-            <p><i class="fas fa-users"></i> 0 bạn bè</p>
-            <p><i class="fas fa-edit"></i> 0 bài viết</p>
-            <p><i class="fas fa-heart"></i> 0 lượt thích</p>
+            <p><i class="fas fa-users"></i> <span id="friends-count">0</span> bạn bè</p>
+            <p><i class="fas fa-edit"></i> <span id="posts-count">0</span> bài viết</p>
+            <p><i class="fas fa-heart"></i> <span id="likes-count">0</span> lượt thích</p>
         </div>
+
+        <hr class="divider">
+
+
     </div>
 
     <!-- Main Feed -->
@@ -107,9 +168,30 @@
                 <i class="fas fa-pen"></i> Bạn đang nghĩ gì?
             </h3>
             <form>
-                <textarea class="form-control" rows="3" placeholder="Chia sẻ suy nghĩ của bạn..."></textarea>
+                <div class="post-creator-header">
+                    <!-- User avatar in post creator -->
+                    <img th:if="${#authentication.principal.avatarUrl != null and !#strings.isEmpty(#authentication.principal.avatarUrl)}"
+                         th:src="${#authentication.principal.avatarUrl}" alt="Avatar"
+                         class="creator-avatar">
+
+                    <img th:unless="${#authentication.principal.avatarUrl != null and !#strings.isEmpty(#authentication.principal.avatarUrl)}"
+                         th:src="@{/images/default-avatar.jpg}" alt="Avatar"
+                         class="creator-avatar">
+
+                    <div class="creator-info">
+                        <span th:text="${#authentication.principal.fullName}">Tên người dùng</span>
+                        <select class="privacy-select">
+                            <option value="PUBLIC">🌍 Công khai</option>
+                            <option value="FRIENDS">👥 Bạn bè</option>
+                            <option value="PRIVATE">🔒 Chỉ mình tôi</option>
+                        </select>
+                    </div>
+                </div>
+
+                <textarea class="form-control post-content-input" rows="3" placeholder="Chia sẻ suy nghĩ của bạn..."></textarea>
+
                 <div class="post-options">
-                    <div>
+                    <div class="post-actions-left">
                         <button type="button" class="action-btn">
                             <i class="fas fa-image"></i> Ảnh
                         </button>
@@ -117,7 +199,7 @@
                             <i class="fas fa-video"></i> Video
                         </button>
                     </div>
-                    <button type="submit" class="btn">
+                    <button type="submit" class="post-btn">
                         <i class="fas fa-paper-plane"></i> Đăng
                     </button>
                 </div>
@@ -126,11 +208,24 @@
 
         <!-- Posts -->
         <div th:each="status : ${statuses}" class="post">
-            <div class="post-header"></div>
+            <div class="post-header">
+                <img th:src="${status.user.profilePicture ?: '/images/default-avatar.jpg'}"
+                     alt="Avatar" class="post-avatar">
+                <div class="post-user-info">
+                    <a th:href="@{'/profile/' + ${status.user.username}}" class="post-username">
+                        <span th:text="${status.user.firstName + ' ' + status.user.lastName}">Tên người dùng</span>
+                    </a>
+                    <div class="post-meta">
+                        <span class="post-time">2 giờ trước</span>
+                        <span class="post-privacy">🌍 Công khai</span>
+                    </div>
+                </div>
+            </div>
 
             <div class="post-content">
                 <p th:text="${status.content}">Chào mừng bạn đến với mạng xã hội của chúng tôi</p>
             </div>
+
             <div class="post-actions">
                 <button class="action-btn like-btn"
                         th:data-status-id="${status.id}"
@@ -151,7 +246,7 @@
     <div class="sidebar">
         <h5><i class="fas fa-users"></i> Người liên hệ</h5>
         <div id="onlineFriendsList">
-            <!-- Hiển thị loading ban đầu -->
+            <!-- Online friends will be loaded here -->
             <div class="text-center p-3">
                 <i class="fas fa-spinner fa-spin"></i> Đang tải...
             </div>
@@ -162,15 +257,23 @@
         <h5><i class="fas fa-fire"></i> Nhóm</h5>
         <div class="group-item">
             <!-- Groups sẽ thêm sau -->
+            <p class="text-muted text-center">Chưa có nhóm nào</p>
         </div>
     </div>
 </div>
 
-<!-- Chat Container -->
-<div class="chat-container" id="chatContainer"></div>
+<!-- Chat Containers -->
+<div class="chat-bubbles-container" id="chatBubblesContainer">
+    <!-- Chat bubbles will be added here -->
+</div>
+
+<div class="chat-windows-container" id="chatWindowsContainer">
+    <!-- Chat windows will be added here -->
+</div>
 
 <!-- Load JavaScript files -->
 <script th:src="@{/js/chat.js}"></script>
+<script th:src="@{/js/news-feed.js}"></script>
 <script th:inline="javascript">
     /*<![CDATA[*/
     const currentUser = /*[[${#authentication.principal.username}]]*/ 'defaultUser';
@@ -195,17 +298,19 @@
             // Subscribe vào các topic cần thiết cho posts
             document.querySelectorAll('.post').forEach(post => {
                 const statusId = post.querySelector('.like-btn').getAttribute('data-status-id');
-                stompClient.subscribe('/topic/status/' + statusId + '/likes', function (message) {
-                    const data = JSON.parse(message.body);
-                    if (data.userName === currentUser) {
-                        updateLikeUI(data.statusId, data.likeCount, data.isLiked);
-                    } else {
-                        const btn = document.querySelector(`.like-btn[data-status-id="${data.statusId}"]`);
-                        if (btn) {
-                            btn.querySelector('.like-count').textContent = data.likeCount;
+                if (statusId) {
+                    stompClient.subscribe('/topic/status/' + statusId + '/likes', function (message) {
+                        const data = JSON.parse(message.body);
+                        if (data.userName === currentUser) {
+                            updateLikeUI(data.statusId, data.likeCount, data.isLiked);
+                        } else {
+                            const btn = document.querySelector(`.like-btn[data-status-id="${data.statusId}"]`);
+                            if (btn) {
+                                btn.querySelector('.like-count').textContent = data.likeCount;
+                            }
                         }
-                    }
-                });
+                    });
+                }
             });
 
             // Subscribe to personal message queue for chat
@@ -214,8 +319,6 @@
                 handleIncomingMessage(messageData);
             });
 
-            // Load online friends after WebSocket connection
-            loadOnlineFriends();
         }, function (error) {
             console.log('WebSocket connection error: ' + error);
         });
@@ -243,6 +346,9 @@
                 }
             });
         });
+
+        // Load stats
+        loadUserStats();
     });
 
     function updateLikeUI(statusId, likeCount, isLiked) {
@@ -258,146 +364,20 @@
         }
     }
 
-    // Load online friends for sidebar
-    function loadOnlineFriends() {
-        // Mock data for testing - replace with real API call
-        const mockFriends = [
-            {
-                id: '1',
-                name: 'Ngô Duy',
-                avatar: '/images/default-avatar.jpg',
-                isOnline: true
-            },
-            {
-                id: '2',
-                name: 'Ngô Duy',
-                avatar: '/images/default-avatar.jpg',
-                isOnline: true
+    async function loadUserStats() {
+        try {
+            const response = await fetch('/api/user/stats');
+            if (response.ok) {
+                const stats = await response.json();
+
+                document.getElementById('friends-count').textContent = stats.friends || 0;
+                document.getElementById('posts-count').textContent = stats.posts || 0;
+                document.getElementById('likes-count').textContent = stats.likes || 0;
             }
-        ];
-
-        const friendsList = document.getElementById('onlineFriendsList');
-
-        if (mockFriends.length === 0) {
-            friendsList.innerHTML = `
-                <div class="text-center p-3 text-muted">
-                    <i class="fas fa-user-friends"></i><br>
-                    Không có bạn bè online
-                </div>
-            `;
-            return;
-        }
-
-        friendsList.innerHTML = mockFriends.map(friend => `
-            <div class="friend-item-enhanced" onclick="openChatFromSidebar('${friend.id}', '${friend.name}', '${friend.avatar || '/images/default-avatar.jpg'}')">
-                <div style="position: relative;">
-                    <img src="${friend.avatar || '/images/default-avatar.jpg'}" alt="${friend.name}" class="friend-avatar">
-                    ${friend.isOnline ? '<div class="online-indicator"></div>' : ''}
-                </div>
-                <span class="friend-name">${friend.name}</span>
-            </div>
-        `).join('');
-
-        // Use real API when available
-        /*
-        fetch('/api/chat/online-friends')
-            .then(response => response.json())
-            .then(friends => {
-                // Handle real data here
-            })
-            .catch(error => {
-                console.error('Error loading online friends:', error);
-                friendsList.innerHTML = `
-                    <div class="text-center p-3 text-danger">
-                        <i class="fas fa-exclamation-triangle"></i><br>
-                        Lỗi tải danh sách
-                    </div>
-                `;
-            });
-        */
-    }
-
-    // Function to open chat from sidebar (called from inline onclick)
-    function openChatFromSidebar(userId, userName, avatar) {
-        if (typeof openChat === 'function') {
-            openChat(userId, userName, avatar);
+        } catch (error) {
+            console.error('Error loading user stats:', error);
         }
     }
-
-    // Handle incoming chat messages
-    function handleIncomingMessage(messageData) {
-        const senderId = messageData.senderId;
-        const content = messageData.content;
-        const senderName = messageData.senderName;
-        const senderAvatar = messageData.senderAvatar;
-
-        // Check if chat window is open
-        if (typeof openChats !== 'undefined' && openChats.has(senderId.toString())) {
-            // Add message to existing chat
-            const messagesContainer = document.getElementById(`messages-${senderId}`);
-            if (messagesContainer) {
-                const messageDiv = document.createElement('div');
-                messageDiv.className = 'message received';
-                messageDiv.innerHTML = `
-                    <img src="${senderAvatar || '/images/default-avatar.jpg'}" alt="${senderName}" class="message-avatar">
-                    <div class="message-content">${content}</div>
-                `;
-                messagesContainer.appendChild(messageDiv);
-                messagesContainer.scrollTop = messagesContainer.scrollHeight;
-            }
-        } else {
-            // Show notification
-            showMessageNotification(senderId, senderName, content, senderAvatar);
-        }
-    }
-
-    function showMessageNotification(senderId, senderName, content, senderAvatar) {
-        // Create notification popup
-        const notification = document.createElement('div');
-        notification.className = 'message-notification';
-        notification.innerHTML = `
-            <div class="notification-content">
-                <img src="${senderAvatar || '/images/default-avatar.jpg'}" alt="${senderName}" class="notification-avatar">
-                <div class="notification-text">
-                    <div class="notification-name">${senderName}</div>
-                    <div class="notification-message">${content}</div>
-                </div>
-            </div>
-        `;
-
-        notification.style.cssText = `
-            position: fixed;
-            top: 80px;
-            right: 20px;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            padding: 12px;
-            max-width: 300px;
-            cursor: pointer;
-            z-index: 10000;
-            animation: slideInRight 0.3s ease;
-        `;
-
-        notification.onclick = () => {
-            if (typeof openChat === 'function') {
-                openChat(senderId.toString(), senderName, senderAvatar);
-            }
-            notification.remove();
-        };
-
-        document.body.appendChild(notification);
-
-        // Auto remove after 5 seconds
-        setTimeout(() => {
-            if (notification.parentNode) {
-                notification.remove();
-            }
-        }, 5000);
-    }
-
-    // Refresh online friends every 30 seconds
-    setInterval(loadOnlineFriends, 30000);
 
     /*]]>*/
 </script>
@@ -443,6 +423,48 @@
     .message-notification:hover {
         transform: scale(1.02);
         transition: transform 0.2s ease;
+    }
+
+    .creator-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-right: 12px;
+    }
+
+    .post-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-right: 12px;
+    }
+
+    .post-creator-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+    }
+
+    .creator-info {
+        flex: 1;
+    }
+
+    .creator-info span {
+        font-weight: 600;
+        display: block;
+        margin-bottom: 4px;
+    }
+
+    .privacy-select {
+        border: none;
+        background: #f0f2f5;
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-size: 12px;
+        color: #65676b;
     }
 </style>
 
