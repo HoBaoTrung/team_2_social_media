@@ -6,8 +6,10 @@ import com.codegym.socialmedia.model.account.User;
 import com.codegym.socialmedia.model.account.UserPrivacySettings;
 import com.codegym.socialmedia.model.social_action.Friendship;
 import com.codegym.socialmedia.model.social_action.FriendshipId;
+import com.codegym.socialmedia.model.social_action.Notification;
 import com.codegym.socialmedia.repository.FriendshipRepository;
 import com.codegym.socialmedia.repository.IUserRepository;
+import com.codegym.socialmedia.service.notification.NotificationService;
 import com.codegym.socialmedia.service.user.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -28,6 +30,9 @@ public class FriendshipServiceImpl implements FriendshipService {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private NotificationService notificationService;
+
     @Override
     public boolean addFriendship(User user) {
         User currentUser = userService.getCurrentUser();
@@ -47,6 +52,10 @@ public class FriendshipServiceImpl implements FriendshipService {
 
         try {
             friendshipRepository.save(newFriendship);
+            notificationService.notify(
+                    currentUser.getId(), user.getId(),
+                    Notification.NotificationType.FRIEND_REQUEST,
+                    Notification.ReferenceType.FRIENDSHIP, user.getId());
             return true;
         } catch (Exception e) {
             e.printStackTrace();

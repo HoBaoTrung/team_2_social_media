@@ -6,16 +6,14 @@ import com.codegym.socialmedia.dto.post.PostDisplayDto;
 import com.codegym.socialmedia.dto.post.PostUpdateDto;
 import com.codegym.socialmedia.model.PrivacyLevel;
 import com.codegym.socialmedia.model.account.User;
-import com.codegym.socialmedia.model.social_action.Friendship;
-import com.codegym.socialmedia.model.social_action.LikePost;
-import com.codegym.socialmedia.model.social_action.LikePostId;
-import com.codegym.socialmedia.model.social_action.Post;
+import com.codegym.socialmedia.model.social_action.*;
 import com.codegym.socialmedia.repository.FriendshipRepository;
 import com.codegym.socialmedia.repository.post.PostCommentRepository;
 import com.codegym.socialmedia.repository.post.PostLikeRepository;
 import com.codegym.socialmedia.repository.post.PostRepository;
 import com.codegym.socialmedia.service.friend_ship.FriendshipService;
 import com.codegym.socialmedia.service.notification.LikeNotificationService;
+import com.codegym.socialmedia.service.notification.NotificationService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -47,6 +45,9 @@ public class PostServiceImpl implements PostService {
 
     @Autowired
     private LikeNotificationService likeNotificationService;
+
+    @Autowired
+    private NotificationService notificationService;
 
     @Override
     public Post createPost(PostCreateDto dto, User user) {
@@ -121,11 +122,6 @@ public class PostServiceImpl implements PostService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
 
-        // Simplified - chỉ check owner có thể xem
-        if (!canUserViewPost(post, currentUser)) {
-            throw new RuntimeException("Access denied");
-        }
-
         return convertToDisplayDto(post, currentUser);
     }
 
@@ -177,9 +173,6 @@ public class PostServiceImpl implements PostService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
 
-        if (!canUserViewPost(post, user)) {
-            throw new RuntimeException("Access denied");
-        }
         LikePostId likePostId = getLikeStatusId(postId, user.getId());
         boolean isLiked = postLikeRepository.findById(likePostId).isPresent();
 
@@ -193,6 +186,10 @@ public class PostServiceImpl implements PostService {
             like.setUser(user);
             like.setId(likePostId);
             postLikeRepository.save(like);
+            notificationService.notify(
+                    user.getId(), post.getUser().getId(),
+                    Notification.NotificationType.LIKE_POST,
+                    Notification.ReferenceType.POST, postId);
             likeNotificationService.notifyLikeStatusChanged(postId, getLikeCount(post), true, user.getUsername());
             return true;
         }
@@ -213,19 +210,6 @@ public class PostServiceImpl implements PostService {
         return postLikeRepository.findUsersWhoLikedPost(post);
     }
 
-    @Override
-    public boolean canUserViewPost(Post post, User viewer) {
-        if (post.isDeleted()) {
-            return false;
-        }
-
-        // Simplified logic - chỉ check owner và public
-        if (viewer != null && post.getUser().getId().equals(viewer.getId())) {
-            return true; // Owner can view
-        }
-
-        return post.getPrivacyLevel() == PrivacyLevel.PUBLIC;
-    }
 
     @Override
     public long countUserPosts(User user) {

@@ -12,4 +12,5 @@ public interface PostCommentService {
     void deleteComment(Long commentId, User user);
     Page<PostComment> getCommentsByPost(Post post, Pageable pageable);
     Page<DisplayCommentDTO> getDisplayCommentsByPost(Post post, Pageable pageable);
+    PostComment getCommentById(Long commentId);
 }

@@ -1,5 +1,7 @@
+import {formatTimeAgo} from './timeUtils.js';
+
 // Posts JavaScript
- class PostManager {
+class PostManager {
     constructor() {
         this.currentPage = 0;
         this.isLoading = false;
@@ -164,6 +166,10 @@
         this.showLoading(true);
 
         let controllerURL = `/posts/api/feed?page=${this.currentPage}&size=10`;
+        const urlParams = new URLSearchParams(window.location.search);
+        controllerURL += '&postID=' + (urlParams.get('postID') ? parseInt(urlParams.get('postID')) : -1);
+
+        controllerURL += '&commentID=' + (urlParams.get('commentID') ? parseInt(urlParams.get('commentID')) : -1);
 
         if (this.username != null && this.username != undefined && this.username.trim() != '') {
             controllerURL = `/posts/api/user/${this.username}?page=${this.currentPage}&size=10`;
@@ -179,23 +185,31 @@
                 }
             });
 
-            if (data.content && data.content.length > 0) {
-                data.content.forEach(post => {
-                    this.appendPost(post);
-                });
+            if ('pageable' in data && Array.isArray(data.content)) {
+                if (data.content && data.content.length > 0) {
+                    data.content.forEach(post => {
+                        this.appendPost(post);
+                    });
 
-                this.currentPage++;
-                this.hasMorePosts = !data.last;
-            } else {
-                this.hasMorePosts = false;
-                if (this.currentPage === 0) {
-                    const noPostsEl = document.getElementById('profile-no-posts');
-                    if (noPostsEl) {
-                        noPostsEl.style.display = 'block';
+                    this.currentPage++;
+                    this.hasMorePosts = !data.last;
+                } else {
+                    this.hasMorePosts = false;
+                    if (this.currentPage === 0) {
+                        const noPostsEl = document.getElementById('profile-no-posts');
+                        if (noPostsEl) {
+                            noPostsEl.style.display = 'block';
+                        }
                     }
+                    this.showNoMorePosts();
                 }
-                this.showNoMorePosts();
+            } else {
+                this.appendPost(data);
+                this.hasMorePosts = false;
+                this.goToComment(urlParams.get('commentID'),data.id)
             }
+
+
         } catch (error) {
             console.error('Error loading posts:', error);
 
@@ -209,6 +223,53 @@
             this.showLoading(false);
         }
     }
+    async goToComment(commentId, postId) {
+        const section = document.getElementById(`comments-${postId}`);
+        if (!section) {
+            console.error(`Comments section for post ${postId} not found`);
+            return;
+        }
+
+        // Hiển thị danh sách bình luận nếu chưa hiển thị
+        if (window.getComputedStyle(section).display === 'none') {
+            this.toggleComments(postId);
+        }
+
+        const HIGHLIGHT_DURATION = 2000;
+
+        // Hàm phụ để tìm và cuộn đến comment
+        const tryScrollToComment = async () => {
+            let commentElement = document.getElementById(`comment-id-${commentId}`);
+            const state = this.commentState[postId] = {page: 0, hasMore: true, loading: false, size: 2};
+
+            console.log(state)
+            // Nếu comment chưa tồn tại và vẫn còn bình luận để tải
+            while (!commentElement && state && state.hasMore && !state.loading) {
+                console.log("123131sa31d3a21sd")
+                await this.loadComments(postId, true); // Tải thêm bình luận
+                commentElement = document.getElementById(`comment-id-${commentId}`); // Kiểm tra lại
+            }
+
+            // Nếu tìm thấy commentElement
+            if (commentElement) {
+                commentElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                commentElement.style.backgroundColor = '#e3f2fd';
+                setTimeout(() => {
+                    commentElement.style.backgroundColor = '';
+                }, HIGHLIGHT_DURATION);
+            } else {
+                console.error(`Comment ${commentId} not found after loading all available comments`);
+            }
+        };
+
+        // Thực thi tìm kiếm và cuộn
+        try {
+            await tryScrollToComment();
+        } catch (error) {
+            console.error(`Error while trying to scroll to comment ${commentId}:`, error);
+        }
+    }
+   
 
     showNoMorePosts() {
         const noMorePosts = document.getElementById('no-more-posts');
@@ -380,7 +441,7 @@
     // toggle like (gửi API)
     async toggleLike(id, like_type) {
         let url;
-        if(like_type == 'post') url=`/posts/api/like/${id}`;
+        if (like_type == 'post') url = `/posts/api/like/${id}`;
         else if (like_type == 'comment') url = `/comment/api/like/${id}`;
         try {
             const response = await fetch(url, {
@@ -406,7 +467,7 @@
     // cập nhật class liked của nút like
     updateLikeButton(id, isLiked, like_type) {
         let likeBtn;
-        if(like_type == 'post') likeBtn = document.querySelector(
+        if (like_type == 'post') likeBtn = document.querySelector(
             `.post-item[data-post-id="${id}"] .post-action`
         );
 
@@ -660,77 +721,78 @@
             }
         }
     }
+
 // Thuộc tính của class
-     commentState = {}; // { [postId]: { page, hasMore, loading, size } }
+    commentState = {}; // { [postId]: { page, hasMore, loading, size } }
 
 // ===== Toggle + bind scroll =====
-     toggleComments(postId) {
-         const section = document.getElementById(`comments-${postId}`);
-         // Đừng dùng element.style.display; dùng computedStyle để bắt đúng lần đầu
-         const isVisible = window.getComputedStyle(section).display !== 'none';
+    toggleComments(postId) {
+        const section = document.getElementById(`comments-${postId}`);
+        // Đừng dùng element.style.display; dùng computedStyle để bắt đúng lần đầu
+        const isVisible = window.getComputedStyle(section).display !== 'none';
 
-         if (isVisible) {
-             section.style.display = 'none';
-             return;
-         }
+        if (isVisible) {
+            section.style.display = 'none';
+            return;
+        }
 
-         section.style.display = 'block';
+        section.style.display = 'block';
 
-         // Khởi tạo state 1 lần cho post
-         if (!this.commentState[postId]) {
-             this.commentState[postId] = { page: 0, hasMore: true, loading: false, size: 2};
-         } else {
-             // Mỗi lần mở lại muốn load từ đầu: reset nếu cần
-             this.commentState[postId].page = 0;
-             this.commentState[postId].hasMore = true;
-         }
+        // Khởi tạo state 1 lần cho post
+        if (!this.commentState[postId]) {
+            this.commentState[postId] = {page: 0, hasMore: true, loading: false, size: 2};
+        } else {
+            // Mỗi lần mở lại muốn load từ đầu: reset nếu cần
+            this.commentState[postId].page = 0;
+            this.commentState[postId].hasMore = true;
+        }
 
-         const $container = $(`#comments-list-${postId}`);
+        const $container = $(`#comments-list-${postId}`);
 
-         // Load trang đầu
-         this.loadComments(postId, /*append*/ false).then(() => {
-             // Nếu nội dung chưa đủ tạo thanh cuộn, tự fill thêm đến khi đủ (hoặc hết dữ liệu)
-             this._prefillViewport(postId);
-         });
+        // Load trang đầu
+        this.loadComments(postId, /*append*/ false).then(() => {
+            // Nếu nội dung chưa đủ tạo thanh cuộn, tự fill thêm đến khi đủ (hoặc hết dữ liệu)
+            this._prefillViewport(postId);
+        });
 
-         // Gắn scroll 1 lần
-         if (!$container.data('scrollBound')) {
-             $container.on('scroll', () => {
-                 const el = $container[0];
-                 // gần chạm đáy
-                 if (el.scrollTop + el.clientHeight >= el.scrollHeight - 10) {
-                     const st = this.commentState[postId];
-                     if (!st.loading && st.hasMore) {
-                         this.loadComments(postId, /*append*/ true);
-                     }
-                 }
-             });
-             $container.data('scrollBound', true);
-         }
-     }
+        // Gắn scroll 1 lần
+        if (!$container.data('scrollBound')) {
+            $container.on('scroll', () => {
+                const el = $container[0];
+                // gần chạm đáy
+                if (el.scrollTop + el.clientHeight >= el.scrollHeight - 10) {
+                    const st = this.commentState[postId];
+                    if (!st.loading && st.hasMore) {
+                        this.loadComments(postId, /*append*/ true);
+                    }
+                }
+            });
+            $container.data('scrollBound', true);
+        }
+    }
 
 // ===== Load comments theo trang =====
-     loadComments(postId, append = true) {
-         const st = this.commentState[postId];
-         if (!st || st.loading || (!append && st.page !== 0)) return Promise.resolve();
+    loadComments(postId, append = true) {
+        const st = this.commentState[postId];
+        if (!st || st.loading || (!append && st.page !== 0)) return Promise.resolve();
 
-         st.loading = true;
+        st.loading = true;
 
-         const page = st.page;
-         const size = st.size;
+        const page = st.page;
+        const size = st.size;
 
-         return $.ajax({
-             url: `/api/${postId}/comments`,
-             type: 'GET',
-             data: { page, size }
-         }).done((data) => {
-             const $container = $(`#comments-list-${postId}`);
-             if (!append) $container.empty();
+        return $.ajax({
+            url: `/api/${postId}/comments`,
+            type: 'GET',
+            data: {page, size}
+        }).done((data) => {
+            const $container = $(`#comments-list-${postId}`);
+            if (!append) $container.empty();
 
-             (data.comments || []).forEach(c => {
-                 const timeAgo = formatTimeAgo(c.createdAt); // xem hàm bên dưới
-                 const $card = $(`
-                <div class="comment-card d-flex">
+            (data.comments || []).forEach(c => {
+                const timeAgo = formatTimeAgo(c.createdAt); // xem hàm bên dưới
+                const $card = $(`
+                <div id="comment-id-${c.id}" class="comment-card d-flex">
                     <img src="${c.userAvatarUrl || ''}" alt="avatar" class="comment-avatar">
                     <div>
                         <strong>${c.userFullName || c.username || ''}</strong>
@@ -750,34 +812,34 @@
                     </div>
                 </div>
             `);
-                 $container.append($card);
-             });
+                $container.append($card);
+            });
 
-             // cập nhật phân trang
-             st.page = page + 1;
-             st.hasMore = (data.comments || []).length === size;
-         }).fail((xhr) => {
-             console.error('Lỗi load comments:', xhr?.responseText || xhr?.statusText);
-         }).always(() => {
-             st.loading = false;
-         });
-     }
+            // cập nhật phân trang
+            st.page = page + 1;
+            st.hasMore = (data.comments || []).length === size;
+        }).fail((xhr) => {
+            console.error('Lỗi load comments:', xhr?.responseText || xhr?.statusText);
+        }).always(() => {
+            st.loading = false;
+        });
+    }
 
 // ===== Tự lấp đầy cho đến khi có thanh cuộn (đề phòng size quá nhỏ) =====
-     _prefillViewport(postId) {
-         const $container = $(`#comments-list-${postId}`);
-         const el = $container[0];
-         const st = this.commentState[postId];
-         let guard = 0;
+    _prefillViewport(postId) {
+        const $container = $(`#comments-list-${postId}`);
+        const el = $container[0];
+        const st = this.commentState[postId];
+        let guard = 0;
 
-         const fill = () => {
-             if (!st || guard++ > 5) return; // tối đa 5 lần để tránh vòng lặp vô hạn
-             if (el.scrollHeight <= el.clientHeight && st.hasMore && !st.loading) {
-                 this.loadComments(postId, true).then(fill);
-             }
-         };
-         fill();
-     }
+        const fill = () => {
+            if (!st || guard++ > 5) return; // tối đa 5 lần để tránh vòng lặp vô hạn
+            if (el.scrollHeight <= el.clientHeight && st.hasMore && !st.loading) {
+                this.loadComments(postId, true).then(fill);
+            }
+        };
+        fill();
+    }
 
     handleCommentKeyPress(event, postId) {
         if (event.key === 'Enter' && !event.shiftKey) {
@@ -921,6 +983,7 @@
         }
     }
 }
+
 let stompClient = null;
 // Initialize PostManager when DOM is loaded
 document.addEventListener('DOMContentLoaded', function () {
@@ -938,35 +1001,3 @@ document.addEventListener('DOMContentLoaded', function () {
     window.postManager = new PostManager();
 
 });
-
-function  formatTimeAgo(dateString) {
-    // Tách ngày, tháng, năm và giờ, phút
-    const [datePart, timePart] = dateString.split(" ");
-    const [day, month, year] = datePart.split("/").map(Number);
-    const [hour, minute] = timePart.split(":").map(Number);
-
-    // Tạo đối tượng Date (lưu ý month phải -1 vì JS tính từ 0-11)
-    const date = new Date(year, month - 1, day, hour, minute);
-
-    const now = new Date();
-    const diffInMs = now - date;
-    const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
-    const diffInHours = Math.floor(diffInMinutes / 60);
-    const diffInDays = Math.floor(diffInHours / 24);
-
-    if (diffInMinutes < 1) {
-        return 'Vừa xong';
-    } else if (diffInMinutes < 60) {
-        return `${diffInMinutes} phút trước`;
-    } else if (diffInHours < 24) {
-        return `${diffInHours} giờ trước`;
-    } else if (diffInDays < 7) {
-        return `${diffInDays} ngày trước`;
-    } else {
-        return date.toLocaleDateString('vi-VN', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
-        });
-    }
-}

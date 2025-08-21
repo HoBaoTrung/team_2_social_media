@@ -43,6 +43,11 @@ public class CustomOAuth2User extends DefaultOAuth2User implements UserPrincipal
         return username;
     }
 
+    @Override
+    public String getName() {
+        return this.username;
+    }
+
     public String getEmail() {
         return email;
     }
