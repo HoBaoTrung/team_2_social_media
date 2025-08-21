@@ -136,5 +136,44 @@ It also provides an admin dashboard to manage users and monitor system activitie
 
 - **application.properties**: Main configuration file.
 - **secret.properties**: Some key configuration file
-- **application-dev-secret.properties**:Information of properties files.  
+- **application-dev-secret.properties**: Information of properties files.  
+
+## Getting Started
+
+### Clone the Repository
+
+Use the following command to clone the repository:
+
+```bash
+git clone https://github.com/HoBaoTrung/team_2_social_media.git
+```
+### Create and Configure the application-dev-secret.properties File
+ 1. Copy the provided application-dev-secret.properties template.
+ 2. Update the file with your specific settings, such as database credentials and API keys.
+
+### Run the ProjectYou can run the project using one of the following methods:
+Use your preferred IDE (e.g., IntelliJ, Eclipse).
+Alternatively, run the following command from the terminal
+
+### Execute the SQL Example Data
+
+## Sample Data Description
+
+To help you get started with testing the application, the provided SQL script includes sample user data with predefined `username` and `password` for both regular users and admin users. Below is an example of the data structure:
+
+| Role       | Username       | Password       |
+|------------|----------------|----------------|
+| Regular User | `john_doe`       | `12345`  |
+| Regular User | `jane_smith`       | `12345`      |
+| Admin       | `admin1`       | `12345` |
+
+### Notes:
+- **Regular User**: These accounts have standard access to the application features.
+- **Admin**: This account has elevated privileges, including access to administrative functions.
+- Ensure that you update the `application-dev-secret.properties` file with the appropriate database credentials to connect to the database containing this sample data.
+- The SQL script (`sample-data.sql`) provided in the repository will automatically populate the database with the above user data when executed.
+
+### Steps to Use Sample Data
+1. Run the SQL script (`example-data.sql`) to populate the database.
+2. Log in to the application using the credentials listed above to test different user roles.
 
