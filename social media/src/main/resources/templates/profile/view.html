@@ -30,7 +30,7 @@
 
             <!-- Enhanced Message Button -->
             <button th:if="${canSendMessage}"
-                    class="enhanced-message-btn"
+                   class="enhanced-message-btn"
                     id="profileMessageBtn"
                     th:data-user-id="${user.id}"
                     th:data-user-name="${user.firstName + ' ' + user.lastName}"
@@ -236,12 +236,10 @@
     /*<![CDATA[*/
     class EnhancedProfileChat {
         constructor() {
-            this.profileMessageBtn = document.getElementById('profileMessageBtn');
+            // this.profileMessageBtn = document.getElementById('profileMessageBtn');
             this.profileChatMessages = document.getElementById('profileChatMessages');
-            this.profileTypingIndicator = document.getElementById('profileTypingIndicator');
             this.messageBadge = document.getElementById('messageBadge');
 
-            this.isOpen = false;
             this.unreadCount = 0;
             this.typingTimer = null;
             this.isTyping = false;
@@ -258,10 +256,10 @@
             if (!this.profileMessageBtn) return;
 
             // Thay vì mở profile chat, sử dụng chat system chính
-            this.profileMessageBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.openMainChat(); // Gọi chat system chính thay vì profile chat
-            });
+            // this.profileMessageBtn.addEventListener('click', (e) => {
+            //     e.preventDefault();
+            //     this.openMainChat(); // Gọi chat system chính thay vì profile chat
+            // });
 
             // Vô hiệu hóa tất cả event handlers của profile chat
             // Không cần setup các event cho profile chat nữa
@@ -309,19 +307,6 @@
             }, 3000);
         }
 
-
-        showTyping() {
-            if (this.profileTypingIndicator) {
-                this.profileTypingIndicator.style.display = 'flex';
-                this.scrollToBottom();
-            }
-        }
-
-        hideTyping() {
-            if (this.profileTypingIndicator) {
-                this.profileTypingIndicator.style.display = 'none';
-            }
-        }
 
         handleTyping() {
             if (!this.isTyping) {

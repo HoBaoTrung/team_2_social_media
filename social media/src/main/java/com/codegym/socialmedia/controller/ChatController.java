@@ -80,18 +80,4 @@ public class ChatController {
         return ResponseEntity.ok(response);
     }
 
-    // Existing method giữ nguyên
-    @GetMapping("/chat-window")
-    public String getChatWindow(@RequestParam String chatId,
-                                @RequestParam String chatName,
-                                @RequestParam String chatType,
-                                @RequestParam String avatar,
-                                Model model) {
-        model.addAttribute("chatId", chatId);
-        model.addAttribute("chatName", chatName);
-        model.addAttribute("chatType", chatType);
-        model.addAttribute("avatar", avatar);
-        return "fragments/chat-window :: chatWindow";
-    }
-
 }
