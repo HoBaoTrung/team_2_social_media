@@ -237,11 +237,6 @@
     class EnhancedProfileChat {
         constructor() {
             this.profileMessageBtn = document.getElementById('profileMessageBtn');
-            this.profileChatBubble = document.getElementById('profileChatBubble');
-            this.profileChatOverlay = document.getElementById('profileChatOverlay');
-
-            this.profileMessageInput = document.getElementById('profileMessageInput');
-
             this.profileChatMessages = document.getElementById('profileChatMessages');
             this.profileTypingIndicator = document.getElementById('profileTypingIndicator');
             this.messageBadge = document.getElementById('messageBadge');
@@ -315,62 +310,6 @@
         }
 
 
-        // sendMessage() {
-        //     console.log('send message from profile')
-        //     if (!this.profileMessageInput) return;
-        //
-        //     const message = this.profileMessageInput.value.trim();
-        //     if (!message) return;
-        //
-        //     // Add sent message to UI
-        //     this.addMessage(message, 'sent');
-        //
-        //     // Clear input
-        //     this.profileMessageInput.value = '';
-        //     this.autoResizeTextarea(this.profileMessageInput);
-        //
-        //     // Send to server if integration exists
-        //     this.sendToServer(message);
-        //
-        //     // Simulate response
-        //     setTimeout(() => {
-        //         this.showTyping();
-        //         setTimeout(() => {
-        //             this.hideTyping();
-        //             this.addMessage(this.getRandomResponse(), 'received');
-        //         }, 2000);
-        //     }, 500);
-        // }
-
-        addMessage(content, type, avatar = null) {
-            if (!this.profileChatMessages) return;
-
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `profile-message ${type}`;
-
-            if (type === 'received') {
-                messageDiv.innerHTML = `
-                <img class="profile-message-avatar"
-                     src="${avatar || this.userAvatar || '/images/default-avatar.jpg'}"
-                     alt="Avatar">
-                <div class="profile-message-content">${this.escapeHtml(content)}</div>
-            `;
-            } else {
-                messageDiv.innerHTML = `
-                <div class="profile-message-content">${this.escapeHtml(content)}</div>
-            `;
-            }
-
-            this.profileChatMessages.appendChild(messageDiv);
-            this.scrollToBottom();
-
-            // Add animation
-            setTimeout(() => {
-                messageDiv.style.opacity = '1';
-                messageDiv.style.transform = 'translateY(0)';
-            }, 10);
-        }
-
         showTyping() {
             if (this.profileTypingIndicator) {
                 this.profileTypingIndicator.style.display = 'flex';
@@ -429,19 +368,6 @@
             this.updateNotificationBadge();
         }
 
-        escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
-        // Public method to receive messages (for WebSocket integration)
-        receiveMessage(message, senderName, senderAvatar) {
-            if (!this.isOpen) {
-                this.addNotification();
-            }
-            this.addMessage(message, 'received', senderAvatar);
-        }
     }
 
     // Enhanced Profile Interactions
