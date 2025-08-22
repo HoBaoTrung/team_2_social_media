@@ -170,8 +170,7 @@ To help you get started with testing the application, the provided SQL script in
 ### Notes:
 - **Regular User**: These accounts have standard access to the application features.
 - **Admin**: This account has elevated privileges, including access to administrative functions.
-- Ensure that you update the `application-dev-secret.properties` file with the appropriate database credentials to connect to the database containing this sample data.
-- The SQL script (`sample-data.sql`) provided in the repository will automatically populate the database with the above user data when executed.
+- Ensure that you update the `application-dev-secret.properties` file with the appropriate database credentials to connect to the database and some key.
 
 ### Steps to Use Sample Data
 1. Run the SQL script (`example-data.sql`) to populate the database.
