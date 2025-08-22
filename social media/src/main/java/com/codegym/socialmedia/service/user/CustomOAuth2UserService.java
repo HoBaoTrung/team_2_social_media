@@ -74,7 +74,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService
                         user.getProfilePicture(),
                         user.getFirstName() + " " + user.getLastName(),
                         user.getUsername(),
-                        user.getEmail()
+                        user.getEmail(), user.getId()
                 );
 
             }

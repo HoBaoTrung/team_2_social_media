@@ -45,7 +45,6 @@ public class NotificationService {
         // gửi tới hàng đợi cá nhân của người nhận
         String userKey = n.getReceiver().getUsername(); // hoặc String.valueOf(receiverId) nếu Principal là id
         messaging.convertAndSendToUser(userKey, "/queue/notifications", mapper.toDto(n));
-        System.out.println("Sending notification to userId={} "+ receiverId);
 
         return n;
     }

@@ -16,6 +16,10 @@ public class CustomUserPrincipal implements UserDetails, UserPrincipalInfo {
         this.user = user;
     }
 
+    public long getId(){
+        return user.getId();
+    }
+
     @Override
     public String getAvatarUrl() {
         return user.getProfilePicture();

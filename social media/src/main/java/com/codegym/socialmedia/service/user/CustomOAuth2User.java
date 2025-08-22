@@ -13,19 +13,24 @@ public class CustomOAuth2User extends DefaultOAuth2User implements UserPrincipal
     private final String fullName;
     private final String username;
     private final String email;
-
+    private final long id;
     public CustomOAuth2User(Collection<? extends GrantedAuthority> authorities,
                             Map<String, Object> attributes,
                             String nameAttributeKey,
                             String avatarUrl,
                             String fullName,
                             String username,
-                            String email) {
+                            String email,long id) {
         super(authorities, attributes, nameAttributeKey);
         this.avatarUrl = avatarUrl;
         this.fullName = fullName;
         this.username = username;
         this.email = email;
+        this.id = id;
+    }
+
+    public long getId() {
+        return id;
     }
 
     @Override

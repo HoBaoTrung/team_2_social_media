@@ -1,12 +1,15 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="user-id" th:content="${#authentication.principal.id}">
     <title>Facebook</title>
     <th:block th:replace="~{fragments/common/commonHead :: commonHead}"></th:block>
     <link rel="stylesheet" th:href="@{/css/news-feed.css}">
     <link rel="stylesheet" th:href="@{/css/post.css}">
+    <link rel="stylesheet" th:href="@{/css/chat.css}">
+
 
 </head>
 <body>
@@ -36,6 +39,10 @@
             <p><i class="fas fa-edit"></i> <span id="posts-count">0</span> bài viết</p>
             <p><i class="fas fa-heart"></i> <span id="likes-count">0</span> lượt thích</p>
         </div>
+
+        <hr class="divider">
+
+
     </div>
 
     <!-- Main Feed -->
@@ -61,30 +68,144 @@
 
     <!-- Right Sidebar -->
     <div class="sidebar">
-        <h3><i class="fas fa-users"></i> Gợi ý kết bạn</h3>
-        <div id="friend-suggestions">
-            <p class="text-muted">
-                Chưa có gợi ý nào.<br>
-                Hãy mời bạn bè tham gia!
-            </p>
+        <h5><i class="fas fa-users"></i> Người liên hệ</h5>
+        <div id="onlineFriendsList">
+            <!-- Online friends will be loaded here -->
+            <div class="text-center p-3">
+                <i class="fas fa-spinner fa-spin"></i> Đang tải...
+            </div>
         </div>
 
         <hr class="divider">
 
-        <h3><i class="fas fa-fire"></i> Xu hướng</h3>
-        <div class="trending">
-            <p>#ChaoMung</p>
-            <p>#SocialMedia</p>
-            <p>#KetNoi</p>
+        <h5><i class="fas fa-fire"></i> Nhóm</h5>
+        <div class="group-item">
+            <!-- Groups sẽ thêm sau -->
+            <p class="text-muted text-center">Chưa có nhóm nào</p>
         </div>
     </div>
 </div>
 
+<!-- Chat Containers -->
+<div class="chat-bubbles-container" id="chatBubblesContainer">
+    <!-- Chat bubbles will be added here -->
+</div>
+<div class="chat-windows-container" id="chatWindowsContainer">
+    <!-- Chat windows will be added here -->
+</div>
 <!-- Edit Post Modal -->
 <div th:replace="fragments/post/post-form :: edit-post-form"></div>
 
 <script  type="module" th:src="@{/js/post.js}"></script>
 <script th:src="@{/js/news-feed.js}"></script>
+<script th:src="@{/js/chat.js}"></script>
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    const currentUser = /*[[${#authentication.principal.username}]]*/ 'defaultUser';
+    const currentUserId = /*[[${#authentication.principal.id}]]*/ '1';
+
+    // Set current user ID in meta tag for chat.js
+    if (document.querySelector('meta[name="user-id"]')) {
+        document.querySelector('meta[name="user-id"]').content = currentUserId;
+    }
+
+    // WebSocket connection and like functionality
+    let stompClient = null;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize WebSocket
+        const socket = new SockJS('/ws');
+        stompClient = Stomp.over(socket);
+
+        stompClient.connect({}, function (frame) {
+            console.log('Connected: ' + frame);
+
+            // Subscribe vào các topic cần thiết cho posts
+            document.querySelectorAll('.post').forEach(post => {
+                const statusId = post.querySelector('.like-btn').getAttribute('data-status-id');
+                if (statusId) {
+                    stompClient.subscribe('/topic/status/' + statusId + '/likes', function (message) {
+                        const data = JSON.parse(message.body);
+                        if (data.userName === currentUser) {
+                            updateLikeUI(data.statusId, data.likeCount, data.isLiked);
+                        } else {
+                            const btn = document.querySelector(`.like-btn[data-status-id="${data.statusId}"]`);
+                            if (btn) {
+                                btn.querySelector('.like-count').textContent = data.likeCount;
+                            }
+                        }
+                    });
+                }
+            });
+
+            // Subscribe to personal message queue for chat
+            stompClient.subscribe(`/user/${currentUserId}/queue/messages`, function (message) {
+                const messageData = JSON.parse(message.body);
+                handleIncomingMessage(messageData);
+            });
+
+        }, function (error) {
+            console.log('WebSocket connection error: ' + error);
+        });
+
+        // Setup like button handlers
+        document.querySelectorAll('.like-btn').forEach(btn => {
+            btn.addEventListener('click', async function () {
+                const statusId = this.getAttribute('data-status-id');
+
+                try {
+                    const response = await fetch(`/api/likes/status/${statusId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        updateLikeUI(data.statusId, data.likeCount, data.isLiked);
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                }
+            });
+        });
+
+        // Load stats
+        loadUserStats();
+    });
+
+    function updateLikeUI(statusId, likeCount, isLiked) {
+        const likeBtn = document.querySelector(`.like-btn[data-status-id="${statusId}"]`);
+        if (likeBtn) {
+            likeBtn.querySelector('.like-count').textContent = likeCount;
+
+            if (isLiked) {
+                likeBtn.classList.add('liked');
+            } else {
+                likeBtn.classList.remove('liked');
+            }
+        }
+    }
+
+    async function loadUserStats() {
+        try {
+            const response = await fetch('/api/user/stats');
+            if (response.ok) {
+                const stats = await response.json();
+
+                document.getElementById('friends-count').textContent = stats.friends || 0;
+                document.getElementById('posts-count').textContent = stats.posts || 0;
+                document.getElementById('likes-count').textContent = stats.likes || 0;
+            }
+        } catch (error) {
+            console.error('Error loading user stats:', error);
+        }
+    }
+
+    /*]]>*/
+</script>
 
 </body>
 </html>
