@@ -42,6 +42,7 @@ class ChatManager {
     }
 
     openChat(userId, userName, avatar) {
+        console.log("open chat in new feed")
         // Check if chat is already open
         if (this.openChats.has(userId)) {
             const existingChat = this.openChats.get(userId);

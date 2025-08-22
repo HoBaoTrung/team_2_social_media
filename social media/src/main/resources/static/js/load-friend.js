@@ -128,16 +128,6 @@ function loadMoreFriends() {
                         }
                     });
 
-                    // Thêm nút chat cho bạn bè
-                    if (friendshipStatus === 'ACCEPTED') {
-                        const chatButtonHtml = `
-                            <button class="btn btn-info btn-sm mt-2" 
-                                    onclick="openChatFromProfile('${friend.id}', '${friend.fullName}', '${friend.avatarUrl || '/images/default-avatar.jpg'}')">
-                                <i class="fa-solid fa-message"></i> Nhắn tin
-                            </button>
-                        `;
-                        $(`#chat-btn-${friend.username}`).html(chatButtonHtml);
-                    }
                 }
             });
 

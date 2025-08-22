@@ -185,81 +185,6 @@
     </div>
 </div>
 
-<!-- Enhanced Chat Bubble -->
-<div class="profile-chat-overlay" id="profileChatOverlay"></div>
-<div class="profile-chat-bubble" id="profileChatBubble">
-    <div class="profile-chat-header">
-        <div class="profile-chat-user-info">
-            <img class="profile-chat-avatar"
-                 th:src="${user.profilePicture ?: '/images/default-avatar.jpg'}"
-                 th:alt="${user.firstName + ' ' + user.lastName}">
-            <div class="profile-chat-user-details">
-                <h4 th:text="${user.firstName + ' ' + user.lastName}">Tên người dùng</h4>
-                <span>
-                    <span class="profile-online-indicator"></span>
-                    Đang hoạt động
-                </span>
-            </div>
-        </div>
-        <div class="profile-chat-controls">
-            <button class="profile-chat-btn" title="Video call">
-                <i class="fas fa-video"></i>
-            </button>
-            <button class="profile-chat-btn" title="Thu nhỏ">
-                <i class="fas fa-minus"></i>
-            </button>
-            <button class="profile-chat-btn" id="profileCloseChatBtn" title="Đóng">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-    </div>
-
-    <div class="profile-chat-messages" id="profileChatMessages">
-        <div class="profile-message-time">Hôm nay</div>
-        <div class="profile-message received">
-            <img class="profile-message-avatar"
-                 th:src="${user.profilePicture ?: '/images/default-avatar.jpg'}"
-                 alt="Avatar">
-            <div class="profile-message-content">
-                Chào bạn! Cảm ơn bạn đã ghé thăm trang của mình 😊
-            </div>
-        </div>
-        <div class="profile-message sent">
-            <div class="profile-message-content">
-                Chào! Trang của bạn thật tuyệt vời!
-            </div>
-        </div>
-        <div class="profile-message received">
-            <img class="profile-message-avatar"
-                 th:src="${user.profilePicture ?: '/images/default-avatar.jpg'}"
-                 alt="Avatar">
-            <div class="profile-message-content">
-                Cảm ơn bạn! Chúng ta có thể trò chuyện thêm không? 🎉
-            </div>
-        </div>
-
-        <!-- Typing indicator (hidden by default) -->
-        <div class="profile-typing-indicator" id="profileTypingIndicator" style="display: none;">
-            <div class="profile-typing-dot"></div>
-            <div class="profile-typing-dot"></div>
-            <div class="profile-typing-dot"></div>
-        </div>
-    </div>
-
-    <div class="profile-chat-input">
-        <div class="profile-input-container">
-            <textarea class="profile-chat-text-input"
-                      placeholder="Nhập tin nhắn..."
-                      id="profileMessageInput"
-                      rows="1"></textarea>
-            <span class="profile-input-icon" title="Emoji">😊</span>
-            <span class="profile-input-icon" title="Đính kèm">📎</span>
-            <span class="profile-input-icon" title="Gửi" id="profileSendBtn">
-                <i class="fas fa-paper-plane"></i>
-            </span>
-        </div>
-    </div>
-</div>
 
 <!-- Post Search Modal (for posts tab) -->
 <div class="modal fade" id="searchPostsModal" tabindex="-1" th:if="${filter == 'posts'}">
@@ -314,9 +239,9 @@
             this.profileMessageBtn = document.getElementById('profileMessageBtn');
             this.profileChatBubble = document.getElementById('profileChatBubble');
             this.profileChatOverlay = document.getElementById('profileChatOverlay');
-            this.profileCloseChatBtn = document.getElementById('profileCloseChatBtn');
+
             this.profileMessageInput = document.getElementById('profileMessageInput');
-            this.profileSendBtn = document.getElementById('profileSendBtn');
+
             this.profileChatMessages = document.getElementById('profileChatMessages');
             this.profileTypingIndicator = document.getElementById('profileTypingIndicator');
             this.messageBadge = document.getElementById('messageBadge');
@@ -389,139 +314,33 @@
             }, 3000);
         }
 
-        // Vô hiệu hóa các method của profile chat
-        openChat() {
-            // Không làm gì - đã disable
-            return false;
-        }
 
-        closeChat() {
-            // Không làm gì - đã disable
-            return false;
-        }
-
-        openChat() {
-            // Đóng tất cả chat windows khác trước khi mở profile chat
-            this.closeAllOtherChats();
-
-            this.isOpen = true;
-
-            if (this.profileChatBubble) {
-                this.profileChatBubble.classList.add('active');
-            }
-
-            if (this.profileChatOverlay) {
-                this.profileChatOverlay.classList.add('active');
-            }
-
-            // Focus input
-            setTimeout(() => {
-                if (this.profileMessageInput) {
-                    this.profileMessageInput.focus();
-                }
-            }, 300);
-
-            // Clear notifications
-            this.clearNotifications();
-
-            // Scroll to bottom
-            setTimeout(() => this.scrollToBottom(), 100);
-
-            // DON'T integrate with existing chat system to avoid conflicts
-            // if (typeof openChat === 'function' && this.userId) {
-            //     openChat(this.userId.toString(), this.userName, this.userAvatar);
-            // }
-        }
-
-        closeAllOtherChats() {
-            // Đóng tất cả chat windows từ hệ thống chat chính
-            if (typeof openChats !== 'undefined' && openChats) {
-                openChats.forEach((chatWindow, userId) => {
-                    if (chatWindow && typeof closeChat === 'function') {
-                        closeChat(userId);
-                    }
-                });
-            }
-
-            // Ẩn tất cả chat bubbles và windows
-            document.querySelectorAll('.chat-window, .chat-bubble').forEach(element => {
-                element.style.display = 'none';
-            });
-
-            // Ẩn chat container chính
-            const mainChatContainer = document.getElementById('chatContainer');
-            if (mainChatContainer) {
-                mainChatContainer.style.visibility = 'hidden';
-                mainChatContainer.style.opacity = '0';
-                mainChatContainer.style.pointerEvents = 'none';
-            }
-        }
-
-        restoreOtherChats() {
-            // Khôi phục chat system chính khi đóng profile chat
-            const mainChatContainer = document.getElementById('chatContainer');
-            if (mainChatContainer) {
-                mainChatContainer.style.visibility = 'visible';
-                mainChatContainer.style.opacity = '1';
-                mainChatContainer.style.pointerEvents = 'auto';
-            }
-
-            // Hiện lại các chat elements
-            document.querySelectorAll('.chat-window, .chat-bubble').forEach(element => {
-                element.style.display = '';
-            });
-        }
-
-        closeChat() {
-            this.isOpen = false;
-
-            if (this.profileChatBubble) {
-                this.profileChatBubble.classList.remove('active');
-            }
-
-            if (this.profileChatOverlay) {
-                this.profileChatOverlay.classList.remove('active');
-            }
-
-            this.hideTyping();
-
-            // Clear input
-            if (this.profileMessageInput) {
-                this.profileMessageInput.value = '';
-                this.autoResizeTextarea(this.profileMessageInput);
-            }
-
-            // Khôi phục chat system chính
-            setTimeout(() => {
-                this.restoreOtherChats();
-            }, 400); // Đợi animation hoàn thành
-        }
-
-        sendMessage() {
-            if (!this.profileMessageInput) return;
-
-            const message = this.profileMessageInput.value.trim();
-            if (!message) return;
-
-            // Add sent message to UI
-            this.addMessage(message, 'sent');
-
-            // Clear input
-            this.profileMessageInput.value = '';
-            this.autoResizeTextarea(this.profileMessageInput);
-
-            // Send to server if integration exists
-            this.sendToServer(message);
-
-            // Simulate response
-            setTimeout(() => {
-                this.showTyping();
-                setTimeout(() => {
-                    this.hideTyping();
-                    this.addMessage(this.getRandomResponse(), 'received');
-                }, 2000);
-            }, 500);
-        }
+        // sendMessage() {
+        //     console.log('send message from profile')
+        //     if (!this.profileMessageInput) return;
+        //
+        //     const message = this.profileMessageInput.value.trim();
+        //     if (!message) return;
+        //
+        //     // Add sent message to UI
+        //     this.addMessage(message, 'sent');
+        //
+        //     // Clear input
+        //     this.profileMessageInput.value = '';
+        //     this.autoResizeTextarea(this.profileMessageInput);
+        //
+        //     // Send to server if integration exists
+        //     this.sendToServer(message);
+        //
+        //     // Simulate response
+        //     setTimeout(() => {
+        //         this.showTyping();
+        //         setTimeout(() => {
+        //             this.hideTyping();
+        //             this.addMessage(this.getRandomResponse(), 'received');
+        //         }, 2000);
+        //     }, 500);
+        // }
 
         addMessage(content, type, avatar = null) {
             if (!this.profileChatMessages) return;
@@ -608,68 +427,6 @@
         addNotification() {
             this.unreadCount++;
             this.updateNotificationBadge();
-        }
-
-        sendToServer(message) {
-            // Integration with existing chat system
-            if (typeof sendMessageToServer === 'function' && this.userId) {
-                sendMessageToServer(this.userId.toString(), message);
-            }
-
-            // Or direct API call
-            fetch('/api/chat/send-message', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: JSON.stringify({
-                    receiverId: this.userId,
-                    content: message,
-                    type: 'TEXT'
-                })
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (!data.success) {
-                        console.error('Failed to send message:', data.error);
-                        this.showError('Không thể gửi tin nhắn. Vui lòng thử lại.');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error sending message:', error);
-                    this.showError('Lỗi kết nối. Vui lòng kiểm tra mạng.');
-                });
-        }
-
-        showError(message) {
-            // Show error notification
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'profile-message received';
-            errorDiv.innerHTML = `
-            <div class="profile-message-content" style="background: #ffebee; color: #c62828; border: 1px solid #ffcdd2;">
-                <i class="fas fa-exclamation-triangle"></i> ${message}
-            </div>
-        `;
-
-            if (this.profileChatMessages) {
-                this.profileChatMessages.appendChild(errorDiv);
-                this.scrollToBottom();
-            }
-        }
-
-        getRandomResponse() {
-            const responses = [
-                "Cảm ơn bạn đã nhắn tin! 😊",
-                "Thật tuyệt khi được trò chuyện với bạn!",
-                "Mình rất vui khi nghe từ bạn! 🎉",
-                "Sounds great! Hẹn gặp lại sau nhé!",
-                "Cảm ơn bạn! Chúc bạn một ngày tuyệt vời! ✨",
-                "Được rồi, mình sẽ liên hệ lại sau.",
-                "Haha, thú vị quá! 😄",
-                "OK nhé, thanks bạn!"
-            ];
-            return responses[Math.floor(Math.random() * responses.length)];
         }
 
         escapeHtml(text) {
