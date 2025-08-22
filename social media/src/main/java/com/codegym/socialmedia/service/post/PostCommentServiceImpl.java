@@ -2,8 +2,11 @@ package com.codegym.socialmedia.service.post;
 
 import com.codegym.socialmedia.dto.comment.DisplayCommentDTO;
 import com.codegym.socialmedia.model.account.User;
+import com.codegym.socialmedia.model.social_action.LikeComment;
+import com.codegym.socialmedia.model.social_action.LikeCommentId;
 import com.codegym.socialmedia.model.social_action.Post;
 import com.codegym.socialmedia.model.social_action.PostComment;
+import com.codegym.socialmedia.repository.comment.LikeCommentRepository;
 import com.codegym.socialmedia.repository.post.PostCommentRepository;
 import com.codegym.socialmedia.repository.post.PostRepository;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +16,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Optional;
 
 @Service
@@ -21,6 +26,8 @@ public class PostCommentServiceImpl implements PostCommentService {
 
     private final PostCommentRepository postCommentRepository;
     private final PostRepository postRepository;
+    private final LikeCommentRepository likeCommentRepository;
+    private final UserRepository userRepository;
 
     @Override
     public PostComment addComment(Long postId, User user, String content) {
@@ -66,25 +73,25 @@ public class PostCommentServiceImpl implements PostCommentService {
         dto.setCommentId(comment.getId());
         dto.setComment(comment.getContent());
         dto.setCreatedAt(comment.getCreatedAt());
+        dto.setUpdatedAt(comment.getUpdatedAt());
         dto.setUserFullName(comment.getUser().getFirstName() + " " + comment.getUser().getLastName());
         dto.setUsername(comment.getUser().getUsername());
         dto.setUserAvatarUrl(comment.getUser().getProfilePicture());
 
-        // Quyền edit/delete: chỉ cho user comment đó
-        dto.setCanEdit(comment.getUser().getId().equals(currentUser.getId()));
-        dto.setCanDeleted(comment.getUser().getId().equals(currentUser.getId()));
+        dto.setCanEdit(currentUser != null && comment.getUser().getId().equals(currentUser.getId()));
+        dto.setCanDeleted(currentUser != null && comment.getUser().getId().equals(currentUser.getId()));
 
-        // likedByCurrentUser nếu bạn có bảng like comment, ví dụ:
-        // dto.setLikedByCurrentUser(comment.getLikes().contains(currentUser));
-        // Nếu chưa có, tạm set false
-        dto.setLikedByCurrentUser(false);
+        // Like info
+        int likeCount = comment.getLikedByUsers() != null ? comment.getLikedByUsers().size() : 0;
+        dto.setLikeCount(likeCount);
 
-        // Nếu bạn có số like
-        // dto.setLikeCount(comment.getLikes().size());
-        dto.setLikeCount(0);
+        boolean likedByCurrentUser = currentUser != null && comment.getLikedByUsers() != null &&
+                comment.getLikedByUsers().stream().anyMatch(like -> like.getUser().getId().equals(currentUser.getId()));
+        dto.setLikedByCurrentUser(likedByCurrentUser);
 
         return dto;
     }
+
     @Override
     public Optional<PostComment> DeleteCommentAndReturn(Long commentId, User currentUser) {
         Optional<PostComment> optionalComment = postCommentRepository.findById(commentId);
@@ -101,5 +108,39 @@ public class PostCommentServiceImpl implements PostCommentService {
         return Optional.of(comment);
     }
 
-}
+    @Override
+    public Optional<PostComment> getCommentById(Long commentId) {
+        return postCommentRepository.findById(commentId);
+    }
 
+    /**
+     * Toggle like/unlike comment
+     */
+    @Override
+    public DisplayCommentDTO toggleLikeComment(Long commentId, User currentUser) {
+        PostComment comment = postCommentRepository.findById(commentId)
+                .orElseThrow(() -> new RuntimeException("Comment not found"));
+
+        LikeCommentId likeId = new LikeCommentId(currentUser.getId(), commentId);
+
+        Optional<LikeComment> existingLike = likeCommentRepository.findById(likeId);
+
+        if (existingLike.isPresent()) {
+            // unlike
+            likeCommentRepository.delete(existingLike.get());
+        } else {
+            // like mới
+            LikeComment like = new LikeComment();
+            like.setId(likeId);
+            like.setUser(currentUser);
+            like.setComment(comment);
+            likeCommentRepository.save(like);
+        }
+
+        // Refresh lại danh sách likedByUsers nếu cần
+        comment.setLikedByUsers(likeCommentRepository.findByUserAndComment(currentUser, comment));
+
+        return mapToDTO(comment, currentUser);
+    }
+
+}

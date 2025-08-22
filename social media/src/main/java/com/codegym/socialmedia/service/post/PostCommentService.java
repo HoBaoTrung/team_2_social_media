@@ -18,5 +18,8 @@ public interface PostCommentService {
     DisplayCommentDTO mapToDTO(PostComment updated, User currentUser);
 
     Optional<PostComment> DeleteCommentAndReturn(Long commentId, User currentUser);
+    // Thêm method lấy comment theo commentId
+    Optional<PostComment> getCommentById(Long commentId);
+    DisplayCommentDTO toggleLikeComment(Long commentId, User currentUser);
 }
 

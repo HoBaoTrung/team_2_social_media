@@ -379,33 +379,57 @@
         return html;
     }
 
-    // toggle like (gửi API)
-    async toggleLike(id, like_type) {
-        let url;
-        if(like_type == 'post') url=`/posts/api/like/${id}`;
-        else if (like_type == 'comment') url = `/comment/api/like/${id}`;
-        try {
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: {'X-Requested-With': 'XMLHttpRequest'}
-            });
+     async toggleLike(id, like_type) {
+         let url;
+         if (like_type === 'post') url = `/posts/api/like/${id}`;
+         else if (like_type === 'comment') url = `/api/comments/${id}/like`;
 
-            const result = await response.json();
+         const likeBtn = like_type === 'post'
+             ? document.querySelector(`.post-item[data-post-id="${id}"] .post-action`)
+             : document.querySelector(`#comment-${id} .like-btn`);
 
-            if (result.success) {
-                // cập nhật nút like ngay lập tức cho user hiện tại
-                this.updateLikeButton(id, result.isLiked, like_type);
+         if (!likeBtn) return;
 
-            } else {
-                this.showNotification(result.message || 'Có lỗi xảy ra', 'error');
-            }
-        } catch (error) {
-            console.error('Error toggling like:', error);
-            this.showNotification('Có lỗi xảy ra', 'error');
-        }
-    }
+         const countSpan = likeBtn.querySelector('span');
 
-    // cập nhật class liked của nút like
+         // Lấy số like từ dataset hoặc khởi tạo
+         let count = parseInt(likeBtn.dataset.count) || parseInt(countSpan.textContent.replace(/\D/g, "")) || 0;
+         const isLiked = likeBtn.classList.contains('liked');
+
+         // Cập nhật UI ngay (optimistic)
+         likeBtn.classList.toggle('liked');
+         count = isLiked ? count - 1 : count + 1;
+         likeBtn.dataset.count = count;
+         countSpan.textContent = like_type === 'post' ? `${count} lượt thích` : `${count}`;
+
+         try {
+             const response = await fetch(url, {
+                 method: 'POST',
+                 headers: { 'X-Requested-With': 'XMLHttpRequest' }
+             });
+
+             const result = await response.json();
+
+             if (!result.success) {
+                 // revert UI nếu fail
+                 likeBtn.classList.toggle('liked');
+                 count = isLiked ? count + 1 : count - 1;
+                 likeBtn.dataset.count = count;
+                 countSpan.textContent = like_type === 'post' ? `${count} lượt thích` : `${count}`;
+                 this.showNotification(result.message || 'Có lỗi xảy ra', 'error');
+             }
+         } catch (error) {
+             console.error(error);
+             // revert UI nếu lỗi
+             likeBtn.classList.toggle('liked');
+             count = isLiked ? count + 1 : count - 1;
+             likeBtn.dataset.count = count;
+             countSpan.textContent = like_type === 'post' ? `${count} lượt thích` : `${count}`;
+             this.showNotification('Có lỗi xảy ra', 'error');
+         }
+     }
+
+     // cập nhật class liked của nút like
     updateLikeButton(id, isLiked, like_type) {
         let likeBtn;
         if(like_type == 'post') likeBtn = document.querySelector(
@@ -881,6 +905,8 @@
              cancelBtn.remove();
          });
      }
+
+
      async deleteComment(postId, commentId) {
          try {
              const confirmed = await Swal.fire({
@@ -925,48 +951,119 @@
          }
      }
 
-
-
-
-
      async submitComment(postId) {
-        const commentInput = document.querySelector(`#comments-${postId} .comment-input`);
-        const content = commentInput.value.trim();
+         const commentInput = document.querySelector(`#comments-${postId} .comment-input`);
+         const content = commentInput.value.trim();
+         if (!content) return;
 
-        if (!content) return;
+         // Disable input và nút gửi
+         commentInput.disabled = true;
+         const submitBtn = commentInput.nextElementSibling; // nút gửi
+         submitBtn.disabled = true;
 
-        try {
+         try {
+             // Tạo comment tạm thời UI ngay
+             const tempComment = {
+                 commentId: `temp-${Date.now()}`, // ID tạm
+                 userFullName: "Bạn", // hoặc lấy tên hiện tại
+                 username: "currentUser",
+                 userAvatarUrl: postManager.getCurrentUserAvatar(),
+                 comment: content,
+                 createdAt: new Date().toLocaleString('vi-VN', { hour12: false }),
+                 likeCount: 0,
+                 isLikedByCurrentUser: false,
+                 canEdit: true,
+                 canDeleted: true
+             };
 
-            const response = await fetch(`api/comments/add`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(   {postId: postId,
-                content: content})
-            });
+             this.appendCommentToUI(postId, tempComment);
 
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
+             // Cập nhật số comment trên post ngay
+             const postStats = document.querySelector(`.post-item[data-post-id="${postId}"] .post-comments-count`);
+             let count = parseInt(postStats.dataset.count) || parseInt(postStats.textContent.replace(/\D/g, "")) || 0;
+             count++;
+             postStats.dataset.count = count;
+             postStats.textContent = `${count} bình luận`;
 
-            const newComment = await response.json();
+             // Gửi lên server
+             const response = await fetch(`api/comments/add`, {
+                 method: 'POST',
+                 headers: { 'Content-Type': 'application/json' },
+                 body: JSON.stringify({ postId, content })
+             });
 
-            // Reset input
-            commentInput.value = '';
-            this.showNotification('Bình luận đã được thêm!', 'success');
-            // ✅ thêm comment mới ngay vào UI
-            this.appendCommentToUI(postId, newComment);
+             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+             const newComment = await response.json();
 
-            // Refresh post stats to update comment count
-            this.refreshPostStats(postId);
-        } catch (error) {
-            console.error('Error submitting comment:', error);
-            this.showNotification('Có lỗi xảy ra khi gửi bình luận', 'error');
-        }
-    }
+             // Thay comment tạm bằng comment thực tế từ server
+             const tempEl = document.getElementById(tempComment.commentId);
+             if (tempEl) tempEl.replaceWith(this.createCommentElement(postId, newComment));
 
-    viewImage(imageUrl) {
+             this.showNotification('Bình luận đã được thêm!', 'success');
+             commentInput.value = '';
+
+         } catch (error) {
+             console.error('Error submitting comment:', error);
+             this.showNotification('Có lỗi xảy ra khi gửi bình luận', 'error');
+
+             // Nếu lỗi, remove comment tạm
+             const tempEl = document.querySelector(`#comments-list-${postId} .comment-card[id^="temp-"]`);
+             if (tempEl) tempEl.remove();
+
+             // Giảm số comment nếu đã tăng UI
+             const postStats = document.querySelector(`.post-item[data-post-id="${postId}"] .post-comments-count`);
+             let count = parseInt(postStats.dataset.count) || 1;
+             count = Math.max(count - 1, 0);
+             postStats.dataset.count = count;
+             postStats.textContent = `${count} bình luận`;
+         } finally {
+             commentInput.disabled = false;
+             submitBtn.disabled = false;
+         }
+     }
+
+// Tạo comment element (tách riêng để dễ dùng)
+     createCommentElement(postId, c) {
+         const div = document.createElement('div');
+         div.id = `comment-${c.commentId}`;
+         div.className = 'comment-card d-flex';
+         const timeAgo = formatTimeAgo(c.createdAt);
+         const likeCount = c.likeCount || 0;
+
+         const actionButtons = (c.canEdit || c.canDeleted) ? `
+        <div class="dropdown comment-actions-dropdown">
+            <button class="btn btn-light btn-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="fas fa-ellipsis-h"></i>
+            </button>
+            <ul class="dropdown-menu">
+                ${c.canEdit ? `<li><button class="dropdown-item" onclick="postManager.editCommentUI(${postId}, ${c.commentId})">
+                                <i class="fas fa-edit"></i> Sửa</button></li>` : ''}
+                ${c.canDeleted ? `<li><button class="dropdown-item text-danger" onclick="postManager.deleteComment(${postId}, ${c.commentId})">
+                                <i class="fas fa-trash"></i> Xóa</button></li>` : ''}
+            </ul>
+        </div>
+    ` : '';
+
+         div.innerHTML = `
+        <img src="${c.userAvatarUrl || '/images/default-avatar.jpg'}" alt="avatar" class="comment-avatar">
+        <div class="comment-body">
+            <strong>${c.userFullName || c.username}</strong>
+            <span class="comment-time">${timeAgo}</span>
+            <p class="comment-text">${c.comment}</p>
+            <div class="comment-actions d-flex align-items-center">
+                <span class="like-btn ${c.isLikedByCurrentUser ? 'liked' : ''}" 
+                      onclick="postManager.toggleLike(${c.commentId},'comment')" style="cursor: pointer">
+                    <i class="fas fa-heart"></i>
+                    <span>${likeCount}</span>
+                </span>
+                ${actionButtons}
+            </div>
+        </div>
+    `;
+         return div;
+     }
+
+     viewImage(imageUrl) {
         // Open image in modal or lightbox
         const modal = document.createElement('div');
         modal.className = 'image-modal';
@@ -1132,7 +1229,7 @@ function  formatTimeAgo(dateString) {
 }
 
 // Ví dụ toggle like (cập nhật ngay UI)
-function toggleLike(commentId) {
+function toggleLikeUI(commentId) {
     const btn = document.querySelector(`#comment-${commentId} .like-btn`);
     let count = parseInt(btn.textContent.replace(/\D/g, ""));
     if (btn.classList.contains("liked")) {

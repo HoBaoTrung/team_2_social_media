@@ -14,6 +14,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -65,6 +66,14 @@ public class CommentController {
                     "message", "Bạn không có quyền xóa bình luận này"
             ));
         }
+    }
+    // Like/unlike comment
+    // Like/unlike comment
+    @PostMapping("/{id}/like")
+    public DisplayCommentDTO likeComment(@PathVariable Long id) {
+        User currentUser = userService.getCurrentUser();
+        // Toggle like/unlike
+        return postCommentService.toggleLikeComment(id, currentUser);
     }
 
 }
