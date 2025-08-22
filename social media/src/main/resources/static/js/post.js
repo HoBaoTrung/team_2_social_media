@@ -633,7 +633,7 @@ class PostManager {
             elements.forEach(element => {
                 element.disabled = true;
             });
-            // submitBtn.disabled = true;
+
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang lưu...';
 
             const response = await fetch(`/posts/api/update/${this.editingPostId}`, {
@@ -660,6 +660,9 @@ class PostManager {
         } finally {
             submitBtn.disabled = false;
             submitBtn.innerHTML = originalText;
+            elements.forEach(element => {
+                element.disabled = false;
+            });
         }
     }
 
