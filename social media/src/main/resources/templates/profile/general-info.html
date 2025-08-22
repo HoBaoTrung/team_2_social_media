@@ -38,7 +38,15 @@
     </div>
 
     <div class="form-group-custom">
-        <label>Họ và tên</label>
+        <label>Họ</label>
+        <input type="text" class="form-control" th:field="*{lasttName}"
+               pattern="^[a-zA-Z\sÀ-ỹ]+$"
+               th:classappend="${#fields.hasErrors('lasttName')} ? 'is-invalid' : ''">
+        <div class="invalid-feedback" th:if="${#fields.hasErrors('lasttName')}" th:errors="*{lasttName}"></div>
+    </div>
+
+    <div class="form-group-custom">
+        <label>Tên</label>
         <input type="text" class="form-control" th:field="*{firstName}"
                pattern="^[a-zA-Z\sÀ-ỹ]+$"
                th:classappend="${#fields.hasErrors('firstName')} ? 'is-invalid' : ''">

@@ -1,6 +1,5 @@
 package com.codegym.socialmedia.service.user;
 
-
 import com.codegym.socialmedia.dto.UserRegistrationDto;
 import com.codegym.socialmedia.model.account.User;
 import org.springframework.web.multipart.MultipartFile;
@@ -9,11 +8,15 @@ import java.util.List;
 
 public interface UserService {
     User getCurrentUser();
+    void refreshAuthentication(String username);
+    User getUserById(Long id);
 
     User getUserByUsername(String username);
 
     User save(User user);
+
     User save(User user, MultipartFile file);
+
     User save(UserRegistrationDto registrationDto);
 
     User findByEmail(String email);
@@ -29,4 +32,6 @@ public interface UserService {
     long countUsers();
 
     void deleteAllUsers();
+
+    // ✅ REMOVED getUserStats method - now handled by UserStatsService
 }

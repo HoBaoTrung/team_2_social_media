@@ -1,148 +1,100 @@
-
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
-
-.user-info {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-weight: 600;
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #f0f2f5;
+    padding: 0;
 }
 
 .main-container {
-    width: calc(100% - 10px);
-    margin: 2rem 5px;
-    padding: 0 2rem;
     display: grid;
     grid-template-columns: 1fr 2fr 1fr;
-    gap: 2rem;
-}
-
-.sidebar {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-    border-radius: 20px;
+    gap: 1.5rem;
     padding: 2rem;
-    height: fit-content;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
-.sidebar h3 {
-    margin-bottom: 1rem;
-    color: #667eea;
+.sidebar, .feed, .post-creator, .post {
+    background: white;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
 
-.feed {
+.avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background-color: #1877f2;
+    color: white;
     display: flex;
-    flex-direction: column;
-    gap: 2rem;
-}
-
-.post-creator {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-    border-radius: 20px;
-    padding: 2rem;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-}
-
-.post {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-    border-radius: 20px;
-    padding: 2rem;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s ease;
-}
-
-.post:hover {
-    transform: translateY(-2px);
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.2rem;
 }
 
 .post-header {
     display: flex;
-    align-items: center;
     gap: 1rem;
+    align-items: center;
     margin-bottom: 1rem;
 }
 
 .post-content {
+    font-size: 1rem;
+    color: #050505;
     margin-bottom: 1rem;
-    line-height: 1.6;
 }
 
 .post-actions {
     display: flex;
-    gap: 2rem;
+    justify-content: space-around;
+    border-top: 1px solid #ddd;
     padding-top: 1rem;
-    border-top: 1px solid #eee;
 }
 
-.action-btn {
+.post-actions .action-btn {
+    background: none;
+    border: none;
+    color: #65676b;
+    font-weight: 500;
+    cursor: pointer;
+    font-size: 0.95rem;
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: #666;
-    transition: color 0.3s ease;
 }
 
-.action-btn:hover {
-    color: #667eea;
+.post-actions .action-btn:hover {
+    background-color: #f0f2f5;
+    border-radius: 6px;
+    padding: 0.5rem;
 }
 
 .btn {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
+    background-color: #1877f2;
     border: none;
-    padding: 0.8rem 2rem;
-    border-radius: 10px;
+    padding: 0.6rem 1.2rem;
+    color: white;
+    border-radius: 6px;
     cursor: pointer;
-    font-weight: 600;
-    transition: all 0.3s ease;
+    font-weight: bold;
 }
 
 .btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    background-color: #166fe5;
 }
 
-
-.welcome-message {
-    text-align: center;
-    color: white;
-    margin-bottom: 2rem;
+textarea.form-control {
+    width: 100%;
+    padding: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    resize: none;
+    font-size: 1rem;
 }
 
-.welcome-message h1 {
-    font-size: 3rem;
-    margin-bottom: 0.5rem;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-@media (max-width: 768px) {
-    .main-container {
-        grid-template-columns: 1fr;
-        padding: 0 1rem;
-    }
-
-    .navbar {
-        padding: 1rem;
-    }
-
-    .nav-menu {
-        display: none;
-    }
+.action-btn {
+    background: none;
+    border: none;
+    font-size: 0.95rem;
+    cursor: pointer;
 }
