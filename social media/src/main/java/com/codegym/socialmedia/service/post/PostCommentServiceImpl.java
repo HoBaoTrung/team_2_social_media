@@ -27,7 +27,7 @@ public class PostCommentServiceImpl implements PostCommentService {
     private final PostCommentRepository postCommentRepository;
     private final PostRepository postRepository;
     private final LikeCommentRepository likeCommentRepository;
-    private final UserRepository userRepository;
+
 
     @Override
     public PostComment addComment(Long postId, User user, String content) {
