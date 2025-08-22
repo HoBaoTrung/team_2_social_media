@@ -1,5 +1,6 @@
 package com.codegym.socialmedia.service.user;
 
+import com.codegym.socialmedia.ErrAccountException;
 import com.codegym.socialmedia.model.account.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -11,6 +12,7 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
+
 @Service
 public class CustomOAuth2UserService extends DefaultOAuth2UserService
         implements OAuth2UserService<OAuth2UserRequest, OAuth2User> {
@@ -23,7 +25,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         OAuth2User oauth2User = super.loadUser(userRequest);
 
-        try {
+
             String registrationId = userRequest.getClientRegistration().getRegistrationId();
             Map<String, Object> attributes = oauth2User.getAttributes();
 
@@ -31,11 +33,17 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService
             String name = null;
             String avatarUrl = null;
 
-            if ("facebook".equals(registrationId)) {
+            if ("facebook".equalsIgnoreCase(registrationId)) {
+                // Facebook
                 String facebookId = (String) attributes.get("id");
                 email = (String) attributes.get("email");
                 name = (String) attributes.get("name");
                 avatarUrl = "https://graph.facebook.com/" + facebookId + "/picture?type=large";
+            } else if ("google".equalsIgnoreCase(registrationId)) {
+                // Google
+                email = (String) attributes.get("email");
+                name = (String) attributes.get("name");
+                avatarUrl = (String) attributes.get("picture");
             }
 
             if (email != null && name != null) {
@@ -48,20 +56,32 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService
                     throw new OAuth2AuthenticationException("User not found after saving");
                 }
 
-                // Dùng thông tin avatar từ DB (có thể người dùng đã cập nhật)
+                String userNameAttributeName = userRequest.getClientRegistration()
+                        .getProviderDetails()
+                        .getUserInfoEndpoint()
+                        .getUserNameAttributeName();
+
+                // Kiểm tra trạng thái tài khoản
+                if (!user.isActive()) {
+                    throw new ErrAccountException("Tài khoản đã bị vô hiệu hóa ");
+                }
+
+                // Return custom OAuth2User với ảnh avatar từ DB
                 return new CustomOAuth2User(
                         oauth2User.getAuthorities(),
                         attributes,
-                        "name", // key nameAttribute
-                        user.getProfilePicture() // avatar đã được lưu trong DB
+                        userNameAttributeName,
+                        user.getProfilePicture(),
+                        user.getFirstName() + " " + user.getLastName(),
+                        user.getUsername(),
+                        user.getEmail()
                 );
+
             }
 
             throw new OAuth2AuthenticationException("Email or name missing from OAuth2 provider");
 
-        } catch (Exception e) {
-            throw new OAuth2AuthenticationException("Failed to process OAuth2 user");
         }
     }
-}
+
 

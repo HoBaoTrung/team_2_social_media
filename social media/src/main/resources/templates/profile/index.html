@@ -3,12 +3,13 @@
 >
 <head>
 
-    <th:block th:replace="~{fragments/commonHead :: commonHead}"></th:block>
+    <th:block th:replace="~{fragments/common/commonHead :: commonHead}"></th:block>
     <link rel="stylesheet" th:href="@{/css/profile.css}">
+    <link rel="stylesheet" th:href="@{/css/button.css}">
 </head>
 <body onload="showSectionFromServer()">
 
-<div th:replace="~{fragments/header :: header}"></div>
+<div th:replace="~{fragments/common/header :: header}"></div>
 <div class="container">
 
     <div th:if="${error != null}" class="alert alert-danger" th:text="${error}"></div>
@@ -57,7 +58,20 @@
 
     <!-- OTHER -->
     <div id="section-other" class="profile-form-container hidden">
-        <div th:replace="profile/other-info :: content"></div>
+        <form th:action="@{/setting/privacy}" th:object="${privacySettings}" method="post">
+            <div th:replace="profile/other-info :: content"></div>
+            <input type="hidden" th:field="*{id}">
+            <input type="hidden" th:field="*{user}">
+            <div class="text-center">
+                <button type="submit" class="btn btn-primary submitBtn">
+                    <span class="btnContent">Cập nhật</span>
+                    <span class="loadingSpinner d-none">
+                        <div th:replace="~{fragments/loader :: loadingOverlay}"></div>
+                     </span>
+                </button>
+            </div>
+        </form>
+
     </div>
 </div>
 

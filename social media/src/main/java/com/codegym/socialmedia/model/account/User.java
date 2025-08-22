@@ -77,12 +77,6 @@ public class User {
     @Enumerated(EnumType.STRING)
     private AccountStatus accountStatus = AccountStatus.ACTIVE;
 
-    @Enumerated(EnumType.STRING)
-    private PrivacyProfile privacyProfile = PrivacyProfile.PUBLIC;
-
-    private boolean canBeFound = true;
-
-    private boolean showFriendList = true;
 
     @OneToMany(mappedBy = "user")
     private List<UserSearchHistory> searchesPerformed;
@@ -90,10 +84,10 @@ public class User {
     @OneToMany(mappedBy = "resultUser")
     private List<UserSearchHistory> searchesFoundIn;
 
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private UserPrivacySettings privacySettings;
 
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private NotificationSettings notificationSettings;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
@@ -106,7 +100,7 @@ public class User {
     private List<Friendship> receivedFriendRequests;
 
     @OneToMany(mappedBy = "user")
-    private List<LikeStatus> likedStatuses;
+    private List<LikePost> likedStatuses;
 
     @OneToMany(mappedBy = "user")
     private List<LikeComment> likedComments;
@@ -135,7 +129,16 @@ public class User {
         ACTIVE, SUSPENDED, BANNED, PENDING
     }
 
-    public enum PrivacyProfile {
-        PUBLIC, FRIENDS, PRIVATE
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "id=" + id +
+                ", username='" + username + '\'' +
+                ", email='" + email + '\'' +
+                '}';
     }
+
+
+
 }
