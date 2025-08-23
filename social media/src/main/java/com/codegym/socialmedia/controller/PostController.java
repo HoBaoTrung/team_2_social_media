@@ -214,7 +214,7 @@ public class PostController {
             @RequestParam(value = "size", defaultValue = "10") int size) {
 
         if (commentID != -1) {
-            PostComment comment = commentService.getCommentById(commentID);
+            PostComment comment = commentService.getCommentById(commentID).get();
             postID = comment.getPost().getId();
         }
 

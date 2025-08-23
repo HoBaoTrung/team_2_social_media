@@ -206,7 +206,7 @@ class PostManager {
             } else {
                 this.appendPost(data);
                 this.hasMorePosts = false;
-                this.goToComment(urlParams.get('commentID'),data.id)
+                this.goToComment(urlParams.get('commentID'), data.id)
             }
 
 
@@ -223,6 +223,7 @@ class PostManager {
             this.showLoading(false);
         }
     }
+
     async goToComment(commentId, postId) {
         const section = document.getElementById(`comments-${postId}`);
         if (!section) {
@@ -239,20 +240,18 @@ class PostManager {
 
         // Hàm phụ để tìm và cuộn đến comment
         const tryScrollToComment = async () => {
-            let commentElement = document.getElementById(`comment-id-${commentId}`);
+            let commentElement = document.getElementById(`comment-${commentId}`);
             const state = this.commentState[postId] = {page: 0, hasMore: true, loading: false, size: 2};
 
-            console.log(state)
             // Nếu comment chưa tồn tại và vẫn còn bình luận để tải
             while (!commentElement && state && state.hasMore && !state.loading) {
-                console.log("123131sa31d3a21sd")
                 await this.loadComments(postId, true); // Tải thêm bình luận
-                commentElement = document.getElementById(`comment-id-${commentId}`); // Kiểm tra lại
+                commentElement = document.getElementById(`comment-${commentId}`); // Kiểm tra lại
             }
 
             // Nếu tìm thấy commentElement
             if (commentElement) {
-                commentElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                commentElement.scrollIntoView({behavior: 'smooth', block: 'center'});
                 commentElement.style.backgroundColor = '#e3f2fd';
                 setTimeout(() => {
                     commentElement.style.backgroundColor = '';
@@ -269,7 +268,7 @@ class PostManager {
             console.error(`Error while trying to scroll to comment ${commentId}:`, error);
         }
     }
-   
+
 
     showNoMorePosts() {
         const noMorePosts = document.getElementById('no-more-posts');
@@ -296,6 +295,7 @@ class PostManager {
         document.querySelectorAll(".post-item").forEach(postEl => {
             const postId = postEl.getAttribute("data-post-id");
             this.subscribeToPostLikes(postId);
+            this.subscribeToPostComments(postId);
         });
     }
 
@@ -362,7 +362,9 @@ class PostManager {
                            
                         </div>
                         <div>
-                                <span class="post-comments-count">${post.commentsCount} bình luận</span>
+                                <span class="post-comments-count"
+                                 style="cursor:pointer;" 
+      onclick="postManager.toggleComments(${post.id}, true)">${post.commentsCount} bình luận</span>
                         </div>
                     </div>
               
@@ -496,6 +498,26 @@ class PostManager {
 
             // update nút like (cho user khác nhìn thấy realtime)
             this.updateLikeButton(data.postId, data.likedByCurrentUser);
+        });
+    }
+
+    // subscribe cập nhật realtime comment qua websocket
+    subscribeToPostComments(postId) {
+        stompClient.subscribe(`/topic/post/${postId}/comments`, (message) => {
+            const data = JSON.parse(message.body);
+
+            // tìm container comment của post
+            const commentsSection = document.querySelector(
+                `.post-item[data-post-id="${postId}"] .comments-list`
+            );
+
+            // cập nhật số lượng comment hiển thị
+            const commentCountSpan = document.querySelector(
+                `.post-item[data-post-id="${postId}"] .post-comments-count`
+            );
+            if (commentCountSpan) {
+                commentCountSpan.textContent = data.commentCount + " bình luận";
+            }
         });
     }
 
@@ -633,7 +655,6 @@ class PostManager {
             elements.forEach(element => {
                 element.disabled = true;
             });
-
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang lưu...';
 
             const response = await fetch(`/posts/api/update/${this.editingPostId}`, {
@@ -735,15 +756,17 @@ class PostManager {
         const isVisible = window.getComputedStyle(section).display !== 'none';
 
         if (isVisible) {
+            // Đang mở thì ẩn đi
             section.style.display = 'none';
             return;
         }
 
+        // Đang ẩn thì mở
         section.style.display = 'block';
 
         // Khởi tạo state 1 lần cho post
         if (!this.commentState[postId]) {
-            this.commentState[postId] = {page: 0, hasMore: true, loading: false, size: 2};
+            this.commentState[postId] = {page: 0, hasMore: true, loading: false, size: 3};
         } else {
             // Mỗi lần mở lại muốn load từ đầu: reset nếu cần
             this.commentState[postId].page = 0;
@@ -785,42 +808,20 @@ class PostManager {
         const size = st.size;
 
         return $.ajax({
-            url: `/api/${postId}/comments`,
+            url: `/api/comments/${postId}`,
             type: 'GET',
             data: {page, size}
         }).done((data) => {
             const $container = $(`#comments-list-${postId}`);
             if (!append) $container.empty();
 
-            (data.comments || []).forEach(c => {
-                const timeAgo = formatTimeAgo(c.createdAt); // xem hàm bên dưới
-                const $card = $(`
-                <div id="comment-id-${c.id}" class="comment-card d-flex">
-                    <img src="${c.userAvatarUrl || ''}" alt="avatar" class="comment-avatar">
-                    <div>
-                        <strong>${c.userFullName || c.username || ''}</strong>
-                        <span class="comment-time">${timeAgo}</span>
-                        <p>${c.comment || ''}</p>
-                        <div class="comment-actions">
-                           
-                           <span class="${c.likedByCurrentUser ? 'liked' : ''}" onclick="postManager.toggleLike(${c.commentId},'comment')"
-                           style="cursor: pointer">
-                                <i class="fas fa-heart"></i>
-                                <span>${c.likeCount}</span>
-                          </span>
-                            
-                            <span></span>
-                            <button class="btn btn-link btn-sm">Phản hồi</button>
-                        </div>
-                    </div>
-                </div>
-            `);
-                $container.append($card);
+            (data.content || []).forEach(c => {
+                this.appendCommentToUI(postId, c, 'push');
             });
 
             // cập nhật phân trang
             st.page = page + 1;
-            st.hasMore = (data.comments || []).length === size;
+            st.hasMore = (data.content || []).length === size;
         }).fail((xhr) => {
             console.error('Lỗi load comments:', xhr?.responseText || xhr?.statusText);
         }).always(() => {
@@ -851,24 +852,244 @@ class PostManager {
         }
     }
 
+    // Thêm comment vào UI
+    appendCommentToUI(postId, c, type) {
+        const $container = $(`#comments-list-${postId}`);
+        const timeAgo = formatTimeAgo(c.createdAt);
+        const canEdit = c.canEdit || false;
+        const canDelete = c.canDeleted || false;
+        const likeCount = c.likeCount || 0;
+
+        const actionButtons = (canEdit || canDelete) ? `
+        <div class="dropdown comment-actions-dropdown">
+            <button class="btn btn-light btn-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="fas fa-ellipsis-h"></i>
+            </button>
+            <ul class="dropdown-menu">
+                ${canEdit ? `<li><button class="dropdown-item" onclick="postManager.editCommentUI(${postId}, ${c.commentId})">
+                                <i class="fas fa-edit"></i> Sửa
+                              </button></li>` : ''}
+                ${canDelete ? `<li><button class="dropdown-item text-danger" onclick="postManager.deleteComment(${postId}, ${c.commentId})">
+                                <i class="fas fa-trash"></i> Xóa
+                              </button></li>` : ''}
+            </ul>
+        </div>
+    ` : '';
+
+        const $card = $(`
+        <div class="comment-card d-flex" id="comment-${c.commentId}">
+            <img src="${c.userAvatarUrl || '/images/default-avatar.jpg'}" alt="avatar" class="comment-avatar">
+            <div class="comment-body">
+                <strong>${c.userFullName || c.username}</strong>
+                <span class="comment-time">${timeAgo}</span>
+                <p class="comment-text">${c.comment}</p>
+                <div class="comment-actions d-flex align-items-center">
+                    <span class="like-btn ${c.isLikedByCurrentUser ? 'liked' : ''}" 
+                          onclick="postManager.toggleLike(${c.commentId},'comment')" style="cursor: pointer">
+                        <i class="fas fa-heart"></i>
+                        <span>${likeCount}</span>
+                    </span>
+                    ${actionButtons}
+                </div>
+            </div>
+        </div>
+    `);
+        if ('pre' == type) $container.prepend($card);
+        else $container.append($card);
+    }
+
+
+    // Sửa comment trực tiếp trên UI
+    editCommentUI(postId, commentId) {
+        const commentCard = document.getElementById(`comment-${commentId}`);
+        const commentTextEl = commentCard.querySelector('.comment-text');
+        const originalText = commentTextEl.textContent;
+
+        // Tạo textarea để sửa
+        const input = document.createElement('textarea');
+        input.className = 'form-control mb-1';
+        input.value = originalText;
+        commentTextEl.replaceWith(input);
+
+        // Tạo nút Lưu & Hủy
+        const actionsDiv = commentCard.querySelector('.comment-actions');
+        const saveBtn = document.createElement('button');
+        saveBtn.className = 'btn btn-primary btn-sm me-1';
+        saveBtn.textContent = 'Lưu';
+
+        const cancelBtn = document.createElement('button');
+        cancelBtn.className = 'btn btn-secondary btn-sm';
+        cancelBtn.textContent = 'Hủy';
+
+        actionsDiv.appendChild(saveBtn);
+        actionsDiv.appendChild(cancelBtn);
+
+        // Lưu comment
+        saveBtn.addEventListener('click', async () => {
+            const newContent = input.value.trim();
+            if (!newContent) return;
+
+            try {
+                const response = await fetch(`/api/comments/${commentId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({content: newContent})
+                });
+
+                if (!response.ok) throw new Error('Update failed');
+
+                const updated = await response.json();
+
+                // Cập nhật UI
+                const p = document.createElement('p');
+                p.className = 'comment-text';
+                p.textContent = updated.comment;
+                input.replaceWith(p);
+
+                saveBtn.remove();
+                cancelBtn.remove();
+
+                postManager.showNotification('Cập nhật comment thành công!', 'success');
+
+            } catch (error) {
+                console.error('Error updating comment:', error);
+                postManager.showNotification('Có lỗi xảy ra khi cập nhật comment', 'error');
+            }
+        });
+
+        // Hủy sửa
+        cancelBtn.addEventListener('click', () => {
+            const p = document.createElement('p');
+            p.className = 'comment-text';
+            p.textContent = originalText;
+            input.replaceWith(p);
+            saveBtn.remove();
+            cancelBtn.remove();
+        });
+    }
+
+
+    async deleteComment(postId, commentId) {
+        try {
+            const confirmed = await Swal.fire({
+                title: 'Xác nhận xóa',
+                text: 'Bạn có chắc chắn muốn xóa bình luận này?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Xóa',
+                cancelButtonText: 'Hủy'
+            });
+
+            if (!confirmed.isConfirmed) return;
+
+            const response = await fetch(`/api/comments/${commentId}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Xóa comment khỏi UI
+                const commentEl = document.getElementById(`comment-${commentId}`);
+                if (commentEl) commentEl.remove();
+                const st = this.commentState[postId];
+                if (st) {
+                    // Giảm tổng số comment hiện tại
+                    st.page = Math.max(0, st.page - 1);
+                    st.hasMore = true; // cho phép load thêm để bù dữ liệu
+                }
+
+                this.showNotification('Xóa bình luận thành công!', 'success');
+            } else {
+                this.showNotification(data.message || 'Có lỗi xảy ra khi xóa comment', 'error');
+            }
+        } catch (error) {
+            console.error('Error deleting comment:', error);
+            this.showNotification('Có lỗi xảy ra khi xóa comment', 'error');
+        }
+    }
+
     async submitComment(postId) {
         const commentInput = document.querySelector(`#comments-${postId} .comment-input`);
         const content = commentInput.value.trim();
-
         if (!content) return;
 
-        try {
-            // This would submit comment to server
-            // For now, we'll just clear the input
-            commentInput.value = '';
-            this.showNotification('Bình luận đã được thêm!', 'success');
+        // Disable input và nút gửi
+        commentInput.disabled = true;
+        const submitBtn = commentInput.nextElementSibling; // nút gửi
+        submitBtn.disabled = true;
 
-            // Refresh post stats to update comment count
-            this.refreshPostStats(postId);
+        try {
+
+            // Gửi lên server
+            const response = await fetch(`api/comments/add`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({postId, content})
+            });
+
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const newComment = await response.json();
+
+            this.appendCommentToUI(postId, newComment, 'pre');
+
+            this.showNotification('Bình luận đã được thêm!', 'success');
+            commentInput.value = '';
+
         } catch (error) {
             console.error('Error submitting comment:', error);
             this.showNotification('Có lỗi xảy ra khi gửi bình luận', 'error');
+        } finally {
+            commentInput.disabled = false;
+            submitBtn.disabled = false;
         }
+    }
+
+// Tạo comment element (tách riêng để dễ dùng)
+    createCommentElement(postId, c) {
+        const div = document.createElement('div');
+        div.id = `comment-${c.commentId}`;
+        div.className = 'comment-card d-flex';
+        const timeAgo = formatTimeAgo(c.createdAt);
+        const likeCount = c.likeCount || 0;
+
+        const actionButtons = (c.canEdit || c.canDeleted) ? `
+        <div class="dropdown comment-actions-dropdown">
+            <button class="btn btn-light btn-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="fas fa-ellipsis-h"></i>
+            </button>
+            <ul class="dropdown-menu">
+                ${c.canEdit ? `<li><button class="dropdown-item" onclick="postManager.editCommentUI(${postId}, ${c.commentId})">
+                                <i class="fas fa-edit"></i> Sửa</button></li>` : ''}
+                ${c.canDeleted ? `<li><button class="dropdown-item text-danger" onclick="postManager.deleteComment(${postId}, ${c.commentId})">
+                                <i class="fas fa-trash"></i> Xóa</button></li>` : ''}
+            </ul>
+        </div>
+    ` : '';
+
+        div.innerHTML = `
+        <img src="${c.userAvatarUrl || '/images/default-avatar.jpg'}" alt="avatar" class="comment-avatar">
+        <div class="comment-body">
+            <strong>${c.userFullName || c.username}</strong>
+            <span class="comment-time">${timeAgo}</span>
+            <p class="comment-text">${c.comment}</p>
+            <div class="comment-actions d-flex align-items-center">
+                <span class="like-btn ${c.isLikedByCurrentUser ? 'liked' : ''}" 
+                      onclick="postManager.toggleLike(${c.commentId},'comment')" style="cursor: pointer">
+                    <i class="fas fa-heart"></i>
+                    <span>${likeCount}</span>
+                </span>
+                ${actionButtons}
+            </div>
+        </div>
+    `;
+        return div;
     }
 
     viewImage(imageUrl) {

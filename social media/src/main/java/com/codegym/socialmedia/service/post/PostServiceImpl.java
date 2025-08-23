@@ -4,15 +4,12 @@ import com.codegym.socialmedia.component.CloudinaryService;
 import com.codegym.socialmedia.dto.post.PostCreateDto;
 import com.codegym.socialmedia.dto.post.PostDisplayDto;
 import com.codegym.socialmedia.dto.post.PostUpdateDto;
-import com.codegym.socialmedia.model.PrivacyLevel;
 import com.codegym.socialmedia.model.account.User;
 import com.codegym.socialmedia.model.social_action.*;
-import com.codegym.socialmedia.repository.FriendshipRepository;
 import com.codegym.socialmedia.repository.post.PostCommentRepository;
 import com.codegym.socialmedia.repository.post.PostLikeRepository;
 import com.codegym.socialmedia.repository.post.PostRepository;
-import com.codegym.socialmedia.service.friend_ship.FriendshipService;
-import com.codegym.socialmedia.service.notification.LikeNotificationService;
+import com.codegym.socialmedia.service.notification.PostMessage;
 import com.codegym.socialmedia.service.notification.NotificationService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,8 +21,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import static com.codegym.socialmedia.component.PrivacyUtils.canView;
 
 @Service
 @Transactional
@@ -44,7 +39,7 @@ public class PostServiceImpl implements PostService {
     private ObjectMapper objectMapper;
 
     @Autowired
-    private LikeNotificationService likeNotificationService;
+    private PostMessage postMessage;
 
     @Autowired
     private NotificationService notificationService;
@@ -178,7 +173,7 @@ public class PostServiceImpl implements PostService {
 
         if (isLiked) {
             postLikeRepository.deleteByPostAndUser(post, user);
-            likeNotificationService.notifyLikeStatusChanged(postId, getLikeCount(post), false, user.getUsername());
+            postMessage.notifyLikeStatusChanged(postId, getLikeCount(post), false, user.getUsername());
             return false;
         } else {
             LikePost like = new LikePost();
@@ -190,7 +185,7 @@ public class PostServiceImpl implements PostService {
                     user.getId(), post.getUser().getId(),
                     Notification.NotificationType.LIKE_POST,
                     Notification.ReferenceType.POST, postId);
-            likeNotificationService.notifyLikeStatusChanged(postId, getLikeCount(post), true, user.getUsername());
+            postMessage.notifyLikeStatusChanged(postId, getLikeCount(post), true, user.getUsername());
             return true;
         }
     }
@@ -245,6 +240,8 @@ public class PostServiceImpl implements PostService {
     public int countCommentsByPost(Post post) {
         return postCommentRepository.countByPost(post);
     }
+
+
 
     private String convertListToJson(List<String> list) {
         if (list == null || list.isEmpty()) {

@@ -14,4 +14,20 @@ import java.io.Serializable;
 public class LikeCommentId implements Serializable {
     private Long userId;
     private Long commentId;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof LikeCommentId)) return false;
+        LikeCommentId that = (LikeCommentId) o;
+        return userId != null && commentId != null &&
+                userId.equals(that.userId) &&
+                commentId.equals(that.commentId);
+    }
+
+    @Override
+    public int hashCode() {
+        return java.util.Objects.hash(userId, commentId);
+    }
+
 }

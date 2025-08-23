@@ -1,5 +1,6 @@
 package com.codegym.socialmedia.dto.comment;
 
+import com.codegym.socialmedia.model.account.User;
 import com.codegym.socialmedia.model.social_action.PostComment;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
@@ -43,5 +44,29 @@ public class DisplayCommentDTO {
         this.commentId = comment.getId();
         this.id=comment.getId().toString();
         this.isLikedByCurrentUser = isLikedByCurrentUser;
+    }
+
+    public static DisplayCommentDTO mapToDTO(PostComment comment, User currentUser) {
+        DisplayCommentDTO dto = new DisplayCommentDTO();
+        dto.setCommentId(comment.getId());
+        dto.setComment(comment.getContent());
+        dto.setCreatedAt(comment.getCreatedAt());
+        dto.setUpdatedAt(comment.getUpdatedAt());
+        dto.setUserFullName(comment.getUser().getFirstName() + " " + comment.getUser().getLastName());
+        dto.setUsername(comment.getUser().getUsername());
+        dto.setUserAvatarUrl(comment.getUser().getProfilePicture());
+
+        dto.setCanEdit(currentUser != null && comment.getUser().getId().equals(currentUser.getId()));
+        dto.setCanDeleted(currentUser != null && comment.getUser().getId().equals(currentUser.getId()));
+
+        // Like info
+        int likeCount = comment.getLikedByUsers() != null ? comment.getLikedByUsers().size() : 0;
+        dto.setLikeCount(likeCount);
+
+        boolean likedByCurrentUser = currentUser != null && comment.getLikedByUsers() != null &&
+                comment.getLikedByUsers().stream().anyMatch(like -> like.getUser().getId().equals(currentUser.getId()));
+        dto.setLikedByCurrentUser(likedByCurrentUser);
+
+        return dto;
     }
 }

@@ -603,3 +603,48 @@
     font-size: 0.85em;
     color: gray;
 }
+/* Comment dropdown menu giống post */
+.comment-actions-dropdown {
+    margin-left: 10px;
+    position: relative;
+}
+
+/* Comment dropdown giống post */
+.comment-actions-dropdown .btn {
+    background: none;
+    border: none;
+    color: #65676b;
+    font-size: 20px;        /* giống post-menu-btn */
+    cursor: pointer;
+    padding: 8px;           /* giống post-menu-btn */
+    border-radius: 50%;     /* giống post-menu-btn */
+    width: 36px;            /* giống post-menu-btn */
+    height: 36px;           /* giống post-menu-btn */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+}
+
+.comment-actions-dropdown .btn:hover {
+    background-color: #f0f2f5;
+}
+
+.comment-actions-dropdown .dropdown-menu {
+    min-width: 120px;       /* rộng hơn chút cho text */
+    padding: 0;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.comment-actions-dropdown .dropdown-item {
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+}
+
+.comment-actions-dropdown .dropdown-item:hover {
+    background-color: #f0f2f5;
+}

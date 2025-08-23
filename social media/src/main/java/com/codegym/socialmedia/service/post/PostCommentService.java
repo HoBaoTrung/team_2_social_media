@@ -2,15 +2,22 @@ package com.codegym.socialmedia.service.post;
 
 import com.codegym.socialmedia.dto.comment.DisplayCommentDTO;
 import com.codegym.socialmedia.model.account.User;
-import com.codegym.socialmedia.model.social_action.Post;
 import com.codegym.socialmedia.model.social_action.PostComment;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+
+import java.util.Optional;
 
 public interface PostCommentService {
-    PostComment createComment(Post post, User user, String content);
-    void deleteComment(Long commentId, User user);
-    Page<PostComment> getCommentsByPost(Post post, Pageable pageable);
-    Page<DisplayCommentDTO> getDisplayCommentsByPost(Post post, Pageable pageable);
-    PostComment getCommentById(Long commentId);
+
+    PostComment addComment(Long postId, User user, String content);
+
+    Page<DisplayCommentDTO> getCommentsByPost(Long postId, User currentUser, int page, int size);
+    // Thêm method update comment
+    PostComment updateComment(Long commentId, User currentUser, String newContent);
+
+    PostComment deleteComment(Long commentId, User currentUser);
+    // Thêm method lấy comment theo commentId
+    Optional<PostComment> getCommentById(Long commentId);
+    DisplayCommentDTO toggleLikeComment(Long commentId, User currentUser);
 }
+

@@ -1,60 +1,84 @@
 package com.codegym.socialmedia.controller;
 
+import com.codegym.socialmedia.dto.comment.CommentRequest;
 import com.codegym.socialmedia.dto.comment.DisplayCommentDTO;
 import com.codegym.socialmedia.model.account.User;
-import com.codegym.socialmedia.model.social_action.Post;
 import com.codegym.socialmedia.model.social_action.PostComment;
 import com.codegym.socialmedia.service.post.PostCommentService;
-import com.codegym.socialmedia.service.post.PostService;
 import com.codegym.socialmedia.service.user.UserService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+
 
 @RestController
+@RequestMapping("/api/comments")
+@RequiredArgsConstructor
 public class CommentController {
-
     @Autowired
-    private UserService userService;
-
+    private final PostCommentService postCommentService;
     @Autowired
-    private PostCommentService commentService;
+    private final UserService userService;
 
-    @Autowired
-    private PostService postService;
+    @PostMapping("/add")
+    public DisplayCommentDTO addComment(@RequestBody CommentRequest req) {
+        PostComment saved = postCommentService.addComment(req.getPostId(), userService.getCurrentUser(), req.getContent());
+        DisplayCommentDTO newComment = new DisplayCommentDTO(saved, false);
+        newComment.setCanEdit(true);
+        newComment.setCanDeleted(true);
+        return newComment;
+    }
 
-    @GetMapping("/api/{postId}/comments")
-    public ResponseEntity<?> createComment(
-            @PathVariable Long postId,
-            @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "size", defaultValue = "10") int size) {
+    @GetMapping("/{postId}")
+    public Page<DisplayCommentDTO> getComments(@PathVariable Long postId,
+                                               @RequestParam(defaultValue = "0") int page,
+                                               @RequestParam(defaultValue = "10") int size) {
+        return postCommentService.getCommentsByPost(postId, userService.getCurrentUser(), page, size);
+    }
 
-        Map<String, Object> response = new HashMap<>();
+    @PutMapping("/{id}")
+    public DisplayCommentDTO editComment(@RequestBody CommentRequest req, @PathVariable Long id) {
+        User currentUser = userService.getCurrentUser();
+        PostComment updated = postCommentService.updateComment(id, currentUser, req.getContent());
+        return DisplayCommentDTO.mapToDTO(updated, currentUser); // trả về DTO với quyền
+    }
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteComment(@PathVariable Long id) {
         User currentUser = userService.getCurrentUser();
 
-        if (currentUser == null) {
-            response.put("success", false);
-            response.put("message", "Vui lòng đăng nhập");
-            return ResponseEntity.status(401).body(response);
-        }
-
-        try {
-            Post post = this.postService.getPostById(postId);
-            Pageable pageable = PageRequest.of(page, size);
-            Page<DisplayCommentDTO> comments = commentService.getDisplayCommentsByPost(post, pageable);
-
-            response.put("comments", comments.getContent());
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            response.put("success", false);
-            response.put("message", "Có lỗi xảy ra: " + e.getMessage());
-            return ResponseEntity.status(500).body(response);
+        PostComment deletedComment = postCommentService.deleteComment(id, currentUser);
+        if (deletedComment!=null) {
+            // Trả về DTO
+            DisplayCommentDTO dto = new DisplayCommentDTO(deletedComment, false);
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "deletedComment", dto
+            ));
+        } else {
+            return ResponseEntity.status(403).body(Map.of(
+                    "success", false,
+                    "message", "Bạn không có quyền xóa bình luận này"
+            ));
         }
     }
+    // Like/unlike comment
+    // Like/unlike comment
+    @PostMapping("/{id}/like")
+    public DisplayCommentDTO likeComment(@PathVariable Long id) {
+        User currentUser = userService.getCurrentUser();
+        // Toggle like/unlike
+        return postCommentService.toggleLikeComment(id, currentUser);
+    }
+
 }
+
+

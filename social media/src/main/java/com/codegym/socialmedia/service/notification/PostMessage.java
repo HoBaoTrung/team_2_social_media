@@ -7,10 +7,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Service
-public class LikeNotificationService {
+public class PostMessage {
     private final SimpMessagingTemplate messagingTemplate;
 
-    public LikeNotificationService(SimpMessagingTemplate messagingTemplate) {
+    public PostMessage(SimpMessagingTemplate messagingTemplate) {
         this.messagingTemplate = messagingTemplate;
     }
 
@@ -23,5 +23,13 @@ public class LikeNotificationService {
 
         // Gửi đến tất cả client đang theo dõi status này
         messagingTemplate.convertAndSend("/topic/status/" + statusId + "/likes", payload);
+    }
+
+    public void notifyCommentStatusChanged(Long postId, Integer commentCount) {
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("postId", postId);
+        payload.put("commentCount", commentCount);
+        messagingTemplate.convertAndSend("/topic/post/" + postId + "/comments", payload);
+
     }
 }
