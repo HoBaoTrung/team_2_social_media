@@ -74,7 +74,8 @@ document.addEventListener("DOMContentLoaded", () => {
             showCancelButton: true,
             confirmButtonColor: "#3085d6",
             cancelButtonColor: "#d33",
-            confirmButtonText: "Yes!"
+            confirmButtonText: "Xóa",
+            cancelButtonText: "Hủy"
         }).then((result) => {
             if (result.isConfirmed) {
                 const username = $(this).data('username');
