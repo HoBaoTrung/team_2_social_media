@@ -1,0 +1,890 @@
+<!-- Cập nhật file profile/view.html để tích hợp posts -->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title th:text="${user.firstName + ' ' + user.lastName + ' | Hồ sơ cá nhân'}">Trang cá nhân</title>
+    <link rel="stylesheet" th:href="@{/css/view_profile.css}">
+    <link rel="stylesheet" th:href="@{/css/friend_card.css}">
+    <link rel="stylesheet" th:href="@{/css/post.css}">
+    <link rel="stylesheet" th:href="@{/css/chat.css}">
+    <th:block th:replace="~{fragments/common/commonHead :: commonHead}"></th:block>
+</head>
+<body>
+
+<!-- HEADER -->
+<div th:replace="~{fragments/common/header :: header}"></div>
+
+<!-- COVER IMAGE + AVATAR -->
+<div class="cover-container">
+    <img class="cover-image" th:src="@{/images/default-avatar.jpg}" alt="Ảnh bìa">
+    <div class="avatar-container">
+        <img class="avatar"
+             th:if="${user.profilePicture != null and !#strings.isEmpty(user.profilePicture)}"
+             th:src="@{${user.profilePicture}}" alt="Avatar">
+        <img class="avatar"
+             th:unless="${user.profilePicture != null and !#strings.isEmpty(user.profilePicture)}"
+             th:src="@{/images/default-avatar.jpg}" alt="Avatar">
+        <div class="user-name" th:text="${user.firstName + ' ' + user.lastName}">Tên người dùng</div>
+        <div class="button-group" th:if="${!isOwner}">
+            <div th:insert="fragments/friend/friend-button-group :: buttonGroup(${user.username}, ${friendshipStatus}, ${isSender}, ${isReceiver}, ${allowFriendRequests},false)"></div>
+
+            <!-- Enhanced Message Button -->
+            <button th:if="${canSendMessage}"
+                    class="enhanced-message-btn"
+                    id="profileMessageBtn"
+                    th:data-user-id="${user.id}"
+                    th:data-user-name="${user.firstName + ' ' + user.lastName}"
+                    th:data-user-avatar="${user.profilePicture}">
+                <i class="fas fa-comment-dots"></i>
+                <span>Nhắn tin</span>
+                <!-- Notification badge (hidden by default) -->
+                <span class="message-notification-badge" id="messageBadge" style="display: none;">3</span>
+            </button>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- NAVIGATION TABS -->
+<div class="profile-tabs">
+    <a th:href="@{'/profile/' + ${user.username} + '?filter=posts'}"
+       th:classappend="${filter == 'posts'} ? 'active' : ''"
+       class="tab">
+        <i class="fas fa-edit"></i> Bài viết
+    </a>
+    <a th:href="@{'/profile/' + ${user.username} + '?filter=photos'}"
+       th:classappend="${filter == 'photos'} ? 'active' : ''"
+       class="tab">
+        <i class="fas fa-images"></i> Ảnh
+    </a>
+    <a th:href="@{'/profile/' + ${user.username} + '?filter=all'}"
+       th:classappend="${filter == 'all'} ? 'active' : ''"
+       class="tab"
+       th:if="${canViewFriendList}">
+        <i class="fas fa-users"></i> Bạn bè
+    </a>
+    <a th:href="@{'/profile/' + ${user.username} + '?filter=mutual'}"
+       th:classappend="${filter == 'mutual'} ? 'active' : ''"
+       class="tab"
+       th:if="${!isOwner and mutualFriendsCount>0}">
+        <i class="fas fa-user-friends"></i> Bạn chung
+    </a>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="profile-page-container d-flex">
+    <!-- CỘT TRÁI: Thông tin người dùng -->
+    <div th:if="${filter == 'posts' or filter == 'photos' }" class="profile-left-column">
+        <div class="card-box profile-content">
+            <h2><i class="fas fa-info-circle"></i> Thông tin cá nhân</h2>
+            <div class="info-item" th:if="${canViewEmail}">
+                <strong><i class="fas fa-envelope"></i> Email:</strong>
+                <span th:text="${user.email}">email@example.com</span>
+            </div>
+            <div class="info-item" th:if="${canViewPhone}">
+                <strong><i class="fas fa-phone"></i> Số điện thoại:</strong>
+                <span th:text="${user.phone}">0123456789</span>
+            </div>
+            <div class="info-item" th:if="${canViewDob}">
+                <strong><i class="fas fa-birthday-cake"></i> Sinh nhật:</strong>
+                <span th:text="${user.dateOfBirth}">01/01/1990</span>
+            </div>
+            <div class="info-item" th:if="${canViewBio}">
+                <strong><i class="fas fa-user-edit"></i> Giới thiệu:</strong><br>
+                <textarea readonly rows="5" style="width: 100%; border: none; background: #f8f9fa; padding: 8px; border-radius: 4px;" th:text="${user.bio}">...</textarea>
+            </div>
+            <div th:if="${isOwner}" class="profile-actions">
+                <a th:href="@{/setting}" class="btn btn-outline-primary">
+                    <i class="fas fa-edit"></i> Chỉnh sửa hồ sơ
+                </a>
+            </div>
+        </div>
+
+        <div class="card-box profile-content" th:if="${canViewFriendList or mutualFriendsCount>0}">
+            <h2><i class="fas fa-users"></i> Thông tin bạn bè</h2>
+            <div th:if="${canViewFriendList}" class="mb-2">
+                <i class="fas fa-user-friends"></i> Bạn bè:
+                <strong th:text="${friendCount}"></strong>
+            </div>
+            <div th:if="${!isOwner and mutualFriendsCount>0}" class="mb-3">
+                <i class="fas fa-users"></i> Bạn chung:
+                <strong th:text="${mutualFriendsCount}"></strong>
+            </div>
+            <div class="row">
+                <div class="col-md-4" th:each="friend, iterStat : ${friends}" th:if="${iterStat.index} < 9">
+                    <th:block
+                            th:insert="~{fragments/friend/friendCard :: friendCard(friend=${friend}, nameClass='name-profile')}">
+                    </th:block>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CỘT PHẢI: Nội dung dựa trên filter -->
+    <div class="card-box posts-container" th:if="${filter == 'posts'}">
+        <span th:if="${isOwner}">
+            <div th:replace="fragments/post/post-form :: create-post-form"></div>
+        </span>
+        <!-- Posts Feed -->
+        <div id="posts-container" th:data-username="${user.username}">
+            <!-- Posts will be loaded here dynamically -->
+        </div>
+
+        <!-- Loading indicator -->
+        <div id="profile-loading-indicator" class="text-center py-3" style="display: none;">
+            <i class="fas fa-spinner fa-spin"></i> Đang tải...
+        </div>
+
+        <!-- No posts message -->
+        <div id="profile-no-posts" class="text-center py-5 text-muted" style="display: none;">
+            <div class="mb-3">
+                <i class="fas fa-edit fa-3x"></i>
+            </div>
+            <h5>Chưa có bài viết nào</h5>
+            <p th:if="${isOwner}">Hãy chia sẻ suy nghĩ đầu tiên của bạn!</p>
+            <p th:unless="${isOwner}" th:text="${user.firstName + ' chưa đăng bài viết nào.'}"></p>
+        </div>
+    </div>
+
+    <!-- Photos tab -->
+    <div class="card-box posts-container" th:if="${filter == 'photos'}">
+        <h2><i class="fas fa-images"></i> Ảnh</h2>
+        <div id="profile-photos-container" th:data-username="${user.username}">
+            <!-- Photos will be loaded here -->
+        </div>
+
+        <div id="photos-loading" class="text-center py-3" style="display: none;">
+            <i class="fas fa-spinner fa-spin"></i> Đang tải...
+        </div>
+
+        <div id="no-photos" class="text-center py-5 text-muted" style="display: none;">
+            <div class="mb-3">
+                <i class="fas fa-camera fa-3x"></i>
+            </div>
+            <h5>Chưa có ảnh nào</h5>
+            <p th:if="${isOwner}">Hãy thêm ảnh vào bài viết để hiển thị tại đây!</p>
+            <p th:unless="${isOwner}" th:text="${user.firstName + ' chưa có ảnh nào.'}"></p>
+        </div>
+    </div>
+
+    <!-- Bạn bè -->
+    <div class="card-box profile-content" th:if="${filter == 'all' or filter == 'mutual' }">
+        <input type="hidden" id="targetUserId" th:value="${targetUserId}"/>
+        <input type="hidden" id="filterValue" th:value="${filter}"/>
+        <div class="row" id="friends-list">
+            <div class="col-md-3" th:each="friend : ${friends}">
+                <th:block
+                        th:insert="~{fragments/friend/friendCard :: friendCard(friend=${friend}, nameClass='name-list-friend')}">
+                </th:block>
+            </div>
+        </div>
+        <div class="loading" id="loading">
+            <i class="fas fa-spinner fa-spin"></i> Đang tải...
+        </div>
+    </div>
+</div>
+
+<!-- Enhanced Chat Bubble -->
+<div class="profile-chat-overlay" id="profileChatOverlay"></div>
+<div class="profile-chat-bubble" id="profileChatBubble">
+    <div class="profile-chat-header">
+        <div class="profile-chat-user-info">
+            <img class="profile-chat-avatar"
+                 th:src="${user.profilePicture ?: '/images/default-avatar.jpg'}"
+                 th:alt="${user.firstName + ' ' + user.lastName}">
+            <div class="profile-chat-user-details">
+                <h4 th:text="${user.firstName + ' ' + user.lastName}">Tên người dùng</h4>
+                <span>
+                    <span class="profile-online-indicator"></span>
+                    Đang hoạt động
+                </span>
+            </div>
+        </div>
+        <div class="profile-chat-controls">
+            <button class="profile-chat-btn" title="Video call">
+                <i class="fas fa-video"></i>
+            </button>
+            <button class="profile-chat-btn" title="Thu nhỏ">
+                <i class="fas fa-minus"></i>
+            </button>
+            <button class="profile-chat-btn" id="profileCloseChatBtn" title="Đóng">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+
+    <div class="profile-chat-messages" id="profileChatMessages">
+        <div class="profile-message-time">Hôm nay</div>
+        <div class="profile-message received">
+            <img class="profile-message-avatar"
+                 th:src="${user.profilePicture ?: '/images/default-avatar.jpg'}"
+                 alt="Avatar">
+            <div class="profile-message-content">
+                Chào bạn! Cảm ơn bạn đã ghé thăm trang của mình 😊
+            </div>
+        </div>
+        <div class="profile-message sent">
+            <div class="profile-message-content">
+                Chào! Trang của bạn thật tuyệt vời!
+            </div>
+        </div>
+        <div class="profile-message received">
+            <img class="profile-message-avatar"
+                 th:src="${user.profilePicture ?: '/images/default-avatar.jpg'}"
+                 alt="Avatar">
+            <div class="profile-message-content">
+                Cảm ơn bạn! Chúng ta có thể trò chuyện thêm không? 🎉
+            </div>
+        </div>
+
+        <!-- Typing indicator (hidden by default) -->
+        <div class="profile-typing-indicator" id="profileTypingIndicator" style="display: none;">
+            <div class="profile-typing-dot"></div>
+            <div class="profile-typing-dot"></div>
+            <div class="profile-typing-dot"></div>
+        </div>
+    </div>
+
+    <div class="profile-chat-input">
+        <div class="profile-input-container">
+            <textarea class="profile-chat-text-input"
+                      placeholder="Nhập tin nhắn..."
+                      id="profileMessageInput"
+                      rows="1"></textarea>
+            <span class="profile-input-icon" title="Emoji">😊</span>
+            <span class="profile-input-icon" title="Đính kèm">📎</span>
+            <span class="profile-input-icon" title="Gửi" id="profileSendBtn">
+                <i class="fas fa-paper-plane"></i>
+            </span>
+        </div>
+    </div>
+</div>
+
+<!-- Post Search Modal (for posts tab) -->
+<div class="modal fade" id="searchPostsModal" tabindex="-1" th:if="${filter == 'posts'}">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-search"></i> Tìm kiếm bài viết
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <input type="text" id="post-search-input" class="form-control"
+                           placeholder="Nhập từ khóa tìm kiếm...">
+                </div>
+                <div id="search-results-container">
+                    <!-- Search results will appear here -->
+                </div>
+                <div id="search-loading" class="text-center py-3" style="display: none;">
+                    <i class="fas fa-spinner fa-spin"></i> Đang tìm kiếm...
+                </div>
+                <div id="no-search-results" class="text-center py-3 text-muted" style="display: none;">
+                    <i class="fas fa-search"></i> Không tìm thấy bài viết nào
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<span th:if="${isOwner}">
+    <div th:replace="fragments/post/post-form :: edit-post-form"></div>
+</span>
+
+<!-- Add search button for posts tab -->
+<div th:if="${filter == 'posts'}" class="floating-search-btn">
+    <button class="btn btn-primary rounded-circle" data-bs-toggle="modal" data-bs-target="#searchPostsModal">
+        <i class="fas fa-search"></i>
+    </button>
+</div>
+
+<script type="module" th:src="@{/js/post.js}"></script>
+<script type="module" th:src="@{/js/profile-posts.js}"></script>
+<script th:src="@{/js/load-friend.js}"></script>
+<script th:src="@{/js/friend-button.js}"></script>
+<script th:src="@{/js/chat.js}"></script>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    class EnhancedProfileChat {
+        constructor() {
+            this.profileMessageBtn = document.getElementById('profileMessageBtn');
+            this.profileChatBubble = document.getElementById('profileChatBubble');
+            this.profileChatOverlay = document.getElementById('profileChatOverlay');
+            this.profileCloseChatBtn = document.getElementById('profileCloseChatBtn');
+            this.profileMessageInput = document.getElementById('profileMessageInput');
+            this.profileSendBtn = document.getElementById('profileSendBtn');
+            this.profileChatMessages = document.getElementById('profileChatMessages');
+            this.profileTypingIndicator = document.getElementById('profileTypingIndicator');
+            this.messageBadge = document.getElementById('messageBadge');
+
+            this.isOpen = false;
+            this.unreadCount = 0;
+            this.typingTimer = null;
+            this.isTyping = false;
+
+            // Get user data from Thymeleaf
+            this.userId = /*[[${user.id}]]*/ null;
+            this.userName = /*[[${user.firstName + ' ' + user.lastName}]]*/ 'User';
+            this.userAvatar = /*[[${user.profilePicture}]]*/ '/images/default-avatar.jpg';
+
+            this.init();
+        }
+
+        init() {
+            if (!this.profileMessageBtn) return;
+
+            // Thay vì mở profile chat, sử dụng chat system chính
+            this.profileMessageBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.openMainChat(); // Gọi chat system chính thay vì profile chat
+            });
+
+            // Vô hiệu hóa tất cả event handlers của profile chat
+            // Không cần setup các event cho profile chat nữa
+
+            // Initialize notification badge
+            this.updateNotificationBadge();
+        }
+
+        openMainChat() {
+            // Sử dụng chat system chính thay vì profile chat
+            if (typeof openChat === 'function' && this.userId) {
+                openChat(this.userId.toString(), this.userName, this.userAvatar);
+            } else if (typeof openChatFromProfile === 'function') {
+                openChatFromProfile(this.userId.toString(), this.userName, this.userAvatar);
+            } else {
+                // Fallback: scroll to existing chat or show notification
+                console.log('Opening chat with:', this.userName);
+                this.showChatNotification();
+            }
+        }
+
+        showChatNotification() {
+            // Hiển thị notification nếu không thể mở chat
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 80px;
+                right: 20px;
+                background: #1877f2;
+                color: white;
+                padding: 12px 20px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                z-index: 10000;
+                animation: slideInRight 0.3s ease;
+            `;
+            notification.textContent = `Đang mở chat với ${this.userName}...`;
+
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 3000);
+        }
+
+        // Vô hiệu hóa các method của profile chat
+        openChat() {
+            // Không làm gì - đã disable
+            return false;
+        }
+
+        closeChat() {
+            // Không làm gì - đã disable
+            return false;
+        }
+
+        openChat() {
+            // Đóng tất cả chat windows khác trước khi mở profile chat
+            this.closeAllOtherChats();
+
+            this.isOpen = true;
+
+            if (this.profileChatBubble) {
+                this.profileChatBubble.classList.add('active');
+            }
+
+            if (this.profileChatOverlay) {
+                this.profileChatOverlay.classList.add('active');
+            }
+
+            // Focus input
+            setTimeout(() => {
+                if (this.profileMessageInput) {
+                    this.profileMessageInput.focus();
+                }
+            }, 300);
+
+            // Clear notifications
+            this.clearNotifications();
+
+            // Scroll to bottom
+            setTimeout(() => this.scrollToBottom(), 100);
+
+            // DON'T integrate with existing chat system to avoid conflicts
+            // if (typeof openChat === 'function' && this.userId) {
+            //     openChat(this.userId.toString(), this.userName, this.userAvatar);
+            // }
+        }
+
+        closeAllOtherChats() {
+            // Đóng tất cả chat windows từ hệ thống chat chính
+            if (typeof openChats !== 'undefined' && openChats) {
+                openChats.forEach((chatWindow, userId) => {
+                    if (chatWindow && typeof closeChat === 'function') {
+                        closeChat(userId);
+                    }
+                });
+            }
+
+            // Ẩn tất cả chat bubbles và windows
+            document.querySelectorAll('.chat-window, .chat-bubble').forEach(element => {
+                element.style.display = 'none';
+            });
+
+            // Ẩn chat container chính
+            const mainChatContainer = document.getElementById('chatContainer');
+            if (mainChatContainer) {
+                mainChatContainer.style.visibility = 'hidden';
+                mainChatContainer.style.opacity = '0';
+                mainChatContainer.style.pointerEvents = 'none';
+            }
+        }
+
+        restoreOtherChats() {
+            // Khôi phục chat system chính khi đóng profile chat
+            const mainChatContainer = document.getElementById('chatContainer');
+            if (mainChatContainer) {
+                mainChatContainer.style.visibility = 'visible';
+                mainChatContainer.style.opacity = '1';
+                mainChatContainer.style.pointerEvents = 'auto';
+            }
+
+            // Hiện lại các chat elements
+            document.querySelectorAll('.chat-window, .chat-bubble').forEach(element => {
+                element.style.display = '';
+            });
+        }
+
+        closeChat() {
+            this.isOpen = false;
+
+            if (this.profileChatBubble) {
+                this.profileChatBubble.classList.remove('active');
+            }
+
+            if (this.profileChatOverlay) {
+                this.profileChatOverlay.classList.remove('active');
+            }
+
+            this.hideTyping();
+
+            // Clear input
+            if (this.profileMessageInput) {
+                this.profileMessageInput.value = '';
+                this.autoResizeTextarea(this.profileMessageInput);
+            }
+
+            // Khôi phục chat system chính
+            setTimeout(() => {
+                this.restoreOtherChats();
+            }, 400); // Đợi animation hoàn thành
+        }
+
+        sendMessage() {
+            if (!this.profileMessageInput) return;
+
+            const message = this.profileMessageInput.value.trim();
+            if (!message) return;
+
+            // Add sent message to UI
+            this.addMessage(message, 'sent');
+
+            // Clear input
+            this.profileMessageInput.value = '';
+            this.autoResizeTextarea(this.profileMessageInput);
+
+            // Send to server if integration exists
+            this.sendToServer(message);
+
+            // Simulate response
+            setTimeout(() => {
+                this.showTyping();
+                setTimeout(() => {
+                    this.hideTyping();
+                    this.addMessage(this.getRandomResponse(), 'received');
+                }, 2000);
+            }, 500);
+        }
+
+        addMessage(content, type, avatar = null) {
+            if (!this.profileChatMessages) return;
+
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `profile-message ${type}`;
+
+            if (type === 'received') {
+                messageDiv.innerHTML = `
+                <img class="profile-message-avatar"
+                     src="${avatar || this.userAvatar || '/images/default-avatar.jpg'}"
+                     alt="Avatar">
+                <div class="profile-message-content">${this.escapeHtml(content)}</div>
+            `;
+            } else {
+                messageDiv.innerHTML = `
+                <div class="profile-message-content">${this.escapeHtml(content)}</div>
+            `;
+            }
+
+            this.profileChatMessages.appendChild(messageDiv);
+            this.scrollToBottom();
+
+            // Add animation
+            setTimeout(() => {
+                messageDiv.style.opacity = '1';
+                messageDiv.style.transform = 'translateY(0)';
+            }, 10);
+        }
+
+        showTyping() {
+            if (this.profileTypingIndicator) {
+                this.profileTypingIndicator.style.display = 'flex';
+                this.scrollToBottom();
+            }
+        }
+
+        hideTyping() {
+            if (this.profileTypingIndicator) {
+                this.profileTypingIndicator.style.display = 'none';
+            }
+        }
+
+        handleTyping() {
+            if (!this.isTyping) {
+                this.isTyping = true;
+                // Could send typing indicator to server here
+            }
+
+            clearTimeout(this.typingTimer);
+            this.typingTimer = setTimeout(() => {
+                this.isTyping = false;
+                // Could send stop typing to server here
+            }, 1000);
+        }
+
+        scrollToBottom() {
+            if (this.profileChatMessages) {
+                this.profileChatMessages.scrollTop = this.profileChatMessages.scrollHeight;
+            }
+        }
+
+        autoResizeTextarea(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = Math.min(textarea.scrollHeight, 80) + 'px';
+        }
+
+        clearNotifications() {
+            this.unreadCount = 0;
+            this.updateNotificationBadge();
+        }
+
+        updateNotificationBadge() {
+            if (this.messageBadge) {
+                if (this.unreadCount > 0) {
+                    this.messageBadge.textContent = this.unreadCount;
+                    this.messageBadge.style.display = 'block';
+                } else {
+                    this.messageBadge.style.display = 'none';
+                }
+            }
+        }
+
+        addNotification() {
+            this.unreadCount++;
+            this.updateNotificationBadge();
+        }
+
+        sendToServer(message) {
+            // Integration with existing chat system
+            if (typeof sendMessageToServer === 'function' && this.userId) {
+                sendMessageToServer(this.userId.toString(), message);
+            }
+
+            // Or direct API call
+            fetch('/api/chat/send-message', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    receiverId: this.userId,
+                    content: message,
+                    type: 'TEXT'
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.success) {
+                        console.error('Failed to send message:', data.error);
+                        this.showError('Không thể gửi tin nhắn. Vui lòng thử lại.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error sending message:', error);
+                    this.showError('Lỗi kết nối. Vui lòng kiểm tra mạng.');
+                });
+        }
+
+        showError(message) {
+            // Show error notification
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'profile-message received';
+            errorDiv.innerHTML = `
+            <div class="profile-message-content" style="background: #ffebee; color: #c62828; border: 1px solid #ffcdd2;">
+                <i class="fas fa-exclamation-triangle"></i> ${message}
+            </div>
+        `;
+
+            if (this.profileChatMessages) {
+                this.profileChatMessages.appendChild(errorDiv);
+                this.scrollToBottom();
+            }
+        }
+
+        getRandomResponse() {
+            const responses = [
+                "Cảm ơn bạn đã nhắn tin! 😊",
+                "Thật tuyệt khi được trò chuyện với bạn!",
+                "Mình rất vui khi nghe từ bạn! 🎉",
+                "Sounds great! Hẹn gặp lại sau nhé!",
+                "Cảm ơn bạn! Chúc bạn một ngày tuyệt vời! ✨",
+                "Được rồi, mình sẽ liên hệ lại sau.",
+                "Haha, thú vị quá! 😄",
+                "OK nhé, thanks bạn!"
+            ];
+            return responses[Math.floor(Math.random() * responses.length)];
+        }
+
+        escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Public method to receive messages (for WebSocket integration)
+        receiveMessage(message, senderName, senderAvatar) {
+            if (!this.isOpen) {
+                this.addNotification();
+            }
+            this.addMessage(message, 'received', senderAvatar);
+        }
+    }
+
+    // Enhanced Profile Interactions
+    class ProfileEnhancements {
+        constructor() {
+            this.init();
+        }
+
+        init() {
+            this.enhanceButtons();
+            this.addHoverEffects();
+            this.addScrollEffects();
+            this.initLazyLoading();
+        }
+
+        enhanceButtons() {
+            // Add ripple effect to buttons
+            document.querySelectorAll('.enhanced-message-btn, .btn').forEach(button => {
+                button.addEventListener('click', this.createRipple);
+            });
+        }
+
+        createRipple(e) {
+            const button = e.currentTarget;
+            const ripple = document.createElement('span');
+            const rect = button.getBoundingClientRect();
+            const size = Math.max(rect.width, rect.height);
+            const x = e.clientX - rect.left - size / 2;
+            const y = e.clientY - rect.top - size / 2;
+
+            ripple.style.cssText = `
+            position: absolute;
+            width: ${size}px;
+            height: ${size}px;
+            left: ${x}px;
+            top: ${y}px;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 50%;
+            transform: scale(0);
+            animation: ripple 0.6s linear;
+            pointer-events: none;
+        `;
+
+            if (!document.querySelector('#ripple-style')) {
+                const style = document.createElement('style');
+                style.id = 'ripple-style';
+                style.textContent = `
+                @keyframes ripple {
+                    to {
+                        transform: scale(4);
+                        opacity: 0;
+                    }
+                }
+            `;
+                document.head.appendChild(style);
+            }
+
+            button.style.position = 'relative';
+            button.style.overflow = 'hidden';
+            button.appendChild(ripple);
+
+            setTimeout(() => ripple.remove(), 600);
+        }
+
+        addHoverEffects() {
+            // Enhanced hover effects for profile elements
+            document.querySelectorAll('.info-item').forEach(item => {
+                item.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateX(5px)';
+                    this.style.transition = 'transform 0.3s ease';
+                });
+
+                item.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateX(0)';
+                });
+            });
+        }
+
+        addScrollEffects() {
+            // Scroll reveal animation
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            }, observerOptions);
+
+            document.querySelectorAll('.card-box, .info-item').forEach(el => {
+                el.style.opacity = '0';
+                el.style.transform = 'translateY(20px)';
+                el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+                observer.observe(el);
+            });
+        }
+
+        initLazyLoading() {
+            // Lazy loading for images
+            const imageObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const img = entry.target;
+                        if (img.dataset.src) {
+                            img.src = img.dataset.src;
+                            img.classList.add('loaded');
+                            imageObserver.unobserve(img);
+                        }
+                    }
+                });
+            });
+
+            document.querySelectorAll('img[data-src]').forEach(img => {
+                imageObserver.observe(img);
+            });
+        }
+    }
+
+    // Initialize when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize enhanced profile chat
+        window.profileChat = new EnhancedProfileChat();
+
+        // Initialize profile enhancements
+        new ProfileEnhancements();
+
+        // Add loading animation
+        const profileContainer = document.querySelector('.profile-page-container');
+        if (profileContainer) {
+            profileContainer.style.opacity = '0';
+            setTimeout(() => {
+                profileContainer.style.transition = 'opacity 0.8s ease';
+                profileContainer.style.opacity = '1';
+            }, 100);
+        }
+
+        // Enhanced tab switching
+        document.querySelectorAll('.profile-tabs .tab').forEach(tab => {
+            tab.addEventListener('click', function(e) {
+                // Add loading effect
+                const loadingOverlay = document.createElement('div');
+                loadingOverlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(255, 255, 255, 0.8);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 9999;
+            `;
+                loadingOverlay.innerHTML = '<i class="fas fa-spinner fa-spin fa-2x text-primary"></i>';
+                document.body.appendChild(loadingOverlay);
+
+                // Remove after navigation starts
+                setTimeout(() => loadingOverlay.remove(), 100);
+            });
+        });
+
+        // WebSocket integration for real-time chat
+        if (typeof stompClient !== 'undefined' && stompClient && window.profileChat) {
+            const userId = window.profileChat.userId;
+            if (userId) {
+                // Subscribe to personal message queue
+                stompClient.subscribe(`/user/${userId}/queue/messages`, function(message) {
+                    const messageData = JSON.parse(message.body);
+                    if (window.profileChat) {
+                        window.profileChat.receiveMessage(
+                            messageData.content,
+                            messageData.senderName,
+                            messageData.senderAvatar
+                        );
+                    }
+                });
+            }
+        }
+    });
+
+    // Global function for external integration
+    window.openProfileChat = function() {
+        if (window.profileChat) {
+            window.profileChat.openChat();
+        }
+    };
+
+    // Error handling
+    window.addEventListener('error', function(e) {
+        console.error('Profile page error:', e.error);
+    });
+
+    /*]]>*/
+</script>
+
+
+</body>
+</html>

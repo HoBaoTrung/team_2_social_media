@@ -1,5 +1,6 @@
 package com.codegym.socialmedia.service.user;
 
+import com.codegym.socialmedia.general_interface.UserPrincipalInfo;
 import com.codegym.socialmedia.model.account.User;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -8,19 +9,25 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 import java.util.Collections;
 
-public class CustomUserPrincipal implements UserDetails {
+public class CustomUserPrincipal implements UserDetails, UserPrincipalInfo {
     private final User user;
 
     public CustomUserPrincipal(User user) {
         this.user = user;
     }
 
+    public long getId(){
+        return user.getId();
+    }
+
+    @Override
     public String getAvatarUrl() {
         return user.getProfilePicture();
     }
 
+    @Override
     public String getFullName() {
-        return user.getFirstName() + user.getLastName();
+        return user.getFirstName() + " " + user.getLastName();
     }
 
     @Override

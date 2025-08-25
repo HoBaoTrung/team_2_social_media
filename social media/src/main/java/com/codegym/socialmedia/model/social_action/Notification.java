@@ -16,43 +16,35 @@ import java.time.LocalDateTime;
 public class Notification {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer notificationId;
+    private Long id;
 
     @ManyToOne
     @JoinColumn(name = "sender_id")
-    private User sender;
+    private User sender;  // ai thực hiện hành động
 
     @ManyToOne
     @JoinColumn(name = "receiver_id")
-    private User receiver;
-
-    private String title;
-    private String linkUrl;
-
-    @Lob
-    private String content;
+    private User receiver;  // ai nhận thông báo
 
     @Enumerated(EnumType.STRING)
     private NotificationType notificationType;
 
-    private Integer relatedId;
+    @Enumerated(EnumType.STRING) private ReferenceType referenceType;
+    private Long referenceId;
 
-    private boolean isRead;
-
-    @Enumerated(EnumType.STRING)
-    private Priority priority;
+    private boolean isRead = false;
 
     @CreationTimestamp
     private LocalDateTime createdAt;
 
-    @UpdateTimestamp
-    private LocalDateTime updatedAt;
+    public enum ReferenceType { POST, COMMENT, FRIENDSHIP }
 
     public enum NotificationType {
-        COMMENT, LIKE, SHARE, FRIEND_REQUEST
-    }
-
-    public enum Priority {
-        LOW, MEDIUM, HIGH
+        LIKE_POST,
+        LIKE_COMMENT,
+        COMMENT_POST,
+        REPLY_COMMENT,
+        FRIEND_REQUEST
     }
 }
+
