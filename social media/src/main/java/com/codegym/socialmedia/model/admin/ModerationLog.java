@@ -46,7 +46,7 @@ public class ModerationLog {
 
     @ManyToOne
     @JoinColumn(name = "resolved_by")
-    private Admin resolvedBy;
+    private User resolvedBy;
 
     public enum TargetType {
         USER, COMMENT, STATUS

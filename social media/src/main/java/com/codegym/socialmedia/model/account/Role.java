@@ -1,4 +1,4 @@
-package com.codegym.socialmedia.model.admin;
+package com.codegym.socialmedia.model.account;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -6,22 +6,17 @@ import lombok.*;
 import java.util.List;
 
 @Entity
-@Table(name = "admin_roles")
+@Table(name = "roles")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class AdminRole {
+public class Role {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
     @Column(unique = true, nullable = false)
-    private String name; // SUPER_ADMIN, ADMIN, MODERATOR
-
-    private String description;
-
-    @OneToMany(mappedBy = "role")
-    private List<Admin> admins;
+    private String name;
 
 }

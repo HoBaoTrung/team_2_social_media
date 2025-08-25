@@ -1,19 +1,26 @@
 package com.codegym.socialmedia.service.user;
 
 import com.codegym.socialmedia.general_interface.UserPrincipalInfo;
+import com.codegym.socialmedia.model.account.Role;
 import com.codegym.socialmedia.model.account.User;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.List;
 
 public class CustomUserPrincipal implements UserDetails, UserPrincipalInfo {
     private final User user;
-
+    private Collection<? extends GrantedAuthority> roles;
     public CustomUserPrincipal(User user) {
         this.user = user;
+        List<GrantedAuthority> authorities = new ArrayList<>();
+        for (Role a : user.getRoles()) {
+            authorities.add(new SimpleGrantedAuthority(a.getName()));
+        }
+        this.roles = authorities;
     }
 
     public long getId(){
@@ -32,7 +39,7 @@ public class CustomUserPrincipal implements UserDetails, UserPrincipalInfo {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"));
+        return roles;
     }
 
     @Override

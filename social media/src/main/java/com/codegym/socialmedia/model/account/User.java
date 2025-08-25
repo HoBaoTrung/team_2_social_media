@@ -12,6 +12,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "users")
@@ -77,6 +78,11 @@ public class User {
     @Enumerated(EnumType.STRING)
     private AccountStatus accountStatus = AccountStatus.ACTIVE;
 
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(name = "users_roles",
+            joinColumns = {@JoinColumn(name = "user_id")},
+            inverseJoinColumns = {@JoinColumn(name = "role_id")})
+    private Set<Role> roles;
 
     @OneToMany(mappedBy = "user")
     private List<UserSearchHistory> searchesPerformed;

@@ -179,7 +179,7 @@
     padding: 0.5rem;
 }
 
-.btn {
+.btn:not(.btn-light) {
     background-color: #1877f2;
     border: none;
     padding: 0.6rem 1.2rem;
@@ -189,7 +189,7 @@
     font-weight: bold;
 }
 
-.btn:hover {
+.btn:not(.btn-light):hover {
     background-color: #166fe5;
 }
 

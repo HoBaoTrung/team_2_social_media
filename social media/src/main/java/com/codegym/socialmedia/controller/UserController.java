@@ -129,14 +129,15 @@ public class UserController {
         return "redirect:/login";
     }
 
-    @GetMapping({"/login", "/admin/login"})
+    @GetMapping("/login")
     public String loginForm(
                             @RequestParam(value = "logout", required = false) String logout,
                             Model model, HttpServletRequest request) {
-        boolean isAdmin = request.getRequestURI().startsWith("/admin");
-        model.addAttribute("loginAction", isAdmin ? "/admin/login" : "/login");
-        model.addAttribute("switchLoginUrl", isAdmin ? "/login" : "/admin/login");
-        model.addAttribute("isAdmin", isAdmin);
+
+        model.addAttribute("loginAction", "/login");
+//        model.addAttribute("switchLoginUrl", isAdmin ? "/login" : "/admin/login");
+//        model.addAttribute("isAdmin", isAdmin);
+
         // Luôn thêm object user để tránh lỗi template
         if (!model.containsAttribute("user")) {
             model.addAttribute("user", new UserRegistrationDto());

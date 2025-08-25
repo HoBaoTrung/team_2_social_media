@@ -121,6 +121,12 @@
                             <i class="fas fa-cog icon"></i>
                             Cài đặt</a></li>
                         <li>
+                        <li th:if="${#authorization.expression('hasRole(''ADMIN'')')}">
+                            <a class="dropdown-item" th:href="@{/admin/dashboard}">
+                                <i class="fas fa-user-shield icon"></i>
+                                Trang admin
+                            </a>
+                        </li>
                             <hr class="dropdown-divider">
                         </li>
                         <li>

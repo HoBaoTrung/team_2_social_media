@@ -3,10 +3,12 @@ package com.codegym.socialmedia.service.user;
 import com.codegym.socialmedia.component.CloudinaryService;
 import com.codegym.socialmedia.dto.UserRegistrationDto;
 import com.codegym.socialmedia.model.account.NotificationSettings;
+import com.codegym.socialmedia.model.account.Role;
 import com.codegym.socialmedia.model.account.User;
 import com.codegym.socialmedia.model.account.UserPrivacySettings;
 import com.codegym.socialmedia.repository.IUserRepository;
 import com.codegym.socialmedia.repository.NotificationSettingsRepository;
+import com.codegym.socialmedia.repository.RoleRepository;
 import com.codegym.socialmedia.repository.UserPrivacySettingsRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -21,6 +23,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 
 @Service
@@ -40,7 +44,7 @@ public class UserServiceImpl implements UserService {
     private UserPrivacySettingsRepository userPrivacySettingsRepository;
 
     @Autowired
-    private NotificationSettingsRepository notificationSettingsRepository;
+    private RoleRepository roleRepository;
 
     @Autowired
     @Qualifier("customUserDetailsService")
@@ -62,7 +66,12 @@ public class UserServiceImpl implements UserService {
         user.setActive(true);
         user.setVerified(false);
         user.setProfilePicture("https://res.cloudinary.com/dryyvmkwo/image/upload/v1748588721/samples/landscapes/nature-mountains.jpg");
+        // Lấy role từ DB
+        Role roleUser = roleRepository.findByName("ROLE_USER")
+                .orElseThrow(() -> new RuntimeException("Role not found"));
 
+        // Gán role
+        user.setRoles(new HashSet<>(Arrays.asList(roleUser)));
         UserPrivacySettings privacySettings = new UserPrivacySettings();
         privacySettings.setUser(user);
 
@@ -206,6 +215,13 @@ public class UserServiceImpl implements UserService {
 
             user.setPrivacySettings(privacySettings);
             user.setNotificationSettings(notificationSettings);
+
+            // Lấy role từ DB
+            Role roleUser = roleRepository.findByName("ROLE_USER")
+                    .orElseThrow(() -> new RuntimeException("Role not found"));
+
+            // Gán role
+            user.setRoles(new HashSet<>(Arrays.asList(roleUser)));
 
             User savedUser = iUserRepository.save(user);
             return savedUser;

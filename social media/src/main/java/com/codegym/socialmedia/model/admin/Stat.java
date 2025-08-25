@@ -1,5 +1,6 @@
 package com.codegym.socialmedia.model.admin;
 
+import com.codegym.socialmedia.model.account.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
@@ -24,7 +25,7 @@ public class Stat {
 
     @ManyToOne
     @JoinColumn(name = "admin_id")
-    private Admin admin;
+    private User admin;
 
     @Column(name = "stats_date")
     private LocalDate statsDate;

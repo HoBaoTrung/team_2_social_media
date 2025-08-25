@@ -1,6 +1,6 @@
 package com.codegym.socialmedia.jwt;
 
-import com.codegym.socialmedia.service.admin.AdminDetailsService;
+import com.codegym.socialmedia.service.user.CustomUserDetailsService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -22,7 +22,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private JwtUtil jwtUtil;
 
     @Autowired
-    private AdminDetailsService adminDetailsService;
+    private CustomUserDetailsService customUserDetailsService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -41,7 +41,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = this.adminDetailsService.loadUserByUsername(username);
+            UserDetails userDetails = this.customUserDetailsService.loadUserByUsername(username);
 
             if (jwtUtil.validateToken(jwtToken, userDetails)) {
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
