@@ -29,7 +29,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService
     @Autowired
     private CloudinaryService cloudinaryService;
 
-    private MultipartFile fromUrl(String url, String fileName) throws Exception {
+    public static MultipartFile fromUrl(String url, String fileName) throws Exception {
         try (InputStream in = new URL(url).openStream()) {
             byte[] bytes = in.readAllBytes();
             return new UrlMultipartFile(bytes, fileName, "image/jpeg");
@@ -61,12 +61,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService
                 avatarUrl = (String) attributes.get("picture");
                 if (avatarUrl.contains("=s96-c")) {
                     avatarUrl = avatarUrl.replace("=s96-c", "=s512-c");
-                }
-                try {
-                    MultipartFile avatarFile = fromUrl(avatarUrl, "avatar.jpg");
-                    avatarUrl = cloudinaryService.upload(avatarFile);
-                } catch (Exception e) {
-                    e.printStackTrace();
                 }
             }
 

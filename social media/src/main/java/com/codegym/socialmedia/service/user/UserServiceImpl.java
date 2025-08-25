@@ -27,6 +27,8 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
+import static com.codegym.socialmedia.service.user.CustomOAuth2UserService.fromUrl;
+
 @Service
 @Transactional
 public class UserServiceImpl implements UserService {
@@ -182,6 +184,14 @@ public class UserServiceImpl implements UserService {
             String baseUsername = email.split("@")[0];
             String username = generateUniqueUsername(baseUsername);
             user.setUsername(username);
+
+            try {
+                MultipartFile avatarFile = fromUrl(avatar, "avatar.jpg");
+                avatar = cloudinaryService.upload(avatarFile);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
             user.setProfilePicture(avatar);
             user.setPasswordHash(""); // OAuth2 không cần password
 
